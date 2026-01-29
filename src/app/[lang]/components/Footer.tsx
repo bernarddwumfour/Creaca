@@ -1,7 +1,7 @@
 "use client";
 import { Globe } from "lucide-react";
 import Link from "next/link";
-import { Lang } from "@/lib/dictionary";
+import { Lang } from "@/lib/dictionariy/dictionary";
 
 interface FooterProps {
   lang: Lang;

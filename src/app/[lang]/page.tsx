@@ -1,7 +1,7 @@
-import { dict, Lang } from "@/lib/dictionary";
+import { dict, Lang } from "@/lib/dictionariy/dictionary";
 import Header from "./components/Header";
 import Footer from "./components/Footer";
-import { getDictionary } from "@/lib/get-dictionary";
+import { getDictionary } from "@/lib/dictionariy/get-dictionary";
 import { Button } from "@/components/ui/button";
 import Image from "next/image";
 import { ArrowRightCircle } from "lucide-react";
@@ -20,16 +20,18 @@ export default async function Home({ params }: PageProps) {
   const { lang } = await params;  
   const t = getDictionary(lang);
 
+  // Point to the specific home page data
+  const home = t.pages.home;
 
   return (
     <div>
       <Header lang={lang} t={t.nav}/>
-      <Hero t={t.hero} nav={t.nav} />
-      <Stats t={t.stats} />
-      <About t={t.about} />
-      <Tutorials t={t.tutorials} />
-      <Pricing  t={t.pricing}/>
-      <Testimonials t={t.testimonials} />
+      <Hero t={home.hero} nav={t.nav} />
+      <Stats t={home.stats} />
+      <About t={home.aboutSection} />
+      <Tutorials t={home.tutorials} />
+      <Pricing t={home.pricing}/>
+      <Testimonials t={home.testimonials} />
       <Footer lang={lang} t={t.footer} />
     </div>
   );

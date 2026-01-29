@@ -3,7 +3,8 @@
 import { useState, useEffect } from 'react'
 import { Button } from '@/components/ui/button'
 import Link from 'next/link'
-import { Lang } from '@/lib/dictionary'
+import { Lang } from '@/lib/dictionariy/dictionary'
+import LanguageSwitcher from './LanguageSwitcher'
 
 interface HeaderProps {
   lang: Lang;
@@ -56,22 +57,8 @@ const Header = ({ lang, t }: HeaderProps) => {
         </ul>
 
         <div className="flex items-center gap-4">
-          {/* Language Switcher Buttons */}
-          <div className="flex bg-gray-100/50 rounded-full p-1 border border-gray-200">
-            {(['en', 'es', 'fr'] as const).map((l) => (
-              <Link 
-                key={l} 
-                href={`/${l}`}
-                className={`px-3 py-1 text-xs rounded-full transition-all ${
-                  lang === l 
-                    ? 'bg-white text-black shadow-sm font-bold' 
-                    : 'text-gray-500 hover:text-black'
-                }`}
-              >
-                {l.toUpperCase()}
-              </Link>
-            ))}
-          </div>
+          
+        <LanguageSwitcher currentLang={lang} />
 
           <Button className={isScrolled ? 'text-white' : 'bg-black text-white hover:bg-black/80'}>
             {t.trial}
