@@ -23,12 +23,12 @@ const Header = ({ lang, t }: HeaderProps) => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
 
   useEffect(() => {
+    // Glass effect kicks in after 20px of scrolling
     const handleScroll = () => setIsScrolled(window.scrollY > 20)
     window.addEventListener('scroll', handleScroll)
     return () => window.removeEventListener('scroll', handleScroll)
   }, [])
 
-  // Prevent scrolling when mobile menu is open
   useEffect(() => {
     if (mobileMenuOpen) {
       document.body.style.overflow = 'hidden'
@@ -46,11 +46,15 @@ const Header = ({ lang, t }: HeaderProps) => {
 
   return (
     <header
-      className={`fixed w-full top-0 left-0 z-[1000] transition-all duration-300 ${
-        isScrolled || mobileMenuOpen ? 'bg-white shadow-sm' : 'bg-transparent'
+      className={`fixed w-full top-0 left-0 z-[1000] transition-all duration-500 ${
+        mobileMenuOpen 
+          ? 'bg-white' // Solid white when mobile menu is open
+          : isScrolled 
+            ? 'bg-white/70 backdrop-blur-md shadow-sm' // Glass effect
+            : 'bg-transparent' // Initial state
       }`}
     >
-      <div className="container mx-auto flex justify-between items-center p-5">
+      <div className="container mx-auto flex justify-between items-center p-5 py-3">
         {/* LOGO */}
         <Link 
           className="text-lg font-black tracking-tighter z-[1001]" 
@@ -62,7 +66,7 @@ const Header = ({ lang, t }: HeaderProps) => {
 
         {/* DESKTOP NAVIGATION */}
         <nav className="hidden md:block">
-          <ul className={`flex gap-6 ${isScrolled ? 'text-black' : 'text-zinc-600'}`}>
+          <ul className={`flex gap-6 transition-colors duration-300 ${isScrolled ? 'text-black' : 'text-zinc-600'}`}>
             {navItems.map((item) => (
               <li key={item.label}>
                 <Link 
@@ -82,7 +86,7 @@ const Header = ({ lang, t }: HeaderProps) => {
             <LanguageSwitcher currentLang={lang} />
           </div>
 
-          <Button asChild size="sm" className="flex rounded-full font-bold px-5 bg-black text-white hover:bg-primary transition-all text-xs tracking-wide">
+          <Button asChild size="sm" className="flex rounded-full font-bold px-5 bg-black text-white hover:bg-primary transition-all text-xs tracking-wide shadow-lg shadow-black/5">
             <Link href={`/${lang}/login`}>{t.trial}</Link>
           </Button>
 
@@ -102,12 +106,13 @@ const Header = ({ lang, t }: HeaderProps) => {
         fixed inset-0 bg-white z-[999] transition-all duration-500 ease-in-out md:hidden
         ${mobileMenuOpen ? 'opacity-100 visible' : 'opacity-0 invisible pointer-events-none'}
       `}>
-        <nav className="flex flex-col justify-center items-center h-full w-full bg-white px-8">
+        <nav className="flex flex-col justify-center items-center h-full w-full px-8">
           <ul className="space-y-8 text-center">
             {navItems.map((item, index) => (
               <li 
                 key={item.label} 
-                className={`transition-all duration-500 delay-[${index * 100}ms] ${mobileMenuOpen ? 'translate-y-0 opacity-100' : 'translate-y-4 opacity-0'}`}
+                className={`transition-all duration-500 ${mobileMenuOpen ? 'translate-y-0 opacity-100' : 'translate-y-4 opacity-0'}`}
+                style={{ transitionDelay: mobileMenuOpen ? `${index * 50}ms` : '0ms' }}
                 onClick={() => setMobileMenuOpen(false)}
               >
                 <Link 
@@ -119,8 +124,6 @@ const Header = ({ lang, t }: HeaderProps) => {
               </li>
             ))}
           </ul>
-          
-        
         </nav>
       </div>
     </header>
