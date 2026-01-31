@@ -1,7 +1,7 @@
-import { dict, Lang } from "@/lib/dictionariy/dictionary";
+import { dict, Lang } from "@/lib/dictionary/dictionary";
 import Header from "./components/Header";
 import Footer from "./components/Footer";
-import { getDictionary } from "@/lib/dictionariy/get-dictionary";
+import { getDictionary } from "@/lib/dictionary/get-dictionary";
 import { Button } from "@/components/ui/button";
 import Image from "next/image";
 import { ArrowRightCircle } from "lucide-react";
@@ -41,10 +41,10 @@ export default async function Home({ params }: PageProps) {
 function Hero({ t, nav }: { t: any, nav: any }) {
   return (
     <div className="bg-gradient-to-r from-white from-50% to-primary to-50%">
-      <div className="flex lg:container mx-auto  overflow-hidden">
+      <div className="flex flex-col md:flex-row lg:container mx-auto  overflow-hidden">
         <div className="bg-white w-3/5 flex items-center">
           <div className=" p-12 py-64 py-6">
-            <h1 className="text-5xl leading-18 font-extrabold">
+            <h1 className="text-[2.5rem] leading-18 font-extrabold">
               <span className="text-primary">{t.title}</span> {t.subtitle}
             </h1>
             <p className="py-6 max-w-[700px] text-gray-500">
@@ -104,8 +104,8 @@ function About({ t }: { t: any }) {
         <div className="w-full justify-between items-center gap-12 grid lg:grid-cols-2 grid-cols-1">
           <div
             className="w-full justify-center items-start gap-6  lg:order-first order-last relative">
-            <div className="pt-24 lg:justify-center sm:justify-end w-[95%] h-[700px] justify-start items-start gap-2.5 flex relative">
-              <Image fill className=" rounded-xl object-cover scale-90" src="/about_image.png" alt="Students from diverse backgrounds collaborating" />
+            <div className="pt-24 lg:justify-center sm:justify-end w-[95%] h-[calc(450px+5vw)]  justify-start items-start gap-2.5 flex relative">
+              <Image fill className=" rounded-xl object-contain scale-90" src="/about_image.png" alt="Students from diverse backgrounds collaborating" />
             </div>
           </div>
           <div className="w-full flex-col justify-center lg:items-start items-center gap-10 inline-flex">
@@ -157,7 +157,7 @@ function About({ t }: { t: any }) {
 function Tutorials({ t }: { t: any }) {
   return (
     <section className="">
-      <div className="container mx-auto py-24">
+      <div className="container mx-auto py-24 px-6">
         <div className="space-y-4 pb-4">
           <h3 className="text-4xl font-bold max-w-[700px] leading-12">
             {t.title}

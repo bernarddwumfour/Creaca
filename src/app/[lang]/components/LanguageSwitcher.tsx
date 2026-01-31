@@ -1,38 +1,70 @@
 'use client';
 
-import Link from 'next/link';
-import { usePathname } from 'next/navigation';
-import { Lang } from '@/lib/dictionariy/dictionary';
+import React from 'react';
+import { useRouter, usePathname } from 'next/navigation';
+import { Globe, ChevronDown } from 'lucide-react';
+import { 
+  DropdownMenu, 
+  DropdownMenuContent, 
+  DropdownMenuItem, 
+  DropdownMenuTrigger 
+} from "@/components/ui/dropdown-menu";
+import { Button } from "@/components/ui/button";
 
-interface LanguageSwitcherProps {
-  currentLang: Lang;
-}
-
-export default function LanguageSwitcher({ currentLang }: LanguageSwitcherProps) {
+export default function LanguageSwitcher({ currentLang }: { currentLang: string }) {
+  const router = useRouter();
   const pathname = usePathname();
 
-  const getLocalizedPath = (targetLang: string) => {
-    if (!pathname) return `/${targetLang}`;
+  const languages = [
+    { code: 'en', label: 'English' },
+    { code: 'fr', label: 'Français' },
+    { code: 'es', label: 'Español' }
+  ];
+
+  const handleLanguageChange = (newLang: string) => {
+    if (!pathname) return;
     const segments = pathname.split('/');
-    segments[1] = targetLang; 
-    return segments.join('/');
+    segments[1] = newLang;
+    const newPath = segments.join('/') || '/';
+    router.push(newPath);
   };
 
   return (
-    <div className="flex bg-gray-100/50 rounded-full p-1 border border-gray-200">
-      {(['en', 'es', 'fr'] as const).map((l) => (
-        <Link
-          key={l}
-          href={getLocalizedPath(l)}
-          className={`px-3 py-1 text-xs rounded-full transition-all ${
-            currentLang === l
-              ? 'bg-white text-black shadow-sm font-bold'
-              : 'text-gray-500 hover:text-black'
-          }`}
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <Button 
+          variant="ghost" 
+          size="sm" 
+          className="h-9 px-3 gap-2 rounded-full hover:bg-zinc-100 transition-colors group"
         >
-          {l.toUpperCase()}
-        </Link>
-      ))}
-    </div>
+          <Globe className="w-4 h-4 text-gray-600 group-hover:text-primary transition-colors" />
+          <span className="text-xs font-bold uppercase tracking-widest text-gray-600">
+            {currentLang}
+          </span>
+          <ChevronDown className="w-3 h-3 text-gray-600 group-hover:text-zinc-600 transition-all" />
+        </Button>
+      </DropdownMenuTrigger>
+      
+      <DropdownMenuContent 
+        align="end" 
+        className="min-w-[120px] p-1 rounded-xl shadow-xl z-100 bg-white border-zinc-100 mt-2"
+      >
+        {languages.map((lang) => (
+          <DropdownMenuItem 
+            key={lang.code} 
+            onClick={() => handleLanguageChange(lang.code)}
+            className={`
+              flex items-center justify-between px-3 py-2 rounded-lg cursor-pointer transition-all
+              ${currentLang === lang.code 
+                ? 'bg-primary/5 text-primary font-bold' 
+                : 'text-zinc-600 hover:bg-zinc-50 font-medium'}
+            `}
+          >
+            <span className="text-xs">{lang.label}</span>
+            {currentLang === lang.code && <div className="w-1 h-1 rounded-full bg-primary" />}
+          </DropdownMenuItem>
+        ))}
+      </DropdownMenuContent>
+    </DropdownMenu>
   );
 }

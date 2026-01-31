@@ -3,8 +3,9 @@
 import { useState, useEffect } from 'react'
 import { Button } from '@/components/ui/button'
 import Link from 'next/link'
-import { Lang } from '@/lib/dictionariy/dictionary'
+import { Lang } from '@/lib/dictionary/dictionary'
 import LanguageSwitcher from './LanguageSwitcher'
+import { Menu, X } from 'lucide-react'
 
 interface HeaderProps {
   lang: Lang;
@@ -19,14 +20,23 @@ interface HeaderProps {
 
 const Header = ({ lang, t }: HeaderProps) => {
   const [isScrolled, setIsScrolled] = useState(false)
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
 
   useEffect(() => {
-    const handleScroll = () => setIsScrolled(window.scrollY > 200)
+    const handleScroll = () => setIsScrolled(window.scrollY > 20)
     window.addEventListener('scroll', handleScroll)
     return () => window.removeEventListener('scroll', handleScroll)
   }, [])
 
-  // Use the dictionary values directly
+  // Prevent scrolling when mobile menu is open
+  useEffect(() => {
+    if (mobileMenuOpen) {
+      document.body.style.overflow = 'hidden'
+    } else {
+      document.body.style.overflow = 'unset'
+    }
+  }, [mobileMenuOpen])
+
   const navItems = [
     { label: t.home, href: `/${lang}` },
     { label: t.about, href: `/${lang}/about` },
@@ -35,37 +45,85 @@ const Header = ({ lang, t }: HeaderProps) => {
   ]
 
   return (
-    <div 
+    <header
       className={`fixed w-full top-0 left-0 z-[1000] transition-all duration-300 ${
-        isScrolled ? 'bg-white/60 backdrop-blur shadow-xs' : 'bg-transparent'
+        isScrolled || mobileMenuOpen ? 'bg-white shadow-sm' : 'bg-transparent'
       }`}
     >
-      <div className="container mx-auto flex justify-between items-center p-4 pb-3">
-        <Link className={`text-lg font-semibold ${isScrolled ? 'text-black' : 'text-gray-600'}`} href={`/${lang}`}>
-          Cresca
+      <div className="container mx-auto flex justify-between items-center p-5">
+        {/* LOGO */}
+        <Link 
+          className="text-lg font-black tracking-tighter z-[1001]" 
+          href={`/${lang}`}
+          onClick={() => setMobileMenuOpen(false)}
+        >
+          QUBIT<span className="text-primary">.</span>
         </Link>
 
-        {/* Mapped Navigation */}
-        <ul className={`flex gap-8 ${isScrolled ? 'text-black' : 'text-gray-600'}`}>
-          {navItems.map((item) => (
-            <li key={item.label}>
-              <Link className='text-sm font-medium hover:opacity-70 transition-opacity' href={item.href}>
-                {item.label}
-              </Link>
-            </li>
-          ))}
-        </ul>
+        {/* DESKTOP NAVIGATION */}
+        <nav className="hidden md:block">
+          <ul className={`flex gap-6 ${isScrolled ? 'text-black' : 'text-zinc-600'}`}>
+            {navItems.map((item) => (
+              <li key={item.label}>
+                <Link 
+                  className='text-[13px] font-bold hover:text-primary transition-colors tracking-widest uppercase' 
+                  href={item.href}
+                >
+                  {item.label}
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </nav>
 
-        <div className="flex items-center gap-4">
-          
-        <LanguageSwitcher currentLang={lang} />
+        {/* ACTIONS */}
+        <div className="flex items-center gap-3 z-[1001]">
+          <div className="block">
+            <LanguageSwitcher currentLang={lang} />
+          </div>
 
-          <Button className={isScrolled ? 'text-white' : 'bg-black text-white hover:bg-black/80'}>
-            {t.trial}
+          <Button asChild size="sm" className="flex rounded-full font-bold px-5 bg-black text-white hover:bg-primary transition-all text-xs tracking-wide">
+            <Link href={`/${lang}/login`}>{t.trial}</Link>
           </Button>
+
+          {/* MOBILE TOGGLE */}
+          <button 
+            className="md:hidden p-1 text-zinc-900 focus:outline-none" 
+            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+            aria-label="Toggle Menu"
+          >
+            {mobileMenuOpen ? <X size={22} strokeWidth={2.5} /> : <Menu size={22} strokeWidth={2.5} />}
+          </button>
         </div>
       </div>
-    </div>
+
+      {/* FULL SCREEN MOBILE MENU */}
+      <div className={`
+        fixed inset-0 bg-white z-[999] transition-all duration-500 ease-in-out md:hidden
+        ${mobileMenuOpen ? 'opacity-100 visible' : 'opacity-0 invisible pointer-events-none'}
+      `}>
+        <nav className="flex flex-col justify-center items-center h-full w-full bg-white px-8">
+          <ul className="space-y-8 text-center">
+            {navItems.map((item, index) => (
+              <li 
+                key={item.label} 
+                className={`transition-all duration-500 delay-[${index * 100}ms] ${mobileMenuOpen ? 'translate-y-0 opacity-100' : 'translate-y-4 opacity-0'}`}
+                onClick={() => setMobileMenuOpen(false)}
+              >
+                <Link 
+                  className='text-xl font-bold text-zinc-900 uppercase tracking-[0.2em] hover:text-primary transition-colors' 
+                  href={item.href}
+                >
+                  {item.label}
+                </Link>
+              </li>
+            ))}
+          </ul>
+          
+        
+        </nav>
+      </div>
+    </header>
   )
 }
 

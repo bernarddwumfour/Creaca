@@ -1,5 +1,5 @@
-import { Lang } from '@/lib/dictionariy/dictionary';
-import { getDictionary } from '@/lib/dictionariy/get-dictionary';
+import { Lang } from '@/lib/dictionary/dictionary';
+import { getDictionary } from '@/lib/dictionary/get-dictionary';
 import React from 'react'
 import Header from '../components/Header';
 import Footer from '../components/Footer';
@@ -44,10 +44,10 @@ async function page({ params }: PageProps) {
                     <div className="w-full container px-4 md:px-5 lg:px-5 mx-auto">
                         <div className="w-full justify-between items-center gap-12 grid lg:grid-cols-2 grid-cols-1">
                             <div className="w-full justify-center items-start gap-6 lg:order-first order-last relative">
-                                <div className="pt-24 lg:justify-center sm:justify-end w-[95%] h-[700px] justify-start items-start gap-2.5 flex relative">
+                                <div className="pt-24 lg:justify-center sm:justify-end w-[95%] h-[calc(450px+5vw)] justify-start items-start gap-2.5 flex relative">
                                     <Image
                                         fill
-                                        className="rounded-xl object-cover scale-90"
+                                        className="rounded-xl object-contain scale-90"
                                         src="/about_image.png"
                                         alt="Students from diverse backgrounds"
                                     />
@@ -130,13 +130,13 @@ async function page({ params }: PageProps) {
                 </section>
 
                 {/* Founders Section */}
-                <section className="py-24 relative bg-primary/[0.03] overflow-hidden">
+                <section className="py-24 relative bg-primary/[0.03] px-6 overflow-hidden">
                     <div className="space-y-4 container mx-auto pb-4">
                         <h3 className="text-4xl text-start font-bold max-w-[800px] leading-12 text-zinc-900">
                             Meet Our <span className="text-primary">Founders</span>
                         </h3>
                         <p className="text-start text-sm text-gray-500 max-w-[700px]">
-                            The two educators behind the vision of Cresca, dedicated to bridging the gap in global communication.
+                            The two educators behind the vision of Qubit, dedicated to bridging the gap in global communication.
                         </p>
                     </div>
 

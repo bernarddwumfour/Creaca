@@ -1,6 +1,8 @@
 import { commonDict } from './common';
 import { homeDict } from './home';
 import { aboutDict } from './about'; // Create this when ready
+import { contactDict } from './contact';
+import { coursesDict } from './courses';
 
 export const dict = {
   en: {
@@ -8,6 +10,10 @@ export const dict = {
     pages: {
       home: homeDict.en,
       about: aboutDict.en,
+      contact: contactDict.en,
+      courses: coursesDict.en,
+
+
     }
   },
   fr: {
@@ -15,6 +21,8 @@ export const dict = {
     pages: {
       home: homeDict.fr,
       about: aboutDict.fr,
+      contact: contactDict.fr,
+      courses: coursesDict.fr,
     }
   },
   es: {
@@ -22,6 +30,8 @@ export const dict = {
     pages: {
       home: homeDict.es,
       about: aboutDict.es,
+      contact: contactDict.es,
+      courses: coursesDict.es,
     }
   }
 };
