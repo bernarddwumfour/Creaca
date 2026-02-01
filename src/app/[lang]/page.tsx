@@ -110,6 +110,14 @@ function About({ t }: { t: any }) {
     <section className="py-12 md:py-24 relative bg-primary/3">
       <div className="w-full container px-4 mx-auto">
         <div className="w-full justify-between items-center gap-8 md:gap-12 grid lg:grid-cols-2 grid-cols-1">
+
+          {/* Image second on mobile */}
+          <div className="w-full flex justify-center items-start relative ">
+            <div className="relative w-full aspect-video md:h-[450px] scale-120">
+              <Image fill className="rounded-xl object-contain scale-90" src="/about_image.png" alt="Students" />
+            </div>
+          </div>
+
           {/* Order adjustment: Text first on mobile */}
           <div className="w-full flex-col justify-center lg:items-start items-center gap-6 md:gap-10 inline-flex">
             <div className="w-full flex-col justify-center items-center lg:items-start gap-4 flex">
@@ -149,12 +157,7 @@ function About({ t }: { t: any }) {
               Join Our Global Village <ArrowRightCircle className="ml-2" />
             </Button>
           </div>
-          {/* Image second on mobile */}
-          <div className="w-full flex justify-center items-start relative order-last">
-            <div className="relative w-full aspect-video md:h-[450px]">
-              <Image fill className="rounded-xl object-contain scale-90" src="/about_image.png" alt="Students" />
-            </div>
-          </div>
+          
         </div>
       </div>
     </section>
