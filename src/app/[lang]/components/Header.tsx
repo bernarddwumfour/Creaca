@@ -55,7 +55,6 @@ const Header = ({ lang, t }: HeaderProps) => {
       }`}
     >
       <div className="container mx-auto flex justify-between items-center p-5 py-3">
-        {/* LOGO */}
         <Link 
           className="text-lg font-black tracking-tighter z-[1001]" 
           href={`/${lang}`}
@@ -81,12 +80,12 @@ const Header = ({ lang, t }: HeaderProps) => {
         </nav>
 
         {/* ACTIONS */}
-        <div className="flex items-center gap-3 z-[1001]">
+        <div className="flex items-center gap-2 z-[1001]">
           <div className="block">
             <LanguageSwitcher currentLang={lang} />
           </div>
 
-          <Button asChild size="sm" className="flex rounded-full font-bold px-5 bg-black text-white hover:bg-primary transition-all text-xs tracking-wide shadow-lg shadow-black/5">
+          <Button asChild size="sm" className="flex rounded-full font-bold px-3 bg-black text-white hover:bg-primary transition-all text-xs tracking-wide shadow-lg shadow-black/5">
             <Link href={`/${lang}/login`}>{t.trial}</Link>
           </Button>
 
@@ -103,7 +102,7 @@ const Header = ({ lang, t }: HeaderProps) => {
 
       {/* FULL SCREEN MOBILE MENU */}
       <div className={`
-        fixed inset-0 bg-white z-[999] transition-all duration-500 ease-in-out md:hidden
+        fixed inset-0 bg-white z-[999] transition-all duration-200 ease-in-out md:hidden
         ${mobileMenuOpen ? 'opacity-100 visible' : 'opacity-0 invisible pointer-events-none'}
       `}>
         <nav className="flex flex-col justify-center items-center h-full w-full px-8">
@@ -111,7 +110,7 @@ const Header = ({ lang, t }: HeaderProps) => {
             {navItems.map((item, index) => (
               <li 
                 key={item.label} 
-                className={`transition-all duration-500 ${mobileMenuOpen ? 'translate-y-0 opacity-100' : 'translate-y-4 opacity-0'}`}
+                className={`transition-all duration-200 ${mobileMenuOpen ? 'translate-y-0 opacity-100' : 'translate-y-4 opacity-0'}`}
                 style={{ transitionDelay: mobileMenuOpen ? `${index * 50}ms` : '0ms' }}
                 onClick={() => setMobileMenuOpen(false)}
               >
