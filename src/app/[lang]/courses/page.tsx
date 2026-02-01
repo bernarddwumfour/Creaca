@@ -15,7 +15,7 @@ type PageProps = {
 
 export default async function page({ params }: PageProps) {
     const { lang } = await params;
-    const dictionary = await getDictionary(lang);
+    const dictionary =  getDictionary(lang);
     const t = dictionary.pages.courses; 
 
     return (

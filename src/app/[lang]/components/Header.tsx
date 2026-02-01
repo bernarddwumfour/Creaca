@@ -15,6 +15,7 @@ interface HeaderProps {
     courses: string;
     contact: string;
     trial: string;
+    faqs : string
   }
 }
 
@@ -42,6 +43,8 @@ const Header = ({ lang, t }: HeaderProps) => {
     { label: t.about, href: `/${lang}/about` },
     { label: t.courses, href: `/${lang}/courses` },
     { label: t.contact, href: `/${lang}/contact` },
+    { label: t.faqs, href: `/${lang}/FAQs` },
+
   ]
 
   return (
