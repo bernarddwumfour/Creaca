@@ -1,164 +1,193 @@
 export const homeDict = {
   en: {
     hero: {
-      title: "Master Math with AI,",
-      subtitle: "Personalized Logic in Any Language",
-      desc: "Experience the future of STEM education. Our adaptive AI tutor understands your unique learning style and explains complex mathematical concepts in your native tongue—instantly.",
-    },
-    stats: {
-      active: "Active Learners",
-      languages: "Supported Languages",
-      tutors: "AI Learning Models",
-      boost: "Accuracy Improvement",
+      title: "Your English should never",
+      subtitle: "be the ceiling of your potential.",
+      desc: "Great ideas require a powerful voice. We help you speak with the same confidence and authority in English as you do in your own language.",
+      stats: {
+        active: "Learners",
+        languages: "Markets",
+        tutors: "Coaches",
+        boost: "Confidence",
+      },
     },
     aboutSection: {
-      title: "The Universal Language, Powered by AI",
-      desc: "Mathematics doesn't change, but how you learn it should. Our system analyzes your mistakes in real-time to provide the exact hint you need to move forward.",
-      stats: ["Neural Networks", "Adaptive Paths", "Zero Latency"],
+      title: "Why Choose",
+      titleAccent: "Cresca.",
+      desc: "We don't just teach words. We bridge the gap between knowing English and owning the conversation, ensuring your identity isn't lost in translation.",
+      reasons: [
+        { 
+          title: "Clear Thinking", 
+          desc: "We help you organize your thoughts so you can explain complex ideas simply and clearly." 
+        },
+        { 
+          title: "Speak with Power", 
+          desc: "Learn how to lead meetings and talk to clients without feeling nervous or stuck." 
+        },
+        { 
+          title: "Real Context", 
+          desc: "We use the actual situations you face at work every day, not boring textbooks." 
+        },
+        { 
+          title: "Fast Results", 
+          desc: "Our strategic approach is designed for busy professionals who need to see progress immediately." 
+        }
+      ],
     },
     tutorials: {
-      title: "How It Works",
-      subtitle: "Four steps to mathematical mastery through artificial intelligence.",
+      title: "How it works",
+      subtitle: "Four simple steps to speaking",
+      subtitleAccent: "better.",
+      phaseLabel: "Step",
       steps: [
-        { title: "Scan", desc: "Upload a problem or select a topic to begin your session." },
-        { title: "Analyze", desc: "Our AI identifies the underlying theorem and your current knowledge level." },
-        { title: "Interprete", desc: "Receive a step-by-step breakdown tailored to your language and logic." },
-        { title: "Verify", desc: "Test your skills with AI-generated challenges to ensure total mastery." },
+        { title: "The Check-up", desc: "We listen to how you speak now and find the quickest way to help you improve." },
+        { title: "Your Plan", desc: "We create a custom path based on your industry and your specific goals." },
+        { title: "Live Practice", desc: "Talk with expert coaches in real-life scenarios to build your confidence fast." },
+        { title: "Real Success", desc: "Feel the difference in your next meeting as you speak clearly and get results." },
       ],
     },
     pricing: {
-      title: "Scalable Learning for Every Mind",
-      subtitle: "AI-Driven Pricing",
-      desc: "High-quality mathematics education at a fraction of the cost of traditional tutoring.",
-      stats: ["Instant Solving", "Infinite Practice"],
-      button: "View AI Capabilities",
+      title: "Invest in your",
+      titleAccent: "future.",
+      subtitle: "Our Plans",
+      desc: "High-quality coaching designed to fit into your busy work schedule.",
+      stats: ["Private Lessons", "Learning Tools"],
+      button: "See our plans",
       plans: [
-        { 
-          title: 'Free Tier', 
-          price: 0, 
-          features: ['5 AI Solutions / Day', 'Basic Algebra Support', 'Community Forum', 'Mobile App'], 
-          buttonText: 'Start Solving' 
-        },
-        { 
-          title: 'Student Pro', 
-          price: 15, 
-          features: ['Unlimited Solutions', 'Step-by-Step Logic', 'Geometry Visualizer', 'Exam Prep Mode', 'PDF Exports'], 
-          buttonText: 'Go Pro' 
-        },
-        { 
-          title: 'Researcher', 
-          price: 45, 
-          mostPopular: true, 
-          features: ['Advanced Calculus Lab', 'Symbolic Computation', 'LaTeX Integration', 'API Access', 'Priority Processing'], 
-          buttonText: 'Unlock Full Power' 
-        },
+        { title: 'Free Trial', price: 0, features: ['Zero commitment start.', '15-min First Lesson', 'Your Learning Map', 'Skill Assessment', 'Community Access'], buttonText: 'Try for Free' },
+        { title: 'Career Pro', price: 15, features: ['For active professionals.', 'Weekly Private Lessons', 'Business Focus', 'Interview Practice', 'Writing Help', 'All Materials'], buttonText: 'Get Started' },
+        { title: 'Executive', price: 45, mostPopular: true, features: ['Rapid growth immersion.', 'Daily Intensive Coaching', 'Public Speaking', 'Meeting Practice', 'Priority Booking', 'Direct Support'], buttonText: 'Go Executive' },
       ]
     },
     testimonials: {
-      title: "Trusted by Modern Learners",
-      subtitle: "See how students are using our AI to conquer the hardest equations.",
+      title: "Success Stories",
+      subtitle: "Results from",
+      subtitleAccent: "our students.",
       items: [
-        { name: "User A", role: "Engineering Student", content: "It's like having a math genius in my pocket. The AI explains things better than my textbook." },
-        { name: "User B", role: "Self-Learner", content: "The language switching is seamless. I can learn in Spanish when the concepts get tough." },
-        { name: "User C", role: "Data Analyst", content: "The statistical modeling hints are incredibly accurate. Saved me hours of research." },
+        { id: "pl-1", name: "Aleksandra K.", role: "Manager", flag: "🇵🇱", content: "Seni is so friendly! I stopped worrying about my mistakes and started enjoying my work calls." },
+        { id: "ro-1", name: "Andrei M.", role: "Tech Lead", flag: "🇷🇴", content: "The best investment I've made. I finally feel like myself when I lead meetings in English." },
+        { id: "es-1", name: "Elena G.", role: "Director", flag: "🇪🇸", content: "They don't just teach English; they show you how to express your ideas without stress." },
+        { id: "kr-1", name: "Ji-hoon L.", role: "Analyst", flag: "🇰🇷", content: "The feedback is so helpful. I went from being quiet to giving great presentations in weeks." }
       ],
     },
   },
   fr: {
     hero: {
-      title: "Maîtrisez les Maths par l'IA,",
-      subtitle: "Une logique personnalisée dans toutes les langues",
-      desc: "Découvrez l'avenir de l'éducation STEM. Notre tuteur IA adaptatif comprend votre style d'apprentissage et explique les concepts complexes instantanément.",
-    },
-    stats: {
-      active: "Apprenants Actifs",
-      languages: "Langues Supportées",
-      tutors: "Modèles d'Apprentissage IA",
-      boost: "Amélioration de la Précision",
+      title: "Votre anglais ne devrait jamais",
+      subtitle: "être le plafond de votre potentiel.",
+      desc: "Les grandes idées exigent une voix puissante. Nous vous aidons à parler avec la même assurance en anglais que dans votre propre langue.",
+      stats: {
+        active: "Élèves",
+        languages: "Marchés",
+        tutors: "Coachs",
+        boost: "Confiance",
+      },
     },
     aboutSection: {
-      title: "Le Langage Universel, Propulsé par l'IA",
-      desc: "Les mathématiques ne changent pas, mais votre façon de les apprendre le devrait. Notre système analyse vos erreurs en temps réel.",
-      stats: ["Réseaux Neuronaux", "Parcours Adaptatifs", "Latence Zéro"],
+      title: "Pourquoi choisir",
+      titleAccent: "Cresca.",
+      desc: "Nous ne nous contentons pas d'enseigner des mots. Nous comblons le fossé entre la maîtrise de l'anglais et la maîtrise de la conversation.",
+      reasons: [
+        { title: "Pensée Claire", desc: "Nous vous aidons à organiser vos pensées pour expliquer des idées complexes simplement." },
+        { title: "Parlez avec Force", desc: "Apprenez à diriger des réunions sans vous sentir nerveux ou bloqué." },
+        { title: "Contexte Réel", desc: "Nous utilisons les situations réelles de votre travail, pas des manuels ennuyeux." },
+        { title: "Résultats Rapides", desc: "Une approche conçue pour les professionnels qui ont besoin de progrès immédiats." }
+      ],
     },
     tutorials: {
       title: "Comment ça marche",
-      subtitle: "Quatre étapes vers la maîtrise mathématique via l'intelligence artificielle.",
+      subtitle: "Quatre étapes simples pour mieux",
+      subtitleAccent: "parler.",
+      phaseLabel: "Étape",
       steps: [
-        { title: "Scanner", desc: "Téléchargez un problème ou choisissez un sujet pour commencer." },
-        { title: "Analyser", desc: "L'IA identifie le théorème et votre niveau actuel de connaissances." },
-        { title: "Interpréter", desc: "Recevez une explication étape par étape adaptée à votre langue." },
-        { title: "Vérifier", desc: "Testez vos compétences avec des défis générés par l'IA." },
+        { title: "Le Bilan", desc: "Nous écoutons comment vous parlez pour trouver le moyen le plus rapide de progresser." },
+        { title: "Votre Plan", desc: "Nous créons un parcours sur mesure basé sur votre métier et vos objectifs." },
+        { title: "Pratique en Direct", desc: "Parlez avec des coachs experts pour gagner en confiance rapidement." },
+        { title: "Vrai Succès", desc: "Ressentez la différence lors de votre prochaine réunion et obtenez des résultats." },
       ],
     },
     pricing: {
-      title: "Un Apprentissage Évolutif",
-      subtitle: "Tarification IA",
-      desc: "Une éducation mathématique de haute qualité à une fraction du prix d'un tutorat traditionnel.",
-      stats: ["Résolution Instantanée", "Pratique Infinie"],
-      button: "Voir les capacités de l'IA",
+      title: "Investissez dans votre",
+      titleAccent: "futur.",
+      subtitle: "Nos Forfaits",
+      desc: "Un coaching de haute qualité conçu pour s'adapter à votre emploi du temps chargé.",
+      stats: ["Cours Privés", "Outils"],
+      button: "Voir les plans",
       plans: [
-        { title: 'Niveau Gratuit', price: 0, buttonText: 'Commencer', features: ['5 Solutions IA / Jour', 'Support Algèbre de base', 'Forum Communautaire', 'App Mobile'] },
-        { title: 'Étudiant Pro', price: 15, buttonText: 'Passer au Pro', features: ['Solutions illimitées', 'Logique étape par étape', 'Visualiseur de géométrie', 'Mode prépa examen', 'Exports PDF'] },
-        { title: 'Chercheur', price: 45, mostPopular: true, buttonText: 'Débloquer la puissance', features: ['Calcul avancé', 'Calcul symbolique', 'Intégration LaTeX', 'Accès API', 'Traitement Prioritaire'] },
+        { title: 'Essai Gratuit', price: 0, buttonText: 'Essayer Gratuitement', features: ['Démarrez sans engagement.', 'Premier Cours 15min', 'Votre Carte de Route', 'Évaluation', 'Accès Communauté'] },
+        { title: 'Career Pro', price: 15, buttonText: 'Commencer', features: ['Pour les professionnels actifs.', 'Cours Privés Hebdos', 'Focus Business', 'Pratique Entretien', 'Aide Rédaction', 'Matériel Inclus'] },
+        { title: 'Executive', price: 45, mostPopular: true, buttonText: 'Devenir Executive', features: ['Immersion pour progrès rapides.', 'Coaching Intensif Quotidien', 'Prise de Parole', 'Pratique Réunion', 'Booking Prioritaire', 'Support Direct'] },
       ]
     },
     testimonials: {
-      title: "Approuvé par les Apprenants Modernes",
-      subtitle: "Découvrez comment l'IA aide à conquérir les équations les plus dures.",
+      title: "Témoignages",
+      subtitle: "Le succès de",
+      subtitleAccent: "nos membres.",
       items: [
-        { name: "Utilisateur A", role: "Étudiant Ingénieur", content: "C'est comme avoir un génie des maths dans ma poche." },
-        { name: "Utilisateur B", role: "Autodidacte", content: "Le changement de langue est fluide. J'apprends en français quand c'est dur." },
-        { name: "Utilisateur C", role: "Analyste de Données", content: "Les indices de modélisation statistique sont incroyablement précis." },
+        { id: "pl-1", name: "Aleksandra K.", role: "Manager", flag: "🇵🇱", content: "Seni est si amicale ! J'ai arrêté de m'inquiéter de mes erreurs et j'apprécie mes appels." },
+        { id: "ro-1", name: "Andrei M.", role: "Tech Lead", flag: "🇷🇴", content: "Le meilleur investissement. Je me sens enfin moi-même lors de mes réunions en anglais." },
+        { id: "es-1", name: "Elena G.", role: "Directrice", flag: "🇪🇸", content: "Ils ne vous apprennent pas seulement l'anglais, ils vous montrent comment exprimer vos idées." },
+        { id: "kr-1", name: "Ji-hoon L.", role: "Analyste", flag: "🇰🇷", content: "Les retours sont très utiles. Je suis passé de timide à d'excellentes présentations." }
       ],
     },
   },
   es: {
     hero: {
-      title: "Domina las Mates con IA,",
-      subtitle: "Lógica personalizada en cualquier idioma",
-      desc: "Experimenta el futuro de la educación STEM. Nuestro tutor de IA adaptativo entiende tu estilo de aprendizaje y explica conceptos complejos al instante.",
-    },
-    stats: {
-      active: "Estudiantes Activos",
-      languages: "Idiomas Soportados",
-      tutors: "Modelos de IA",
-      boost: "Mejora de Precisión",
+      title: "Tu inglés nunca debería",
+      subtitle: "ser el techo de tu potencial.",
+      desc: "Las grandes ideas requieren una voz poderosa. Te ayudamos a hablar con la misma confianza en inglés que en tu propio idioma.",
+      stats: {
+        active: "Alumnos",
+        languages: "Mercados",
+        tutors: "Coaches",
+        boost: "Confianza",
+      },
     },
     aboutSection: {
-      title: "El Lenguaje Universal, Impulsado por IA",
-      desc: "Las matemáticas no cambian, pero tu forma de aprenderlas debería. Nuestro sistema analiza tus errores en tiempo real.",
-      stats: ["Redes Neuronales", "Rutas Adaptativas", "Latencia Cero"],
+      title: "Por qué elegir",
+      titleAccent: "Cresca.",
+      desc: "No solo enseñamos palabras. Cerramos la brecha entre saber inglés y dominar la conversación.",
+      reasons: [
+        { title: "Pensamiento Claro", desc: "Te ayudamos a organizar tus ideas para explicar conceptos difíciles de forma sencilla." },
+        { title: "Habla con Poder", desc: "Aprende a liderar reuniones y hablar con clientes sin sentirte nervioso o bloqueado." },
+        { title: "Contexto Real", desc: "Usamos situaciones reales de tu día a día, nada de libros de texto aburridos." },
+        { title: "Resultados Rápidos", desc: "Un enfoque diseñado para profesionales que necesitan ver progresos inmediatos." }
+      ],
     },
     tutorials: {
-      title: "Cómo Funciona",
-      subtitle: "Cuatro pasos para la maestría matemática mediante inteligencia artificial.",
+      title: "Cómo funciona",
+      subtitle: "Cuatro pasos simples para hablar",
+      subtitleAccent: "mejor.",
+      phaseLabel: "Paso",
       steps: [
-        { title: "Escanear", desc: "Sube un problema o selecciona un tema para comenzar." },
-        { title: "Analizar", desc: "La IA identifica el teorema subyacente y tu nivel de conocimiento." },
-        { title: "Interpretar", desc: "Recibe un desglose paso a paso adaptado a tu idioma." },
-        { title: "Verificar", desc: "Prueba tus habilidades con desafíos generados por IA." },
+        { title: "El Chequeo", desc: "Escuchamos cómo hablas ahora para encontrar la forma más rápida de mejorar." },
+        { title: "Tu Plan", desc: "Creamos una ruta personalizada basada en tu carrera y tus metas." },
+        { title: "Práctica en Vivo", desc: "Habla con coaches expertos en situaciones reales para ganar confianza rápido." },
+        { title: "Éxito Real", desc: "Siente la diferencia en tu próxima reunión al hablar con claridad y resultados." },
       ],
     },
     pricing: {
-      title: "Aprendizaje Escalable",
-      subtitle: "Precios impulsados por IA",
-      desc: "Educación matemática de alta calidad a una fracción del costo del tutor tradicional.",
-      stats: ["Resolución Instante", "Práctica Infinita"],
-      button: "Ver capacidades de IA",
+      title: "Invierte en tu",
+      titleAccent: "futuro.",
+      subtitle: "Nuestros Planes",
+      desc: "Coaching de alta calidad diseñado para encajar en tu apretada agenda laboral.",
+      stats: ["Clases Privadas", "Herramientas"],
+      button: "Ver planes",
       plans: [
-        { title: 'Nivel Gratis', price: 0, buttonText: 'Empezar', features: ['5 Soluciones IA / Día', 'Álgebra Básica', 'Foro Comunitario', 'App Móvil'] },
-        { title: 'Estudiante Pro', price: 15, buttonText: 'Ser Pro', features: ['Soluciones Ilimitadas', 'Lógica paso a paso', 'Visualizador de Geometría', 'Modo Examen', 'Exportar PDF'] },
-        { title: 'Investigador', price: 45, mostPopular: true, buttonText: 'Desbloquear Poder', features: ['Cálculo Avanzado', 'Cómputo Simbólico', 'Integración LaTeX', 'Acceso API', 'Procesamiento Prioritario'] },
+        { title: 'Prueba Gratis', price: 0, buttonText: 'Probar Gratis', features: ['Empieza sin compromisos.', 'Primera Clase 15min', 'Tu Mapa de Aprendizaje', 'Evaluación', 'Acceso Comunidad'] },
+        { title: 'Career Pro', price: 15, buttonText: 'Empezar', features: ['Para profesionales activos.', 'Clases Privadas Semanales', 'Enfoque Negocios', 'Práctica Entrevistas', 'Ayuda con Escritura', 'Material Incluido'] },
+        { title: 'Executive', price: 45, mostPopular: true, buttonText: 'Ir a Executive', features: ['Inmersión para progreso rápido.', 'Coaching Intensivo Diario', 'Hablar en Público', 'Práctica de Reuniones', 'Reserva Prioritaria', 'Soporte Directo'] },
       ]
     },
     testimonials: {
-      title: "Confiado por Estudiantes Modernos",
-      subtitle: "Mira cómo la IA ayuda a conquistar las ecuaciones más difíciles.",
+      title: "Testimonios",
+      subtitle: "Resultados de",
+      subtitleAccent: "nuestros alumnos.",
       items: [
-        { name: "Usuario A", role: "Estudiante de Ingeniería", content: "Es como tener un genio de las mates en mi bolsillo." },
-        { name: "Usuario B", role: "Autodidacta", content: "El cambio de idioma es perfecto. Aprendo en español cuando es difícil." },
-        { name: "Usuario C", role: "Analista de Datos", content: "Las pistas de modelado estadístico son increíblemente precisas." },
+        { id: "pl-1", name: "Aleksandra K.", role: "Gerente", flag: "🇵🇱", content: "¡Seni es muy amable! Dejé de preocuparme por mis errores y empecé a disfrutar mis llamadas." },
+        { id: "ro-1", name: "Andrei M.", role: "Tech Lead", flag: "🇷🇴", content: "La mejor inversión. Finalmente me siento yo mismo cuando lidero reuniones en inglés." },
+        { id: "es-1", name: "Elena G.", role: "Directora", flag: "🇪🇸", content: "No solo enseñan inglés, te muestran cómo expresar tus ideas sin estrés." },
+        { id: "kr-1", name: "Ji-hoon L.", role: "Analista", flag: "🇰🇷", content: "Los comentarios ayudan mucho. Pasé de ser callado a dar grandes presentaciones." }
       ],
     },
   }

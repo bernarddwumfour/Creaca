@@ -37,11 +37,11 @@ export default function LanguageSwitcher({ currentLang }: { currentLang: string 
           size="sm" 
           className="h-9 px-3 gap-2 rounded-full hover:bg-zinc-100 transition-colors group"
         >
-          <Globe className="w-4 h-4 text-gray-600 group-hover:text-primary transition-colors" />
-          <span className="text-xs font-bold uppercase tracking-widest text-gray-600">
+          <Globe className="w-4 h-4 text-gray-600 dark:text-gray-400 group-hover:text-primary dark:group-hover:text-primary transition-colors" />
+          <span className="text-xs font-bold uppercase tracking-widest text-gray-600 dark:text-gray-400">
             {currentLang}
           </span>
-          <ChevronDown className="w-3 h-3 text-gray-600 group-hover:text-zinc-600 transition-all" />
+          <ChevronDown className="w-3 h-3 text-gray-600 dark:text-gray-400 group-hover:text-zinc-600 transition-all" />
         </Button>
       </DropdownMenuTrigger>
       

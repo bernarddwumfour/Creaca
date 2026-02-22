@@ -10,13 +10,14 @@ interface Plan {
   mostPopular?: boolean;
 }
 
-export default function PricingCarousel({ data }: { data: Plan[] }) {
+// Changed prop name to 'plans' to match what we passed in the Home page (t.plans)
+export default function PricingCarousel({ plans }: { plans: Plan[] }) {
   const scrollRef = useRef<HTMLDivElement>(null);
 
   const scroll = (direction: 'left' | 'right') => {
     if (scrollRef.current) {
       const { scrollLeft, clientWidth } = scrollRef.current;
-      const moveDistance = clientWidth * 0.8; // Move roughly one card at a time
+      const moveDistance = clientWidth * 0.8; 
       const scrollTo = direction === 'left' ? scrollLeft - moveDistance : scrollLeft + moveDistance;
       scrollRef.current.scrollTo({ left: scrollTo, behavior: 'smooth' });
     }
@@ -27,16 +28,16 @@ export default function PricingCarousel({ data }: { data: Plan[] }) {
       {/* Scroll Container */}
       <div 
         ref={scrollRef}
-        className="flex gap-6 overflow-x-auto snap-x snap-mandatory scrollbar-hide pb-12 pt-4  px-4 -mx-4"
+        className="flex gap-6 overflow-x-auto snap-x snap-mandatory scrollbar-hide pb-12 pt-4 px-4 -mx-4"
         style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
       >
-        {data.map((plan, index) => (
+        {plans.map((plan, index) => (
           <div
             key={index}
-            className={`snap-center shrink-0 scale-95 p-8 rounded-3xl w-[290px] md:w-[350px]  transition-all duration-300 hover:-translate-y-2 flex flex-col relative ${
+            className={`snap-center shrink-0 scale-95 p-8 rounded-3xl w-[290px] md:w-[350px] transition-all duration-300 hover:-translate-y-2 flex flex-col relative ${
               plan.mostPopular
-                ? 'bg-gradient-to-b from-primary to-[#c47b2c] text-white ring-4 ring-primary/20 scale-100 z-10 '
-                : 'bg-card border border-border text-card-foreground'
+                ? 'bg-gradient-to-b from-primary to-[#c47b2c] text-white ring-4 ring-primary/20 scale-100 z-10'
+                : 'bg-card border border-border text-card-foreground dark:bg-zinc-900/50'
             }`}
           >
             {plan.mostPopular && (
@@ -49,7 +50,7 @@ export default function PricingCarousel({ data }: { data: Plan[] }) {
             <p className="text-sm font-bold opacity-80 uppercase tracking-widest">{plan.title}</p>
             <div className="flex items-baseline gap-1 mt-4">
               <span className="text-4xl font-black">${plan.price}</span>
-              <span className="text-sm opacity-70">/month</span>
+              <span className="text-sm opacity-70">/session</span>
             </div>
 
             <div className="mt-8 space-y-4 flex-grow">
@@ -76,14 +77,14 @@ export default function PricingCarousel({ data }: { data: Plan[] }) {
       <div className="flex gap-4 mt-2 lg:justify-start justify-center">
         <button 
           onClick={() => scroll('left')}
-          className="p-3 rounded-full border border-border bg-card text-foreground hover:bg-primary hover:text-white transition-all shadow-sm active:scale-90"
+          className="p-3 rounded-full border border-border bg-card dark:bg-zinc-900 text-foreground hover:bg-primary hover:text-white transition-all shadow-sm active:scale-90"
           aria-label="Previous plans"
         >
           <ChevronLeft size={24} />
         </button>
         <button 
           onClick={() => scroll('right')}
-          className="p-3 rounded-full border border-border bg-card text-foreground hover:bg-primary hover:text-white transition-all shadow-sm active:scale-90"
+          className="p-3 rounded-full border border-border bg-card dark:bg-zinc-900 text-foreground hover:bg-primary hover:text-white transition-all shadow-sm active:scale-90"
           aria-label="Next plans"
         >
           <ChevronRight size={24} />

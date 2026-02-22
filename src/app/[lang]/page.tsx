@@ -4,9 +4,11 @@ import Footer from "./components/Footer";
 import { getDictionary } from "@/lib/dictionary/get-dictionary";
 import { Button } from "@/components/ui/button";
 import Image from "next/image";
-import { ArrowRightCircle } from "lucide-react";
+import { ArrowRightCircle, Check, Clock } from "lucide-react";
 import CountUp from "./components/CountUp";
 import PricingCarousel from "./components/PricingCarousel";
+import HowItWorks from "./HowItWorks";
+import Testimonials from "./Testimonials";
 
 type PageProps = {
   params: {
@@ -23,10 +25,10 @@ export default async function Home({ params }: PageProps) {
     <div className="overflow-x-hidden">
       <Header lang={lang} t={t.nav} />
       <Hero t={home.hero} nav={t.nav} />
-      <Stats t={home.stats} />
-      <About t={home.aboutSection} />
-      <Tutorials t={home.tutorials} />
-      <Pricing t={home.pricing} />
+      {/* We pass both aboutSection and tutorials to keep WhyChooseUs dynamic */}
+      <AboutCresca t={home.aboutSection} aboutSection={home.aboutSection} />
+      <HowItWorks t={home.tutorials} />
+      <PricingSection t={home.pricing} />
       <Testimonials t={home.testimonials} />
       <Footer lang={lang} t={t.footer} />
     </div>
@@ -35,61 +37,74 @@ export default async function Home({ params }: PageProps) {
 
 function Hero({ t, nav }: { t: any, nav: any }) {
   return (
-    <div className="bg-gradient-to-r from-white from-50% to-primary to-50%">
-      <div className="flex flex-col-reverse md:flex-row lg:container mx-auto overflow-hidden">
+    <div className="relative overflow-hidden bg-white dark:bg-[#18181b]">
+      <div className="absolute top-[-15%] left-[-10%] w-[70%] h-[60%] bg-primary/20 dark:bg-primary/10 rounded-full blur-[120px] pointer-events-none z-0 animate-[pulse_8s_ease-in-out_infinite]" />
+      <div className="absolute bottom-[-35%] right-[-10%] w-[65%] h-[55%] bg-orange-500/25 dark:bg-orange-600/10 rounded-full blur-[130px] pointer-events-none z-0 animate-[pulse_10s_ease-in-out_infinite]" />
 
-        <div className="bg-white w-full md:w-3/5 flex items-center">
-          {/* Reduced padding for mobile (py-12) vs original (py-64) */}
-          <div className="p-6 md:p-12 py-12 md:py-64">
-            {/* Font reduced from 2.5rem to 3xl on mobile */}
+      <div className="flex flex-col-reverse md:flex-row lg:container mx-auto relative z-10">
+        <div className="w-full md:w-3/5 flex items-center">
+          <div className="p-6 md:p-12 py-12 md:py-64 relative z-10 md:w-11/12">
             <h1 className="text-3xl md:text-[2.5rem] leading-tight md:leading-18 font-extrabold">
-              <span className="text-primary">{t.title}</span> {t.subtitle}
+              <span className="text-orange-600">{t.title}</span> {t.subtitle}
             </h1>
             <p className="py-4 md:py-6 max-w-[700px] text-gray-500 text-sm md:text-base">
               {t.desc}
             </p>
             <div className="flex flex-col sm:flex-row gap-4 md:gap-6">
-              <Button className="w-full sm:w-auto">{nav.trial}</Button>
-              <Button variant={"outline"} className="w-full sm:w-auto">{nav.curriculum}</Button>
+              <Button className="">{nav.trial}</Button>
+              <Button variant="outline" className="w-full sm:w-auto font-bold">
+                {nav.curriculum}
+              </Button>
             </div>
           </div>
         </div>
-        {/* Mobile image container height control */}
-        <div className="bg-primary w-full md:w-2/5 relative z-[2] min-h-[400px] md:min-h-full">
-          <div className="w-full h-full md:h-4/6 absolute bottom-0 md:bottom-16 left-1/2 md:-left-1/5 -translate-x-1/2 md:translate-x-0">
-            <Image
-              src="/home2.png"
-              fill
-              className="absolute scale-100 md:scale-130 transform-origin-bottom p-0 w-full object-contain object-bottom"
-              alt="Students"
-            />
+
+        <div className="w-full md:w-2/5 relative z-[2] min-h-[400px] md:min-h-full">
+          <div className="w-full h-full md:h-4/6 absolute bottom-0 md:bottom-16 left-1/2 md:-left-1/5 -translate-x-1/2 md:translate-x-0 flex items-center justify-center">
+            <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+              <div className="absolute w-[130%] aspect-square border border-dashed border-primary/20 rounded-full animate-[spin_30s_linear_infinite]" />
+              <div className="absolute w-[100%] aspect-square border border-orange-500/10 rounded-full animate-[spin_20s_linear_infinite_reverse]" />
+            </div>
+
+            {[
+              { src: '/China.png', delay: '-4s', size: 'w-14 h-14', orbit: 'w-[130%]' },
+              { src: '/Brazil.png', delay: '-11s', size: 'w-16 h-16', orbit: 'w-[130%]' },
+              { src: '/Mexico.png', delay: '-17s', size: 'w-12 h-12', orbit: 'w-[130%]' },
+              { src: '/Germany.png', delay: '-0s', size: 'w-16 h-16', orbit: 'w-[100%]' },
+              { src: '/Israel.png', delay: '-7s', size: 'w-16 h-16', orbit: 'w-[100%]' },
+              { src: '/UAE.png', delay: '-14s', size: 'w-16 h-16', orbit: 'w-[100%]' },
+            ].map((flag, i) => (
+              <div
+                key={i}
+                style={{ animationDelay: flag.delay }}
+                className={`absolute aspect-square rounded-full animate-[spin_20s_linear_infinite] pointer-events-none ${flag.orbit}`}
+              >
+                <div style={{ animationDelay: flag.delay }} className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/2">
+                  <div className={`relative rounded-full border-2 border-white dark:border-zinc-800 overflow-hidden shadow-lg animate-[spin_20s_linear_infinite_reverse] ${flag.size}`}>
+                    <Image src={flag.src} fill className="object-cover" alt="flag" />
+                  </div>
+                </div>
+              </div>
+            ))}
+
+            <div className="relative z-10 w-full h-full">
+              <Image src="/home3.png" fill className="scale-100 md:scale-130 transform-origin-bottom p-0 w-full object-contain object-bottom" alt="Students" priority />
+            </div>
           </div>
-        </div>
-
-        <div className="bg-primary h-24 md:hidden">
-
-        </div>
+          </div>
       </div>
-    </div>
-  )
-}
 
-function Stats({ t }: { t: any }) {
-  return (
-    <section className="bg-slate-100/30">
       <div className="container mx-auto py-2 md:py-6">
-        {/* Reduced gap and vertical padding for mobile */}
         <div className="grid grid-cols-2 md:grid-cols-4 py-6 md:py-10 gap-2 md:gap-6 justify-center mx-auto">
           {[
-            { label: t.active, value: 3000 },
-            { label: t.languages, value: 15 },
-            { label: t.tutors, value: 850 },
-            { label: t.boost, value: 99 },
+            { label: t.stats.active, value: 3000 },
+            { label: t.stats.languages, value: 15 },
+            { label: t.stats.tutors, value: 850 },
+            { label: t.stats.boost, value: 99 },
           ].map((stat, i) => (
             <div key={i} className="flex justify-center p-2 md:p-6 py-4 md:py-8">
               <div className="space-y-1 md:space-y-4 text-center">
-                {/* Font reduced from 5xl to 3xl on mobile */}
-                <h4 className="text-3xl md:text-5xl font-bold text-primary">
+                <h4 className="text-3xl md:text-5xl font-bold text-orange-600">
                   <CountUp end={stat.value} />
                   {stat.label === t.boost && "%"}
                 </h4>
@@ -101,182 +116,185 @@ function Stats({ t }: { t: any }) {
           ))}
         </div>
       </div>
-    </section>
+    </div>
   )
 }
 
-function About({ t }: { t: any }) {
+const letters = [
+  { char: 'C', img: '/home3.png' },
+  { char: 'R', img: '/home3.png' },
+  { char: 'E', img: '/home3.png' },
+  { char: 'S', img: '/home3.png' },
+  { char: 'C', img: '/home3.png' },
+  { char: 'A', img: '/home3.png' }
+];
+
+function AboutCresca({ t, aboutSection }: { t: any, aboutSection: any }) {
   return (
-    <section className="py-12 md:py-24 relative bg-primary/3">
-      <div className="w-full container px-4 mx-auto">
-        <div className="w-full justify-between items-center gap-8 md:gap-12 grid lg:grid-cols-2 grid-cols-1">
+    <section className="relative py-20 bg-white dark:bg-[#18181b] overflow-hidden">
+      <svg width="0" height="0" className="absolute">
+        <defs>
+          <filter id="blob-filter" x="-50%" y="-50%" width="200%" height="200%">
+            <feGaussianBlur in="SourceGraphic" stdDeviation="5" result="blur1" />
+            <feGaussianBlur in="blur1" stdDeviation="3" result="blur2" />
+            <feColorMatrix in="blur2" mode="matrix" values="1 0 0 0 0 0 1 0 0 0 0 0 1 0 0 0 0 0 25 -12" result="blob" />
+            <feComposite in="SourceGraphic" in2="blob" operator="atop" />
+          </filter>
+          <filter id="extra-curly" x="-50%" y="-50%" width="200%" height="200%">
+            <feTurbulence baseFrequency="0.02 0.03" numOctaves="3" result="turbulence" />
+            <feDisplacementMap in="SourceGraphic" in2="turbulence" scale="8" xChannelSelector="R" yChannelSelector="G" />
+          </filter>
+        </defs>
+      </svg>
 
-          {/* Image second on mobile */}
-          <div className="w-full flex justify-center items-start relative ">
-            <div className="relative w-full aspect-video md:h-[450px] scale-120">
-              <Image fill className="rounded-xl object-contain scale-90" src="/about_image.png" alt="Students" />
-            </div>
-          </div>
+      <div className="absolute top-[-30%] right-[-10%] w-[65%] h-[55%] bg-orange-500/25 dark:bg-orange-600/10 rounded-full blur-[130px] pointer-events-none z-0 animate-[pulse_10s_ease-in-out_infinite]" />
 
-          {/* Order adjustment: Text first on mobile */}
-          <div className="w-full flex-col justify-center lg:items-start items-center gap-6 md:gap-10 inline-flex">
-            <div className="w-full flex-col justify-center items-center lg:items-start gap-4 flex">
-              <div className="space-y-2 md:space-y-4 pb-4 md:pb-6 text-center lg:text-left">
-                {/* Font reduced from 4xl to 2xl on mobile */}
-                <h3 className="text-2xl md:text-4xl font-bold max-w-[800px] leading-tight md:leading-12">
-                  {t.title}
-                </h3>
-                <p className="text-sm md:text-base text-gray-500 max-w-[700px]">
-                  {t.desc}
-                </p>
-              </div>
-              <div className="w-full flex-col justify-start lg:items-start items-center flex">
-                <h2 className="text-gray-900 text-2xl md:text-4xl font-bold leading-normal text-center lg:text-start">
-                  Language Without Borders
-                </h2>
-                <p className="text-gray-500 text-sm md:text-base font-normal leading-relaxed text-center lg:text-start">
-                  Whether you’re in Brazil, Vietnam, or Berlin, our platform feels like home.
-                </p>
-              </div>
-              <div className="w-full lg:justify-start justify-center items-center gap-6 md:gap-10 inline-flex py-4">
-                <div className="text-center lg:text-left">
-                  <h3 className="text-2xl md:text-4xl font-bold">190+</h3>
-                  <h6 className="text-[10px] md:text-base text-gray-500">{t.stats[0]}</h6>
-                </div>
-                <div className="text-center lg:text-left">
-                  <h4 className="text-2xl md:text-4xl font-bold text-gray-900">∞</h4>
-                  <h6 className="text-[10px] md:text-base text-gray-500">{t.stats[1]}</h6>
-                </div>
-                <div className="text-center lg:text-left">
-                  <h4 className="text-2xl md:text-4xl font-bold text-gray-900">0</h4>
-                  <h6 className="text-[10px] md:text-base text-gray-500">{t.stats[2]}</h6>
-                </div>
-              </div>
-            </div>
-            <Button className="w-full sm:w-auto">
-              Join Our Global Village <ArrowRightCircle className="ml-2" />
-            </Button>
+      <div className="lg:container mx-auto px-6 md:px-12 relative z-10">
+        <div className="flex flex-col md:flex-row justify-between items-end gap-8 mb-16">
+          <div className="max-w-xl space-y-4">
+            <h2 className="text-primary font-bold uppercase tracking-[0.3em] text-xs">About Cresca</h2>
+            <h3 className="text-3xl md:text-4xl font-black text-slate-900 dark:text-white tracking-tight leading-tight">
+              {t.title} <span className="text-orange-600 relative inline-block">
+                {t.titleAccent}
+                <span className="absolute -bottom-2 left-0 w-full h-1 bg-gradient-to-r from-orange-600/0 via-orange-600/50 to-orange-600/0 blur-sm"></span>
+              </span>
+            </h3>
           </div>
-          
         </div>
-      </div>
-    </section>
-  )
-}
 
-function Tutorials({ t }: { t: any }) {
-  return (
-    <section>
-      {/* Reduced py-24 to py-12 on mobile */}
-      <div className="container mx-auto py-12 md:py-24 px-6">
-        <div className="space-y-2 md:space-y-4 pb-4">
-          <h3 className="text-2xl md:text-4xl font-bold max-w-[700px] leading-tight md:leading-12">
-            {t.title}
-          </h3>
-          <p className="text-xs md:text-sm text-gray-500">
-            {t.subtitle}
+        <div className="grid grid-cols-3 md:grid-cols-6 gap-6 md:gap-8 items-center justify-items-center">
+          {letters.map((item, i) => (
+            <div key={i} className="relative w-full aspect-square group" style={{ animation: 'letter-wave 3s ease-in-out infinite', animationDelay: `${i * 0.15}s` }}>
+              <svg viewBox="0 0 200 200" className="w-full h-full drop-shadow-2xl transition-all duration-700 group-hover:scale-110 group-hover:rotate-2" style={{ filter: 'drop-shadow(0 15px 45px rgba(0,0,0,0.35))' }}>
+                <defs>
+                  <pattern id={`img-${i}`} x="0" y="0" width="1" height="1" patternContentUnits="objectBoundingBox">
+                    <image href={item.img} x="0" y="0" width="1" height="1" preserveAspectRatio="xMidYMid slice" />
+                  </pattern>
+                  <mask id={`text-mask-${i}`}>
+                    <rect width="200" height="200" fill="black" />
+                    <text x="100" y="150" fontSize="190" fontWeight="950" textAnchor="middle" fill="white" fontFamily="system-ui, -apple-system, BlinkMacSystemFont, 'Arial Black', sans-serif" style={{ filter: 'url(#blob-filter)', letterSpacing: '-0.05em' }}>
+                      {item.char}
+                    </text>
+                  </mask>
+                  <radialGradient id={`gradient-${i}`}>
+                    <stop offset="0%" stopColor="rgba(255,255,255,0.2)" />
+                    <stop offset="50%" stopColor="rgba(0,0,0,0.1)" />
+                    <stop offset="100%" stopColor="rgba(0,0,0,0.5)" />
+                  </radialGradient>
+                  <pattern id={`texture-${i}`} x="0" y="0" width="20" height="20" patternUnits="userSpaceOnUse">
+                    <circle cx="10" cy="10" r="1" fill="rgba(255,255,255,0.1)" />
+                  </pattern>
+                  <linearGradient id="glow-gradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                    <stop offset="0%" stopColor="rgba(249,115,22,0.6)" />
+                    <stop offset="50%" stopColor="rgba(249,115,22,0.2)" />
+                    <stop offset="100%" stopColor="rgba(249,115,22,0.6)" />
+                  </linearGradient>
+                </defs>
+                <circle cx="100" cy="100" r="90" fill={`url(#img-${i})`} mask={`url(#text-mask-${i})`} style={{ filter: 'url(#blob-filter)' }} />
+                <circle cx="100" cy="100" r="90" fill={`url(#gradient-${i})`} mask={`url(#text-mask-${i})`} style={{ filter: 'url(#blob-filter)' }} className="opacity-60 mix-blend-overlay" />
+                <circle cx="100" cy="100" r="90" fill={`url(#texture-${i})`} mask={`url(#text-mask-${i})`} style={{ filter: 'url(#blob-filter)' }} className="opacity-30 mix-blend-soft-light" />
+                <circle cx="100" cy="100" r="92" fill="none" stroke="url(#glow-gradient)" strokeWidth="4" mask={`url(#text-mask-${i})`} style={{ filter: 'url(#blob-filter)' }} className="opacity-40" />
+              </svg>
+              <div className="absolute inset-0 rounded-full bg-gradient-to-t from-orange-500/40 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-700 pointer-events-none blur-2xl" />
+              <div className="absolute -inset-4 opacity-0 group-hover:opacity-100 transition-opacity duration-1000 pointer-events-none">
+                <div className="absolute top-0 left-1/4 w-1 h-1 bg-orange-500 rounded-full animate-ping" style={{ animationDuration: '2s' }}></div>
+                <div className="absolute bottom-1/4 right-0 w-1.5 h-1.5 bg-orange-400 rounded-full animate-ping" style={{ animationDuration: '2.5s' }}></div>
+                <div className="absolute top-1/2 right-1/4 w-1 h-1 bg-yellow-500 rounded-full animate-ping" style={{ animationDuration: '3s' }}></div>
+              </div>
+            </div>
+          ))}
+        </div>
+
+        <div className="flex flex-col md:flex-row justify-between items-end gap-8 mb-16 pt-12">
+          <p className="max-w-3xl text-gray-500 dark:text-gray-400 text-lg leading-relaxed pb-2">
+            {t.desc}
           </p>
         </div>
-        {/* Changed from 2 columns to 1 column on small mobile for better readability */}
+        <div className="max-w-xl space-y-4 pb-4 relative z-10">
+          <h2 className="text-primary font-bold uppercase tracking-[0.3em] text-xs pt-12">{t.title} {t.titleAccent}</h2>
+        </div>
+        <WhyChooseUs t={t.reasons} />
+        <div className="mt-20 h-[2px] w-full bg-gradient-to-r from-transparent via-orange-500 to-transparent opacity-50" />
+      </div>
+
+      <style dangerouslySetInnerHTML={{ __html: `@keyframes letter-wave { 0%, 30%, 100% { transform: translateY(0); } 15% { transform: translateY(-15px); } }` }} />
+    </section>
+  );
+}
+
+function WhyChooseUs({ t }: { t: any }) {
+  return (
+    <div className="relative">
+      <div className="container mx-auto pb-9 md:pb-16 px-6 relative">
+      
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 py-8 md:py-16 gap-6 md:gap-10 justify-center mx-auto">
-          {t.steps.map((step: any, i: number) => (
-            <div key={i} className="flex justify-center p-4 md:p-6 py-8 relative bg-gray-50/30 border-b-4 border-violet-600 rounded-md">
-              <div className="space-y-2 md:space-y-4 w-full max-w-[250px] p-2 md:p-4">
-                <h4 className="text-5xl md:text-7xl -z-1 font-extrabold absolute top-2 left-2 text-primary/30">
-                  0{i + 1}
-                </h4>
-                <h4 className="text-xl md:text-2xl font-bold text-gray-800 relative z-10">
-                  {step.title}
-                </h4>
-                <p className="text-[0.75rem] md:text-[.85rem] font-semibold text-muted-foreground relative z-10">
-                  {step.desc}
-                </p>
+          {t.map((step: any, i: number) => (
+            <div key={i} className="group relative flex flex-col p-6 py-10 rounded-lg overflow-hidden border border-slate-100 dark:border-zinc-800 shadow-2xl shadow-black/[0.03] bg-white/80 dark:bg-zinc-900/80 backdrop-blur-xl transition-all duration-500 hover:-translate-y-2 hover:bg-primary">
+              <div className="absolute -top-10 -left-10 w-44 h-44 bg-primary/30 dark:bg-primary/20 rounded-full blur-[60px] pointer-events-none z-0 transition-opacity duration-500 group-hover:opacity-0" />
+              <div className="absolute -bottom-12 -right-12 w-48 h-48 bg-orange-600/30 dark:bg-orange-600/20 rounded-full blur-[70px] pointer-events-none z-0 transition-opacity duration-500 group-hover:opacity-0" />
+              <div className="space-y-4 relative z-10 h-full flex flex-col">
+                <h4 className="text-4xl font-black text-primary/40 dark:text-primary/30 tracking-tighter transition-colors duration-500 group-hover:text-white/30">0{i + 1}</h4>
+                <h4 className="text-xl font-extrabold text-slate-900 dark:text-white transition-colors duration-500 group-hover:text-white">{step.title}</h4>
+                <p className="text-[0.85rem] md:text-[0.9rem] font-medium text-slate-600 dark:text-zinc-400 leading-relaxed flex-grow transition-colors duration-500 group-hover:text-white/90">{step.desc}</p>
               </div>
             </div>
           ))}
         </div>
       </div>
-    </section>
-  )
-}
-
-function Testimonials({ t }: { t: any }) {
-  return (
-    <section className="flex flex-col items-start my-12 md:my-24 text-sm container mx-auto relative px-4">
-      <div className="space-y-2 md:space-y-4 pb-4">
-        <h3 className="text-2xl md:text-4xl font-bold max-w-[700px] leading-tight">
-          {t.title}
-        </h3>
-        <p className="text-xs md:text-sm text-gray-500">
-          {t.subtitle}
-        </p>
-      </div>
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6 mt-6 md:mt-10">
-        {t.items.map((testimonial: any, index: number) => (
-          <div
-            key={index}
-            className="border border-slate-200 p-4 md:p-6 rounded-lg hover:-translate-y-1 transition duration-500 bg-white"
-          >
-            <p className="text-sm md:text-base text-slate-500 leading-relaxed italic">
-              "{testimonial.content}"
-            </p>
-            <div className="flex items-center gap-3 mt-6 md:mt-8">
-              <div className="relative w-10 h-10 md:w-12 md:h-12 flex-shrink-0">
-                <div className="w-full h-full bg-primary/10 rounded-full flex items-center justify-center font-bold text-primary">
-                  {testimonial.name[0]}
-                </div>
-              </div>
-              <div>
-                <h2 className="text-sm md:text-base text-gray-900 font-bold">
-                  {testimonial.name}
-                </h2>
-                <p className="text-gray-500 text-[10px] md:text-xs">
-                  {testimonial.role}
-                </p>
-              </div>
-            </div>
-          </div>
-        ))}
-      </div>
-    </section>
+    </div>
   );
 }
 
-const Pricing = ({ t }: { t: any }) => {
+function PricingSection({ t }: { t: any }) {
   return (
-    <section className="py-12 md:py-24 relative overflow-hidden bg-primary/3">
-      <div className="absolute top-0 -left-20 w-96 h-96 bg-primary/10 blur-[120px] rounded-full -z-10" />
-      <div className="container px-4 md:px-5 mx-auto">
-        <div className="grid lg:grid-cols-5 grid-cols-1 gap-10 md:gap-16 items-center">
-          <div className="flex flex-col items-start lg:col-span-2 gap-6 md:gap-8">
-            <div className="space-y-2 md:space-y-4">
-              <p className="text-primary font-bold tracking-widest uppercase text-[10px] md:text-sm">
-                {t.subtitle}
-              </p>
-              <h2 className="text-gray-900 text-3xl md:text-5xl font-bold leading-tight">
-                {t.title}
-              </h2>
-              <p className="text-muted-foreground text-sm md:text-lg leading-relaxed max-w-md">
-                {t.desc}
-              </p>
-            </div>
-            <div className="grid grid-cols-2 gap-4 md:gap-8 w-full py-4 border-y border-border">
-              <div>
-                <h4 className="text-2xl md:text-3xl font-bold text-foreground">100%</h4>
-                <p className="text-[10px] md:text-sm text-muted-foreground">{t.stats[0]}</p>
+    <section className="bg-white dark:bg-[#18181b] py-42 overflow-hidden relative transition-colors duration-500">
+      <div className="absolute bottom-[-35%] right-[-5%] w-[65%] h-[55%] bg-orange-500/25 dark:bg-orange-600/10 rounded-full blur-[130px] pointer-events-none z-0 animate-[pulse_10s_ease-in-out_infinite]" />
+      <div className="absolute top-[-50%] left-[-15%] w-[70%] h-[60%] bg-primary/20 dark:bg-primary/10 rounded-full blur-[120px] pointer-events-none z-0 animate-[pulse_8s_ease-in-out_infinite]" />
+      <div className="lg:container mx-auto px-6 relative z-10">
+        <div className="max-w-xl space-y-4 mb-14">
+          <h2 className="text-primary font-bold uppercase tracking-[0.3em] text-xs">{t.subtitle}</h2>
+          <h3 className="text-3xl md:text-4xl font-black text-slate-900 dark:text-white tracking-tight leading-tight">
+            {t.title} <span className="text-orange-600 relative inline-block">
+              {t.titleAccent}
+              <span className="absolute -bottom-2 left-0 w-full h-1 bg-gradient-to-r from-orange-600/0 via-orange-600/50 to-orange-600/0 blur-sm"></span>
+            </span>
+          </h3>
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-10">
+          {t.plans.map((tier: any, i: number) => (
+            <div key={i} className="group relative p-[2px] rounded-3xl transition-all duration-700 hover:-translate-y-2 overflow-hidden bg-slate-100/50 dark:bg-zinc-900 shadow-xs hover:shadow-sm">
+              <div className="absolute w-[95%] h-[95%] top-[2.5%] left-[2.5%] z-1 bg-slate-100 dark:bg-zinc-900 rounded-3xl" />
+              <div className="absolute inset-[-100%] bg-[conic-gradient(from_0deg,transparent_0deg,transparent_150deg,#ea580c_230deg,transparent_210deg)] opacity-0 group-hover:opacity-100 group-hover:animate-spin transition-opacity duration-500 pointer-events-none" style={{ animationDuration: '3s' }} />
+              <div className="relative h-full flex flex-col p-8 rounded-3xl bg-white/50 dark:bg-[#111114]/80 backdrop-blur-2xl z-10 border border-slate-100 dark:border-white/5 overflow-hidden">
+                <div className="absolute top-0 -inset-full h-full w-1/2 z-5 block transform -skew-x-20 bg-gradient-to-r from-transparent via-white/2 to-transparent animate-[shimmer_3s_infinite]" />
+                <div className="mt-10 mb-5">
+                  <h4 className="text-xl font-black text-slate-900 dark:text-white mb-2">{tier.title}</h4>
+                  <p className="text-slate-500 dark:text-zinc-400 text-[13px] font-medium leading-relaxed">{tier.features[0]}</p>
+                </div>
+                <div className="flex items-center gap-2 text-slate-400 dark:text-zinc-500 text-xs font-bold mb-6">
+                  <Clock className="w-4 h-4 text-orange-600" />
+                  Monthly
+                </div>
+                <div className="space-y-4 mb-10 flex-grow">
+                  {tier.features.map((feature: string, idx: number) => (
+                    <div key={idx} className="flex items-start gap-3 text-[13px] font-bold text-slate-700 dark:text-zinc-300">
+                      <Check className="w-3 h-3 text-primary" strokeWidth={4} />
+                      <span className="leading-tight">{feature}</span>
+                    </div>
+                  ))}
+                </div>
+                <div className="pt-6 border-t border-slate-100 dark:border-white/10 mb-6">
+                  <div className="flex items-baseline gap-2">
+                    <span className="text-4xl font-black text-slate-900 dark:text-white tracking-tighter">${tier.price}</span>
+                  </div>
+                </div>
+                <Button className="rounded-[2rem]">{tier.buttonText}</Button>
               </div>
-              <div>
-                <h4 className="text-2xl md:text-3xl font-bold text-foreground">24/7</h4>
-                <p className="text-[10px] md:text-sm text-muted-foreground">{t.stats[1]}</p>
-              </div>
             </div>
-            <Button className="w-full sm:w-auto bg-primary hover:bg-primary/90 text-white px-8 py-4 md:py-6 rounded-full text-base md:text-lg">
-              {t.button} <ArrowRightCircle className="ml-2" />
-            </Button>
-          </div>
-          <PricingCarousel data={t.plans} />
+          ))}
         </div>
       </div>
+      <style dangerouslySetInnerHTML={{ __html: `@keyframes shimmer { 0% { transform: translateX(-150%) skewX(-20deg); } 100% { transform: translateX(450%) skewX(-20deg); } }` }} />
     </section>
   );
-};
+}

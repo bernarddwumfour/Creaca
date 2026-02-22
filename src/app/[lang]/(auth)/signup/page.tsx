@@ -92,7 +92,7 @@ export default function SignupPage({ params }: { params: Promise<{ lang: Lang }>
       {/* RIGHT SIDE: THE SIGNUP CARD */}
       <div className="w-full lg:w-1/2 flex flex-col gap-6 items-center justify-center p-6 bg-white relative">
       <Link href={`/${lang}`}>
-      <span className='font-bold text-xl'>Qubit</span>
+      <span className='font-black text-xl'>QUBIT<span className="text-primary">.</span></span>
       </Link>
         <Card className="w-full max-w-md border-zinc-200 shadow-2xl bg-white relative z-10 rounded-2xl">
           <CardHeader className="space-y-1">
