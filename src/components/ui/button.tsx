@@ -9,11 +9,11 @@ const buttonVariants = cva(
   {
     variants: {
       variant: {
-        default: "bg-primary text-primary-foreground transition-all duration-500 shadow-[0_0_10px_rgba(0,0,0,0.1)] hover:shadow-[0_0_20px_rgba(234,88,12,0.4)] hover:bg-gradient-to-r hover:from-orange-600 hover:to-amber-500 hover:scale-[1.02] active:scale-[0.98]",
+        // Inside button.tsx variants
+        default: "relative overflow-hidden bg-primary text-primary-foreground transition-all duration-700 ease-in-out bg-[length:200%_100%] bg-[linear-gradient(to_left,var(--primary)_50%,#ea580c_65%,#ea580c_100%)] bg-right hover:bg-left hover:scale-[1.02] active:scale-[0.98] shadow-[0_0_10px_rgba(0,0,0,0.1)] hover:shadow-[0_0_20px_rgba(234,88,12,0.4)]",
         destructive:
           "bg-destructive text-white hover:bg-destructive/90 focus-visible:ring-destructive/20 dark:focus-visible:ring-destructive/40 dark:bg-destructive/60",
-        outline:
-          "border bg-background shadow-xs hover:bg-accent hover:text-accent-foreground dark:bg-input/30 dark:border-input dark:hover:bg-input/50",
+        outline: "relative overflow-hidden bg-background border border-zinc-200 dark:border-zinc-800 transition-all duration-300 group active:scale-[0.98] isolate flex items-center justify-center before:absolute before:inset-[-200%] before:bg-[conic-gradient(from_0deg,transparent_30%,#ea580c_50%,transparent_70%)] before:opacity-0 hover:before:opacity-100 before:animate-[spin_1.5s_linear_infinite] before:content-[''] before:-z-10 after:absolute after:inset-[1.5px] after:rounded-[inherit] after:bg-white dark:after:bg-zinc-950 after:content-[''] after:-z-[1]",
         secondary:
           "bg-secondary text-secondary-foreground hover:bg-secondary/80",
         ghost:

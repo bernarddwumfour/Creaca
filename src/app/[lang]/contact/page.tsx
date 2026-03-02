@@ -14,11 +14,55 @@ type PageProps = {
     };
 };
 
-const SocialLink = ({ href, children, className }: { href: string; children: React.ReactNode; className?: string }) => (
-    <a href={href} target="_blank" rel="noopener noreferrer" className={className}>
+// Fixed SocialLink with proper TypeScript types
+const SocialLink = ({ 
+    href, 
+    children, 
+    className, 
+    style 
+}: { 
+    href: string; 
+    children: React.ReactNode; 
+    className?: string; 
+    style?: React.CSSProperties 
+}) => (
+    <a 
+        href={href} 
+        target="_blank" 
+        rel="noopener noreferrer" 
+        style={style} 
+        className={className}
+    >
         {children}
     </a>
 );
+
+const socialLinks = [
+    {
+        name: "X",
+        href: "#",
+        icon: <path d="M11.3214 8.93666L16.4919 3.05566H15.2667L10.7772 8.16205L7.1914 3.05566H3.05566L8.47803 10.7774L3.05566 16.9446H4.28097L9.022 11.552L12.8088 16.9446H16.9446L11.3211 8.93666H11.3214ZM9.64322 10.8455L9.09382 10.0765L4.72246 3.95821H6.60445L10.1322 8.8959L10.6816 9.66481L15.2672 16.083H13.3852L9.64322 10.8458V10.8455Z" />,
+        viewBox: "0 0 20 20"
+    },
+    {
+        name: "Instagram",
+        href: "#",
+        icon: <path d="M4.70975 7.93663C4.70975 6.65824 5.76102 5.62163 7.0582 5.62163C8.35537 5.62163 9.40721 6.65824 9.40721 7.93663C9.40721 9.21502 8.35537 10.2516 7.0582 10.2516C5.76102 10.2516 4.70975 9.21502 4.70975 7.93663ZM3.43991 7.93663C3.43991 9.90608 5.05982 11.5025 7.0582 11.5025C9.05658 11.5025 10.6765 9.90608 10.6765 7.93663C10.6765 5.96719 9.05658 4.37074 7.0582 4.37074C5.05982 4.37074 3.43991 5.96719 3.43991 7.93663ZM9.97414 4.22935C9.97408 4.39417 10.0236 4.55531 10.1165 4.69239C10.2093 4.82946 10.3413 4.93633 10.4958 4.99946C10.6503 5.06259 10.8203 5.07916 10.9844 5.04707C11.1484 5.01498 11.2991 4.93568 11.4174 4.81918C11.5357 4.70268 11.6163 4.55423 11.649 4.39259C11.6817 4.23095 11.665 4.06339 11.6011 3.91109C11.5371 3.7588 11.4288 3.6286 11.2898 3.53698C11.1508 3.44536 10.9873 3.39642 10.8201 3.39635H10.8197C10.5955 3.39646 10.3806 3.48424 10.222 3.64043C10.0635 3.79661 9.97434 4.00843 9.97414 4.22935ZM4.21142 13.5892C3.52442 13.5584 3.15101 13.4456 2.90286 13.3504C2.57387 13.2241 2.33914 13.0738 2.09235 12.8309C1.84555 12.588 1.69278 12.3569 1.56527 12.0327C1.46854 11.7882 1.3541 11.4201 1.32287 10.7431C1.28871 10.0111 1.28189 9.79119 1.28189 7.93669C1.28189 6.08219 1.28927 5.86291 1.32287 5.1303C1.35416 4.45324 1.46944 4.08585 1.56527 3.84069C1.69335 3.51647 1.84589 3.28513 2.09235 3.04191C2.3388 2.79869 2.57331 2.64813 2.90286 2.52247C3.1509 2.42713 3.52442 2.31435 4.21142 2.28358C4.95417 2.24991 5.17729 2.24319 7.0582 2.24319C8.9391 2.24319 9.16244 2.25047 9.90582 2.28358C10.5928 2.31441 10.9656 2.42802 11.2144 2.52247C11.5434 2.64813 11.7781 2.79902 12.0249 3.04191C12.2717 3.2848 12.4239 3.51647 12.552 3.84069C12.6487 4.08513 12.7631 4.45324 12.7944 5.1303C12.8285 5.86291 12.8354 6.08219 12.8354 7.93669C12.8354 9.79119 12.8285 10.0105 12.7944 10.7431C12.7631 11.4201 12.6481 11.7881 12.552 12.0327C12.4239 12.3569 12.2714 12.5882 12.0249 12.8309C11.7784 13.0736 11.5434 13.2241 11.2144 13.3504C10.9663 13.4457 10.5928 13.5585 9.90582 13.5892C9.16306 13.6229 8.93994 13.6296 7.0582 13.6296C5.17645 13.6296 4.95395 13.6229 4.21142 13.5892ZM4.15307 1.03424C3.40294 1.06791 2.89035 1.18513 2.4427 1.3568C1.9791 1.53408 1.58663 1.77191 1.19446 2.1578C0.802277 2.54369 0.56157 2.93108 0.381687 3.38797C0.207498 3.82941 0.0885535 4.3343 0.0543922 5.07358C0.0196672 5.81402 0.0117188 6.05074 0.0117188 7.93663C0.0117188 9.82252 0.0196672 10.0592 0.0543922 10.7997C0.0885535 11.539 0.207498 12.0439 0.381687 12.4853C0.56157 12.9419 0.802334 13.3297 1.19446 13.7155C1.58658 14.1012 1.9791 14.3387 2.4427 14.5165C2.89119 14.6881 3.40294 14.8054 4.15307 14.839C4.90479 14.8727 5.1446 14.8811 7.0582 14.8811C8.9718 14.8811 9.212 14.8732 9.96332 14.839C10.7135 14.8054 11.2258 14.6881 11.6737 14.5165C12.137 14.3387 12.5298 14.1014 12.9219 13.7155C13.3141 13.3296 13.5543 12.9419 13.7347 12.4853C13.9089 12.0439 14.0284 11.539 14.062 10.7997C14.0962 10.0587 14.1041 9.82252 14.1041 7.93663C14.1041 6.05074 14.0962 5.81402 14.062 5.07358C14.0278 4.33424 13.9089 3.82913 13.7347 3.38797C13.5543 2.93135 13.3135 2.5443 12.9219 2.1578C12.5304 1.7713 12.137 1.53408 11.6743 1.3568C11.2258 1.18513 10.7135 1.06735 9.96388 1.03424C9.21256 1.00058 8.97236 0.992188 7.05876 0.992188C5.14516 0.992188 4.90479 1.00002 4.15307 1.03424Z" />,
+        viewBox: "0 0 15 15"
+    },
+    {
+        name: "LinkedIn",
+        href: "#",
+        icon: <path d="M2.8794 11.5527V3.86835H0.318893V11.5527H2.87967H2.8794ZM1.59968 2.81936C2.4924 2.81936 3.04817 2.2293 3.04817 1.49188C3.03146 0.737661 2.4924 0.164062 1.61666 0.164062C0.74032 0.164062 0.167969 0.737661 0.167969 1.49181C0.167969 2.22923 0.723543 2.8193 1.5829 2.8193H1.59948L1.59968 2.81936ZM4.29668 11.5527H6.85698V7.26187C6.85698 7.03251 6.87369 6.80255 6.94134 6.63873C7.12635 6.17968 7.54764 5.70449 8.25514 5.70449C9.18141 5.70449 9.55217 6.4091 9.55217 7.44222V11.5527H12.1124V7.14672C12.1124 4.78652 10.8494 3.68819 9.16483 3.68819C7.78372 3.68819 7.17715 4.45822 6.84014 4.98267H6.85718V3.86862H4.29681C4.33023 4.5895 4.29661 11.553 4.29661 11.553L4.29668 11.5527Z" />,
+        viewBox: "0 0 13 12"
+    },
+    {
+        name: "YouTube",
+        href: "#",
+        icon: <path d="M13.9346 1.13529C14.5684 1.30645 15.0665 1.80588 15.2349 2.43896C15.5413 3.58788 15.5413 5.98654 15.5413 5.98654C15.5413 5.98654 15.5413 8.3852 15.2349 9.53412C15.0642 10.1695 14.5661 10.669 13.9346 10.8378C12.7886 11.1449 8.19058 11.1449 8.19058 11.1449C8.19058 11.1449 3.59491 11.1449 2.44657 10.8378C1.81277 10.6666 1.31461 10.1672 1.14622 9.53412C0.839844 8.3852 0.839844 5.98654 0.839844 5.98654C0.839844 5.98654 0.839844 3.58788 1.14622 2.43896C1.31695 1.80353 1.81511 1.30411 2.44657 1.13529C3.59491 0.828125 8.19058 0.828125 8.19058 0.828125C8.19058 0.828125 12.7886 0.828125 13.9346 1.13529ZM10.541 5.98654L6.72178 8.19762V3.77545L10.541 5.98654Z" />,
+        viewBox: "0 0 16 12"
+    }
+];
 
 async function page({ params }: PageProps) {
     const { lang } = await params;
@@ -29,15 +73,16 @@ async function page({ params }: PageProps) {
         <>
             <Header lang={lang} t={dictionary.nav} />
 
-            <main className="min-h-screen bg-white">
+            <main className="min-h-screen bg-white dark:bg-[#18181b]">
                 {/* Hero Section */}
-                <section className="py-12 md:py-16 relative overflow-hidden bg-primary/[0.02]">
+                <section className="py-12 md:py-16 relative overflow-hidden bg-primary/[0.02] dark:bg-[#18181b]">
+                    <div className="absolute top-[-15%] left-[-10%] w-[70%] h-[60%] bg-primary/20 dark:bg-primary/10 rounded-full blur-[120px] pointer-events-none z-0 animate-[pulse_8s_ease-in-out_infinite]" />
                     <div className="container mx-auto px-6 pt-12 md:pt-24">
                         <div className="space-y-2">
-                            <h1 className="text-3xl md:text-4xl leading-tight font-extrabold text-zinc-900 max-w-full md:max-w-2/3">
+                            <h1 className="text-3xl md:text-4xl leading-tight font-extrabold text-zinc-900 dark:text-white max-w-full md:max-w-2/3">
                                 {t.hero.title} <span className="text-primary">{t.hero.titleAccent}</span>
                             </h1>
-                            <p className="py-4 md:py-6 max-w-[750px] text-gray-500 leading-relaxed text-base md:text-lg">
+                            <p className="py-4 md:py-6 max-w-[750px] text-gray-500 dark:text-gray-300 leading-relaxed text-base md:text-lg">
                                 {t.hero.description}
                             </p>
                         </div>
@@ -48,43 +93,38 @@ async function page({ params }: PageProps) {
                 <section className="py-12 md:py-24 relative overflow-x-hidden overflow-y-visible">
                     <div className="w-full container px-4 mx-auto relative z-10">
                         <div className="w-full justify-between items-start gap-12 grid lg:grid-cols-2 grid-cols-1">
-
                             {/* Left Side: Info */}
                             <div className="w-full flex-col justify-center items-start gap-10 inline-flex">
                                 <div className="w-full flex-col justify-center items-start gap-8 flex">
-                                    <div className="space-y-4">
+                                    <div className="space-y-4 mb-8">
                                         <div className="inline-flex items-center gap-2 bg-primary/10 text-primary px-3 py-1 rounded-full text-xs font-bold uppercase tracking-widest">
                                             {t.info.badge}
                                         </div>
-                                        <h3 className="text-3xl md:text-4xl font-bold leading-tight text-zinc-900">
+                                        <h3 className="text-2xl md:text-3xl font-bold leading-tight text-zinc-900 dark:text-white">
                                             {t.info.mainHeading}
                                         </h3>
                                     </div>
-
-                                    {/* Info Blocks */}
                                     <div className="w-full space-y-4 border-l-4 border-primary pl-6 py-2 bg-primary/[0.02] rounded-r-xl">
                                         <div className="flex items-center gap-4">
                                             <Coffee className="text-primary" size={24} />
-                                            <h2 className="text-zinc-900 text-xl md:text-2xl font-bold">{t.info.coffee.title}</h2>
+                                            <h2 className="text-zinc-900 text-lg md:text-xl font-bold dark:text-gray-300">{t.info.coffee.title}</h2>
                                         </div>
                                         <p className="text-zinc-500 text-sm md:text-base leading-relaxed">{t.info.coffee.address}</p>
                                     </div>
-
                                     <div className="space-y-4">
                                         <div className="flex items-center gap-4">
                                             <Phone className="text-primary" size={24} />
-                                            <h2 className="text-zinc-900 text-xl md:text-2xl font-bold">{t.info.reachOut.title}</h2>
+                                            <h2 className="text-zinc-900 text-lg md:text-xl font-bold dark:text-gray-300">{t.info.reachOut.title}</h2>
                                         </div>
                                         <p className="text-zinc-500 text-sm md:text-base leading-relaxed">
                                             Phone : {t.info.reachOut.phone} <br />
                                             Fax : {t.info.reachOut.fax}
                                         </p>
                                     </div>
-
                                     <div className="space-y-4">
                                         <div className="flex items-center gap-4">
                                             <Mail className="text-primary" size={24} />
-                                            <h2 className="text-zinc-900 text-xl md:text-2xl font-bold">{t.info.assist.title}</h2>
+                                            <h2 className="text-zinc-900 text-lg md:text-xl font-bold dark:text-gray-300">{t.info.assist.title}</h2>
                                         </div>
                                         <p className="text-zinc-500 text-sm md:text-base leading-relaxed">
                                             {t.info.assist.email1} <br />
@@ -95,39 +135,36 @@ async function page({ params }: PageProps) {
                             </div>
 
                             {/* Right Side: Form */}
-                            <div className="w-full p-6 md:p-8 bg-white rounded-2xl shadow-xl border border-zinc-100 relative z-10">
-                                <div className="space-y-8">
-                                    <h3 className="text-2xl md:text-3xl font-black text-zinc-900">{t.form.title}</h3>
-
+                            <div className="w-full group p-[3px] bg-slate-100/50 dark:bg-zinc-900/50 overflow-hidden rounded-2xl shadow-xl relative z-10">
+                                <div className="absolute w-[98%] h-[98%] top-[1%] left-[1%] overflow-hidden bg-slate-100 dark:bg-zinc-900 shadow-xs hover:shadow-sm rounded-sm" />
+                                <div className="absolute inset-[-100%] bg-[conic-gradient(from_0deg,transparent_0deg,transparent_150deg,#ea580c_230deg,transparent_210deg)] opacity-0 group-hover:opacity-100 group-hover:animate-spin transition-opacity duration-500 pointer-events-none -z-1" style={{ animationDuration: '3s' }} />
+                                <div className="relative h-full flex flex-col p-8 rounded-3xl bg-white/50 dark:bg-[#111114]/80 backdrop-blur-2xl z-10 border border-slate-100 dark:border-white/5 overflow-hidden space-y-8">
+                                    <h3 className="text-2xl md:text-3xl font-black text-zinc-900 dark:text-white">{t.form.title}</h3>
                                     <div className="space-y-6">
                                         <div className="space-y-2">
-                                            <p className="text-xs md:text-sm font-black text-zinc-900 ml-1">{t.form.nameLabel}</p>
+                                            <p className="text-xs md:text-sm font-black text-zinc-900 ml-1 dark:text-gray-300">{t.form.nameLabel}</p>
                                             <div className="relative">
-                                                <Input className="h-12 md:h-14 rounded-xl border-zinc-200 bg-zinc-50/50" placeholder={t.form.namePlaceholder} />
+                                                <Input className="h-12 md:h-14 rounded-xl border-zinc-200 dark:border-zinc-700 bg-zinc-50/50" placeholder={t.form.namePlaceholder} />
                                                 <User className="absolute right-4 top-1/2 -translate-y-1/2 text-zinc-400" size={18} />
                                             </div>
                                         </div>
-
                                         <div className="space-y-2">
-                                            <p className="text-xs md:text-sm font-black text-zinc-900 ml-1">{t.form.emailLabel}</p>
+                                            <p className="text-xs md:text-sm font-black text-zinc-900 ml-1 dark:text-gray-300">{t.form.emailLabel}</p>
                                             <div className="relative">
-                                                <Input className="h-12 md:h-14 rounded-xl border-zinc-200 bg-zinc-50/50" placeholder={t.form.emailPlaceholder} />
+                                                <Input className="h-12 md:h-14 rounded-xl border-zinc-200 dark:border-zinc-700 bg-zinc-50/50" placeholder={t.form.emailPlaceholder} />
                                                 <Mail className="absolute right-4 top-1/2 -translate-y-1/2 text-zinc-400" size={18} />
                                             </div>
                                         </div>
-
                                         <div className="space-y-2">
-                                            <p className="text-xs md:text-sm font-black text-zinc-900 ml-1">{t.form.messageLabel}</p>
+                                            <p className="text-xs md:text-sm font-black text-zinc-900 ml-1 dark:text-gray-300">{t.form.messageLabel}</p>
                                             <div className="relative">
-                                                <Textarea className="min-h-[120px] rounded-xl border-zinc-200 bg-zinc-50/50 pt-4" placeholder={t.form.messagePlaceholder} />
+                                                <Textarea className="min-h-[120px] rounded-xl border-zinc-200 dark:border-zinc-700 bg-zinc-50/50 pt-4" placeholder={t.form.messagePlaceholder} />
                                                 <MessageCircle className="absolute right-4 top-5 text-zinc-400" size={18} />
                                             </div>
                                         </div>
-
                                         <Button size="lg" className="w-full rounded-full font-bold py-6 md:py-8 text-base md:text-lg shadow-lg">
                                             {t.form.submitButton} <ArrowRightCircle className="ml-2" />
                                         </Button>
-
                                         <p className="text-[10px] md:text-xs text-center text-zinc-500">
                                             {t.form.privacyNote} <span className="underline font-bold text-zinc-900">{t.form.privacyLink}</span>
                                         </p>
@@ -136,43 +173,47 @@ async function page({ params }: PageProps) {
                             </div>
                         </div>
                     </div>
-                    {/* Background decorative elements */}
-                    <div className="absolute top-0 left-0 w-3/4 h-full bg-primary/5 -skew-x-12 translate-x-1/2 pointer-events-none" />
-                    <div className="absolute -top-12 left-0 w-3/4 h-full bg-primary/7 -skew-x-12 translate-x-1/2 pointer-events-none" />
+                    {/* Decorative Bubbles */}
+                    <div className="absolute inset-0 pointer-events-none z-0">
+                        <div className="absolute top-[15%] left-[30%] w-24 h-24 bg-orange-500/20 rounded-full blur-3xl animate-float-slow" />
+                        <div className="absolute top-[40%] right-[15%] w-36 h-36 bg-primary/20 rounded-full blur-3xl animate-float-medium" />
+                        <div className="absolute bottom-[25%] left-[45%] w-48 h-48 bg-orange-600/15 rounded-full blur-3xl animate-float-fast" />
+                        <div className="absolute top-[60%] left-[35%] w-20 h-20 bg-primary/25 rounded-full blur-2xl animate-float-slow-reverse" />
+                        <div className="absolute bottom-[35%] right-[25%] w-32 h-32 bg-orange-500/20 rounded-full blur-3xl animate-float-medium" />
+                        <div className="absolute top-[20%] right-[30%] w-16 h-16 bg-primary/30 rounded-full blur-2xl animate-ping-slow" />
+                        <div className="absolute top-[25%] left-[30%] w-3 h-3 bg-orange-400 rounded-full animate-pulse-slow" />
+                        <div className="absolute bottom-[40%] right-[10%] w-4 h-4 bg-primary-300 rounded-full animate-pulse-slower" />
+                        <div className="absolute top-[70%] left-[40%] w-2 h-2 bg-orange-500 rounded-full animate-ping-slow" />
+                    </div>
                 </section>
 
-                {/* Social Media Section */}
+                <div className="h-[2px] w-8/10 mx-auto bg-gradient-to-r from-transparent via-orange-500 to-transparent opacity-50" />
+
+                {/* Social Media Section with Wavy Animation */}
                 <div className="py-12 md:py-24 flex flex-col items-center justify-center space-y-6">
-                    <h4 className="text-zinc-900 font-bold uppercase tracking-widest text-xs">{t.social.heading}</h4>
+                    <h4 className="text-zinc-900 dark:text-gray-400 font-bold uppercase tracking-widest text-xs">
+                        {t.social.heading}
+                    </h4>
 
-                    <div className="flex space-x-4 justify-center">
-                        {/* X / Twitter */}
-                        <SocialLink href="#" className="w-10 h-10 md:w-12 md:h-12 bg-primary rounded-full flex items-center justify-center hover:scale-110 transition-transform shadow-lg shadow-primary/20">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 20 20" fill="none">
-                                <path d="M11.3214 8.93666L16.4919 3.05566H15.2667L10.7772 8.16205L7.1914 3.05566H3.05566L8.47803 10.7774L3.05566 16.9446H4.28097L9.022 11.552L12.8088 16.9446H16.9446L11.3211 8.93666H11.3214ZM9.64322 10.8455L9.09382 10.0765L4.72246 3.95821H6.60445L10.1322 8.8959L10.6816 9.66481L15.2672 16.083H13.3852L9.64322 10.8458V10.8455Z" fill="white" />
-                            </svg>
-                        </SocialLink>
-
-                        {/* Instagram */}
-                        <SocialLink href="#" className="w-10 h-10 md:w-12 md:h-12 bg-primary rounded-full flex items-center justify-center hover:scale-110 transition-transform shadow-lg shadow-primary/20">
-                            <svg className="w-[1.25rem] h-[1.125rem] text-white" viewBox="0 0 15 15" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                <path d="M4.70975 7.93663C4.70975 6.65824 5.76102 5.62163 7.0582 5.62163C8.35537 5.62163 9.40721 6.65824 9.40721 7.93663C9.40721 9.21502 8.35537 10.2516 7.0582 10.2516C5.76102 10.2516 4.70975 9.21502 4.70975 7.93663ZM3.43991 7.93663C3.43991 9.90608 5.05982 11.5025 7.0582 11.5025C9.05658 11.5025 10.6765 9.90608 10.6765 7.93663C10.6765 5.96719 9.05658 4.37074 7.0582 4.37074C5.05982 4.37074 3.43991 5.96719 3.43991 7.93663ZM9.97414 4.22935C9.97408 4.39417 10.0236 4.55531 10.1165 4.69239C10.2093 4.82946 10.3413 4.93633 10.4958 4.99946C10.6503 5.06259 10.8203 5.07916 10.9844 5.04707C11.1484 5.01498 11.2991 4.93568 11.4174 4.81918C11.5357 4.70268 11.6163 4.55423 11.649 4.39259C11.6817 4.23095 11.665 4.06339 11.6011 3.91109C11.5371 3.7588 11.4288 3.6286 11.2898 3.53698C11.1508 3.44536 10.9873 3.39642 10.8201 3.39635H10.8197C10.5955 3.39646 10.3806 3.48424 10.222 3.64043C10.0635 3.79661 9.97434 4.00843 9.97414 4.22935ZM4.21142 13.5892C3.52442 13.5584 3.15101 13.4456 2.90286 13.3504C2.57387 13.2241 2.33914 13.0738 2.09235 12.8309C1.84555 12.588 1.69278 12.3569 1.56527 12.0327C1.46854 11.7882 1.3541 11.4201 1.32287 10.7431C1.28871 10.0111 1.28189 9.79119 1.28189 7.93669C1.28189 6.08219 1.28927 5.86291 1.32287 5.1303C1.35416 4.45324 1.46944 4.08585 1.56527 3.84069C1.69335 3.51647 1.84589 3.28513 2.09235 3.04191C2.3388 2.79869 2.57331 2.64813 2.90286 2.52247C3.1509 2.42713 3.52442 2.31435 4.21142 2.28358C4.95417 2.24991 5.17729 2.24319 7.0582 2.24319C8.9391 2.24319 9.16244 2.25047 9.90582 2.28358C10.5928 2.31441 10.9656 2.42802 11.2144 2.52247C11.5434 2.64813 11.7781 2.79902 12.0249 3.04191C12.2717 3.2848 12.4239 3.51647 12.552 3.84069C12.6487 4.08513 12.7631 4.45324 12.7944 5.1303C12.8285 5.86291 12.8354 6.08219 12.8354 7.93669C12.8354 9.79119 12.8285 10.0105 12.7944 10.7431C12.7631 11.4201 12.6481 11.7881 12.552 12.0327C12.4239 12.3569 12.2714 12.5882 12.0249 12.8309C11.7784 13.0736 11.5434 13.2241 11.2144 13.3504C10.9663 13.4457 10.5928 13.5585 9.90582 13.5892C9.16306 13.6229 8.93994 13.6296 7.0582 13.6296C5.17645 13.6296 4.95395 13.6229 4.21142 13.5892ZM4.15307 1.03424C3.40294 1.06791 2.89035 1.18513 2.4427 1.3568C1.9791 1.53408 1.58663 1.77191 1.19446 2.1578C0.802277 2.54369 0.56157 2.93108 0.381687 3.38797C0.207498 3.82941 0.0885535 4.3343 0.0543922 5.07358C0.0196672 5.81402 0.0117188 6.05074 0.0117188 7.93663C0.0117188 9.82252 0.0196672 10.0592 0.0543922 10.7997C0.0885535 11.539 0.207498 12.0439 0.381687 12.4853C0.56157 12.9419 0.802334 13.3297 1.19446 13.7155C1.58658 14.1012 1.9791 14.3387 2.4427 14.5165C2.89119 14.6881 3.40294 14.8054 4.15307 14.839C4.90479 14.8727 5.1446 14.8811 7.0582 14.8811C8.9718 14.8811 9.212 14.8732 9.96332 14.839C10.7135 14.8054 11.2258 14.6881 11.6737 14.5165C12.137 14.3387 12.5298 14.1014 12.9219 13.7155C13.3141 13.3296 13.5543 12.9419 13.7347 12.4853C13.9089 12.0439 14.0284 11.539 14.062 10.7997C14.0962 10.0587 14.1041 9.82252 14.1041 7.93663C14.1041 6.05074 14.0962 5.81402 14.062 5.07358C14.0278 4.33424 13.9089 3.82913 13.7347 3.38797C13.5543 2.93135 13.3135 2.5443 12.9219 2.1578C12.5304 1.7713 12.137 1.53408 11.6743 1.3568C11.2258 1.18513 10.7135 1.06735 9.96388 1.03424C9.21256 1.00058 8.97236 0.992188 7.05876 0.992188C5.14516 0.992188 4.90479 1.00002 4.15307 1.03424Z" fill="white" />
-                            </svg>
-                        </SocialLink>
-
-                        {/* LinkedIn */}
-                        <SocialLink href="#" className="w-10 h-10 md:w-12 md:h-12 bg-primary rounded-full flex items-center justify-center hover:scale-110 transition-transform shadow-lg shadow-primary/20">
-                            <svg className="w-[1rem] h-[1rem] text-white" viewBox="0 0 13 12" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                <path d="M2.8794 11.5527V3.86835H0.318893V11.5527H2.87967H2.8794ZM1.59968 2.81936C2.4924 2.81936 3.04817 2.2293 3.04817 1.49188C3.03146 0.737661 2.4924 0.164062 1.61666 0.164062C0.74032 0.164062 0.167969 0.737661 0.167969 1.49181C0.167969 2.22923 0.723543 2.8193 1.5829 2.8193H1.59948L1.59968 2.81936ZM4.29668 11.5527H6.85698V7.26187C6.85698 7.03251 6.87369 6.80255 6.94134 6.63873C7.12635 6.17968 7.54764 5.70449 8.25514 5.70449C9.18141 5.70449 9.55217 6.4091 9.55217 7.44222V11.5527H12.1124V7.14672C12.1124 4.78652 10.8494 3.68819 9.16483 3.68819C7.78372 3.68819 7.17715 4.45822 6.84014 4.98267H6.85718V3.86862H4.29681C4.33023 4.5895 4.29661 11.553 4.29661 11.553L4.29668 11.5527Z" fill="white" />
-                            </svg>
-                        </SocialLink>
-
-                        {/* YouTube */}
-                        <SocialLink href="#" className="w-10 h-10 md:w-12 md:h-12 bg-primary rounded-full flex items-center justify-center hover:scale-110 transition-transform shadow-lg shadow-primary/20">
-                            <svg className="w-[1.25rem] h-[0.875rem] text-white" viewBox="0 0 16 12" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                <path fillRule="evenodd" clipRule="evenodd" d="M13.9346 1.13529C14.5684 1.30645 15.0665 1.80588 15.2349 2.43896C15.5413 3.58788 15.5413 5.98654 15.5413 5.98654C15.5413 5.98654 15.5413 8.3852 15.2349 9.53412C15.0642 10.1695 14.5661 10.669 13.9346 10.8378C12.7886 11.1449 8.19058 11.1449 8.19058 11.1449C8.19058 11.1449 3.59491 11.1449 2.44657 10.8378C1.81277 10.6666 1.31461 10.1672 1.14622 9.53412C0.839844 8.3852 0.839844 5.98654 0.839844 5.98654C0.839844 5.98654 0.839844 3.58788 1.14622 2.43896C1.31695 1.80353 1.81511 1.30411 2.44657 1.13529C3.59491 0.828125 8.19058 0.828125 8.19058 0.828125C8.19058 0.828125 12.7886 0.828125 13.9346 1.13529ZM10.541 5.98654L6.72178 8.19762V3.77545L10.541 5.98654Z" fill="white" />
-                            </svg>
-                        </SocialLink>
+                    <div className="flex space-x-4 justify-center group/container">
+                        {socialLinks.map((social, i) => (
+                            <SocialLink
+                                key={social.name}
+                                href={social.href}
+                                // Inline delay for the wavy stagger
+                                style={{ transitionDelay: `${i * 75}ms` }}
+                                className="w-10 h-10 md:w-12 md:h-12 bg-primary rounded-full flex items-center justify-center shadow-lg shadow-primary/20 transition-all duration-300 ease-out hover:scale-110 hover:-translate-y-3"
+                            >
+                                <svg
+                                    viewBox={social.viewBox}
+                                    fill="none"
+                                    xmlns="http://www.w3.org/2000/svg"
+                                    className="w-5 h-5 fill-white"
+                                >
+                                    {social.icon}
+                                </svg>
+                            </SocialLink>
+                        ))}
                     </div>
                 </div>
             </main>

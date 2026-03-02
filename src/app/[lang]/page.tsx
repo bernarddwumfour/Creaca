@@ -60,7 +60,7 @@ function Hero({ t, nav }: { t: any, nav: any }) {
         </div>
 
         <div className="w-full md:w-2/5 relative z-[2] min-h-[400px] md:min-h-full">
-          <div className="w-full h-full md:h-4/6 absolute bottom-0 md:bottom-16 left-1/2 md:-left-1/5 -translate-x-1/2 md:translate-x-0 flex items-center justify-center">
+          <div className="w-full h-full md:h-4/6 absolute bottom-0 md:bottom-16 left-1/2 md:-left-1/5 -translate-x-1/2 md:translate-x-0 flex items-center justify-center scale-[65%] md:scale-[90%]">
             <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
               <div className="absolute w-[130%] aspect-square border border-dashed border-primary/20 rounded-full animate-[spin_30s_linear_infinite]" />
               <div className="absolute w-[100%] aspect-square border border-orange-500/10 rounded-full animate-[spin_20s_linear_infinite_reverse]" />

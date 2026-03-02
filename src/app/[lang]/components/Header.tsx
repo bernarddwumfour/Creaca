@@ -51,11 +51,11 @@ const Header = ({ lang, t }: HeaderProps) => {
   // ]
 
   const navItems = [
-    { label: t.home, href: `/#` },
-    { label: t.about, href: `/#` },
-    { label: t.courses, href: `/#` },
-    { label: t.contact, href: `/#` },
-    { label: t.faqs, href: `/#` },
+    { label: t.home, href: `/${lang}` },
+    { label: t.about, href: `/${lang}/about` },
+    { label: t.courses, href: `/${lang}/courses` },
+    { label: t.contact, href: `/${lang}/contact` },
+    // { label: t.faqs, href: `/#` },
   ]
 
 
@@ -140,7 +140,7 @@ const Header = ({ lang, t }: HeaderProps) => {
 
           {/* MOBILE TOGGLE */}
           <button
-            className="md:hidden p-1 text-foreground focus:outline-none"
+            className="md:hidden ms-4 p-1 text-foreground focus:outline-none"
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
             aria-label="Toggle Menu"
           >

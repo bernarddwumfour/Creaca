@@ -22,23 +22,24 @@ async function page({ params }: PageProps) {
         <>
             <Header lang={lang} t={t.nav} />
 
-            <main className="min-h-screen bg-white">
+            <main className="min-h-screen bg-white dark:bg-[#18181b]">
                 {/* Hero Section */}
                 {/* Reduced py-16 to py-12 for mobile */}
                 <section className="py-12 md:py-16 relative bg-primary/[0.03] overflow-hidden">
+                <div className="absolute top-[-15%] left-[-10%] w-[70%] h-[60%] bg-primary/20 dark:bg-primary/10 rounded-full blur-[120px] pointer-events-none z-0 animate-[pulse_8s_ease-in-out_infinite]" />
                     <div className="container mx-auto px-6 pt-12">
                         <div className="space-y-2">
                             {/* Reduced text-4xl to text-3xl for mobile */}
-                            <h1 className="text-3xl md:text-4xl leading-tight md:leading-18 font-extrabold text-zinc-900 max-w-full md:max-w-2/3">
+                            <h1 className="text-3xl md:text-4xl leading-tight font-extrabold text-zinc-900 dark:text-white max-w-full md:max-w-2/3">
                                 {about.hero.title.split(' ')[0]} <span className="text-primary">{about.hero.title.split(' ').slice(1).join(' ')}</span>
                             </h1>
 
-                            <p className="py-4 md:py-6 max-w-[750px] text-gray-500 text-sm md:text-base leading-relaxed">
+                            <p className="py-4 md:py-6 max-w-[750px] text-gray-500 dark:text-gray-300 leading-relaxed text-base md:text-lg">
                                 {about.hero.subtitle}
                             </p>
                         </div>
                     </div>
-                    <div className="absolute hidden md:block top-0 right-0 w-2/3 h-full bg-primary translate-x-1/2" />
+                   s
                 </section>
 
                 {/* Community Section */}
@@ -100,7 +101,7 @@ async function page({ params }: PageProps) {
 
                 {/* Mission & Vision */}
                 {/* Reduced py-20 to py-12 for mobile */}
-                <section className="py-12 md:py-20 relative overflow-hidden bg-white">
+                <section className="py-12 md:py-20 relative overflow-hidden ">
                     <div className="container mx-auto px-6">
                         <div className="grid md:grid-cols-2 gap-12 md:gap-24 items-start relative">
                             <div className="hidden md:block absolute left-1/2 top-0 bottom-0 w-[1px] bg-gradient-to-b from-transparent via-zinc-200 to-transparent shadow-[0_0_15px_rgba(0,0,0,0.05)] backdrop-blur-sm" />

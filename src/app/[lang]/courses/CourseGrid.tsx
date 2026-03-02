@@ -55,24 +55,23 @@ export default function CourseGrid({ lang }: { lang: Lang }) {
     const t = COURSE_DATA[lang] || COURSE_DATA.en;
     const [activeTab, setActiveTab] = useState(t.categories[0]);
 
-    const filteredCourses = activeTab === t.categories[0] 
-        ? t.items 
+    const filteredCourses = activeTab === t.categories[0]
+        ? t.items
         : t.items.filter(course => course.category === activeTab);
 
     return (
         <div className="container mx-auto px-6">
             {/* Filter Bar */}
             <div className="flex flex-wrap items-center justify-between gap-6 mb-16">
-                <div className="flex bg-gray-100/50 rounded-full p-1 border border-gray-200">
+                <div className="flex bg-gray-100/50  dark:bg-[#18181b] rounded-full p-1 border border-gray-200 dark:border-zinc-800">
                     {t.categories.map((cat) => (
-                        <button 
+                        <button
                             key={cat}
                             onClick={() => setActiveTab(cat)}
-                            className={`px-6 py-2 text-sm rounded-full transition-all duration-300 ${
-                                activeTab === cat 
-                                    ? 'bg-white text-black shadow-sm font-bold' 
-                                    : 'text-gray-500 hover:text-black'
-                            }`}
+                            className={`px-6 py-2 text-sm rounded-full transition-all duration-300 ${activeTab === cat
+                                    ? 'bg-white text-black shadow-sm font-bold'
+                                    : 'text-gray-500 dark:text-gray-300 dark:hover:text-primary  hover:text-primary'
+                                }`}
                         >
                             {cat}
                         </button>
@@ -86,37 +85,49 @@ export default function CourseGrid({ lang }: { lang: Lang }) {
             {/* Courses Grid */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10">
                 {filteredCourses.map((course) => (
-                    <div key={course.title} className="group flex flex-col bg-white rounded-xl border border-zinc-100 overflow-hidden hover:shadow-xl transition-all duration-500 hover:-translate-y-2">
-                        <div className="relative h-[240px] w-full overflow-hidden">
-                            <Image src={course.image} fill alt={course.title} className="object-cover group-hover:scale-110 transition-transform duration-700" />
-                            <div className="absolute top-4 left-4 bg-white/90 backdrop-blur-md px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest text-primary shadow-sm">
-                                {course.category}
+                    <div key={course.title} className="group p-[3px] rounded-xl  overflow-hidden hover:shadow-xl transition-all duration-500 hover:-translate-y-2 bg-slate-100/50 dark:bg-zinc-900/50 overflow-hidden rounded-2xl shadow-xl relative z-10">
+                        <div className="absolute w-[98%] h-[98%] top-[1%] left-[1%] overflow-hidden bg-slate-100 dark:bg-zinc-900 shadow-xs hover:shadow-sm rounded-sm" />
+                        <div className="absolute inset-[-100%] bg-[conic-gradient(from_0deg,transparent_0deg,transparent_150deg,#ea580c_230deg,transparent_210deg)] opacity-0 group-hover:opacity-100 group-hover:animate-spin transition-opacity duration-500 pointer-events-none -z-1" style={{ animationDuration: '3s' }} />
+                        
+
+                        <div className="relative h-full bg-white/50 dark:bg-[#111114]/80 backdrop-blur-2xl z-10 border border-slate-100 dark:border-white/5 overflow-hidden rounded-lg">
+                            <div className="relative h-[240px] w-full overflow-hidden ">
+                                <Image src={course.image} fill alt={course.title} className="object-cover group-hover:scale-110 transition-transform duration-700" />
+                                <div className="absolute top-4 left-4 bg-white/90 backdrop-blur-md px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest text-primary shadow-sm">
+                                    {course.category}
+                                </div>
+                            </div>
+                   
+
+                            <div className="p-8 space-y-4 flex flex-col flex-grow">
+                            <div className="absolute top-0 -inset-full h-full w-1/2 z-5 block transform -skew-x-20 bg-gradient-to-r from-transparent via-white/2 to-transparent animate-[shimmer_3s_infinite]" />                         
+
+                                <div className="flex items-center gap-1 text-amber-500">
+                                    <Star size={14} fill="currentColor" />
+                                    <span className="text-xs font-bold text-zinc-900 dark:text-gray-500">{course.rating}</span>
+                                </div>
+                                <h3 className="text-2xl font-black text-zinc-900 dark:text-gray-200 leading-tight group-hover:text-primary transition-colors">
+                                    {course.title}
+                                </h3>
+                                <p className="text-zinc-500 text-sm leading-relaxed">{course.desc}</p>
+                                <div className="pt-4 mt-auto grid grid-cols-2 gap-4 border-t border-zinc-50">
+                                    <div className="flex items-center gap-2 text-zinc-600 dark:text-gray-400">
+                                        <Clock size={16} className="text-primary" />
+                                        <span className="text-xs font-medium">{course.duration}</span>
+                                    </div>
+                                    <div className="flex items-center gap-2 text-zinc-600 dark:text-gray-400">
+                                        <Zap size={16} className="text-primary" />
+                                        <span className="text-xs font-medium">{course.level}</span>
+                                    </div>
+                                </div>
+                                <Button className="w-full mt-6 rounded-xl font-bold py-6  group/btn">
+                                    {t.learnMore} <ArrowRightCircle className="ml-2 w-4 h-4 group-hover/btn:translate-x-1 transition-transform" />
+                                </Button>
                             </div>
                         </div>
 
-                        <div className="p-8 space-y-4 flex flex-col flex-grow">
-                            <div className="flex items-center gap-1 text-amber-500">
-                                <Star size={14} fill="currentColor" />
-                                <span className="text-xs font-bold text-zinc-900">{course.rating}</span>
-                            </div>
-                            <h3 className="text-2xl font-black text-zinc-900 leading-tight group-hover:text-primary transition-colors">
-                                {course.title}
-                            </h3>
-                            <p className="text-zinc-500 text-sm leading-relaxed">{course.desc}</p>
-                            <div className="pt-4 mt-auto grid grid-cols-2 gap-4 border-t border-zinc-50">
-                                <div className="flex items-center gap-2 text-zinc-600">
-                                    <Clock size={16} className="text-primary" />
-                                    <span className="text-xs font-medium">{course.duration}</span>
-                                </div>
-                                <div className="flex items-center gap-2 text-zinc-600">
-                                    <Zap size={16} className="text-primary" />
-                                    <span className="text-xs font-medium">{course.level}</span>
-                                </div>
-                            </div>
-                            <Button className="w-full mt-6 rounded-xl font-bold py-6 bg-zinc-900 hover:bg-primary transition-colors group/btn">
-                                {t.learnMore} <ArrowRightCircle className="ml-2 w-4 h-4 group-hover/btn:translate-x-1 transition-transform" />
-                            </Button>
-                        </div>
+                        <style dangerouslySetInnerHTML={{ __html: `@keyframes shimmer { 0% { transform: translateX(-150%) skewX(-20deg); } 100% { transform: translateX(450%) skewX(-20deg); } }` }} />
+
                     </div>
                 ))}
             </div>

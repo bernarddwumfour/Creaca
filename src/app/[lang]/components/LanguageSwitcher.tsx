@@ -47,7 +47,7 @@ export default function LanguageSwitcher({ currentLang }: { currentLang: string 
       
       <DropdownMenuContent 
         align="end" 
-        className="min-w-[120px] p-1 rounded-xl shadow-xl z-100 bg-white border-zinc-100 mt-2"
+        className="min-w-[120px] p-1 rounded-xl shadow-xl z-100 bg-white dark:bg-black dark:border-[#18181b] border-zinc-100 mt-2"
       >
         {languages.map((lang) => (
           <DropdownMenuItem 
@@ -57,7 +57,7 @@ export default function LanguageSwitcher({ currentLang }: { currentLang: string 
               flex items-center justify-between px-3 py-2 rounded-lg cursor-pointer transition-all
               ${currentLang === lang.code 
                 ? 'bg-primary/5 text-primary font-bold' 
-                : 'text-zinc-600 hover:bg-zinc-50 font-medium'}
+                : 'text-zinc-600 dark:text-gray-300 hover:bg-zinc-50 font-medium'}
             `}
           >
             <span className="text-xs">{lang.label}</span>
