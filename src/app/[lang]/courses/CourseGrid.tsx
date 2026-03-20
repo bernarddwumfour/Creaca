@@ -5,6 +5,7 @@ import Image from 'next/image';
 import { Clock, Star, ArrowRightCircle, Zap } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Lang } from '@/lib/dictionary/dictionary';
+import Link from 'next/link';
 
 const COURSE_DATA = {
     en: {
@@ -120,8 +121,12 @@ export default function CourseGrid({ lang }: { lang: Lang }) {
                                         <span className="text-xs font-medium">{course.level}</span>
                                     </div>
                                 </div>
-                                <Button className="w-full mt-6 rounded-xl font-bold py-6  group/btn">
-                                    {t.learnMore} <ArrowRightCircle className="ml-2 w-4 h-4 group-hover/btn:translate-x-1 transition-transform" />
+                                
+                                <Button asChild className="w-full mt-6 rounded-xl font-bold py-6  group/btn">
+                                <Link href={`/${lang}/courses/${course.title}`}>
+                                {t.learnMore} <ArrowRightCircle className="ml-2 w-4 h-4 group-hover/btn:translate-x-1 transition-transform" />
+                                </Link>
+                                    
                                 </Button>
                             </div>
                         </div>

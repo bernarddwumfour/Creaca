@@ -26,7 +26,7 @@ const Footer = ({ lang, t }: FooterProps) => {
               <div className="w-9 h-9 bg-primary rounded-xl flex items-center justify-center font-black text-lg text-white group-hover:scale-110 transition-transform">
                 Q
               </div>
-              <span className="text-xl font-black tracking-tighter uppercase">CRESCA<span className="text-primary">.</span></span>
+              <span className="text-xl font-black tracking-tighter uppercase">KYRIOS<span className="text-primary">.</span></span>
             </Link>
             
             <p className="text-sm text-zinc-400 leading-relaxed max-w-sm mx-auto lg:mx-0">

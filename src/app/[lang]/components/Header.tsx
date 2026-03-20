@@ -74,7 +74,7 @@ const Header = ({ lang, t }: HeaderProps) => {
           href={`/${lang}`}
           onClick={() => setMobileMenuOpen(false)}
         >
-          CRESCA<span className="text-primary">.</span>
+          KYRIOS<span className="text-primary">.</span>
         </Link>
 
         {/* DESKTOP NAVIGATION */}
@@ -130,8 +130,8 @@ const Header = ({ lang, t }: HeaderProps) => {
 
 
             <Button asChild size="sm" className="hidden sm:flex rounded-full font-bold px-4 bg-primary text-primary-foreground hover:opacity-90 transition-all text-xs tracking-wide shadow-lg">
-              {/* <Link href={`/${lang}/login`}>{t.trial}</Link> */}
-              <Link href={`/${lang}/#`}>{t.trial}</Link>
+              <Link href={`/${lang}/login`}>{t.trial}</Link> 
+              {/* <Link href={`/${lang}/#`}>{t.trial}</Link>*/}
 
             </Button>
 

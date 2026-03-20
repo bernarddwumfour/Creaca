@@ -25,8 +25,8 @@ async function page({ params }: PageProps) {
             <main className="min-h-screen bg-white dark:bg-[#18181b]">
                 {/* Hero Section */}
                 {/* Reduced py-16 to py-12 for mobile */}
-                <section className="py-12 md:py-16 relative bg-primary/[0.03] overflow-hidden">
-                <div className="absolute top-[-15%] left-[-10%] w-[70%] h-[60%] bg-primary/20 dark:bg-primary/10 rounded-full blur-[120px] pointer-events-none z-0 animate-[pulse_8s_ease-in-out_infinite]" />
+                <section className="py-12 md:py-16 relative overflow-hidden">
+                    <div className="absolute top-[-15%] left-[-10%] w-[70%] h-[60%] bg-primary/20 dark:bg-primary/10 rounded-full blur-[120px] pointer-events-none z-0 animate-[pulse_8s_ease-in-out_infinite]" />
                     <div className="container mx-auto px-6 pt-12">
                         <div className="space-y-2">
                             {/* Reduced text-4xl to text-3xl for mobile */}
@@ -39,7 +39,7 @@ async function page({ params }: PageProps) {
                             </p>
                         </div>
                     </div>
-                   s
+
                 </section>
 
                 {/* Community Section */}
@@ -62,28 +62,28 @@ async function page({ params }: PageProps) {
                             <div className="w-full flex-col justify-center lg:items-start items-center gap-6 md:gap-10 inline-flex">
                                 <div className="w-full flex-col justify-center items-start gap-6 md:gap-8 flex">
                                     <div className="space-y-3 md:space-y-4">
-                                        <h3 className="text-2xl md:text-4xl text-start font-bold max-w-[800px] leading-tight text-zinc-900">
+                                        <h3 className="text-2xl md:text-4xl text-start font-bold max-w-[800px] leading-tight ">
                                             {about.community.title}
                                         </h3>
-                                        <p className="text-start text-sm md:text-base text-zinc-500 max-w-[700px] leading-relaxed">
+                                        <p className="text-start text-sm md:text-base text-zinc-500 dark:text-zinc-400 max-w-[700px] leading-relaxed">
                                             {about.community.desc}
                                         </p>
                                     </div>
 
                                     <div className="w-full space-y-3 md:space-y-4 border-l-4 border-primary pl-4 md:pl-6 py-2 bg-primary/[0.02] rounded-r-xl">
-                                        <h2 className="text-zinc-900 text-xl md:text-2xl font-bold leading-normal text-left">
+                                        <h2 className="text-xl md:text-2xl font-bold leading-normal text-left">
                                             {about.community.foundedTitle}
                                         </h2>
-                                        <p className="text-zinc-500 text-sm md:text-base font-normal leading-relaxed text-left">
+                                        <p className="text-zinc-500 dark:text-zinc-400 dark:text-zinc-400 text-sm md:text-base font-normal leading-relaxed text-left">
                                             {about.community.foundedDesc}
                                         </p>
                                     </div>
 
                                     <div className="w-full flex-col justify-start lg:items-start items-center flex">
-                                        <h2 className="text-zinc-900 text-xl md:text-2xl font-bold leading-normal text-left">
+                                        <h2 className="text-zinc-900 dark:text-white text-xl md:text-2xl font-bold leading-normal text-left">
                                             {about.community.philosophyTitle}
                                         </h2>
-                                        <p className="text-zinc-500 text-sm md:text-base font-normal leading-relaxed text-left max-w-[650px]">
+                                        <p className="text-zinc-500 dark:text-zinc-400 text-sm md:text-base font-normal leading-relaxed text-left max-w-[650px]">
                                             {about.community.philosophyDesc}
                                         </p>
                                     </div>
@@ -111,10 +111,10 @@ async function page({ params }: PageProps) {
                                     <Users size={18} strokeWidth={2.5} />
                                     <span className="text-[10px] md:text-xs font-black uppercase tracking-[0.3em]">{about.missionVision.missionLabel}</span>
                                 </div>
-                                <h4 className="text-2xl md:text-3xl font-extrabold text-zinc-900 leading-tight">
+                                <h4 className="text-2xl md:text-3xl font-extrabold text-zinc-900 dark:text-white leading-tight">
                                     {about.missionVision.missionTitle.split(' ').slice(0, -2).join(' ')} <span className="text-primary">{about.missionVision.missionTitle.split(' ').slice(-2).join(' ')}</span>
                                 </h4>
-                                <p className="text-zinc-500 text-sm md:text-base leading-relaxed max-w-md">
+                                <p className="text-zinc-500 dark:text-zinc-400 text-sm md:text-base leading-relaxed max-w-md">
                                     {about.missionVision.missionDesc}
                                 </p>
                             </div>
@@ -124,10 +124,10 @@ async function page({ params }: PageProps) {
                                     <Globe2 size={18} strokeWidth={2.5} />
                                     <span className="text-[10px] md:text-xs font-black uppercase tracking-[0.3em]">{about.missionVision.visionLabel}</span>
                                 </div>
-                                <h4 className="text-2xl md:text-3xl font-extrabold text-zinc-900 leading-tight">
+                                <h4 className="text-2xl md:text-3xl font-extrabold text-zinc-900 dark:text-white leading-tight">
                                     {about.missionVision.visionTitle.split(' ').slice(0, -2).join(' ')} <span className="text-primary">{about.missionVision.visionTitle.split(' ').slice(-2).join(' ')}</span>
                                 </h4>
-                                <p className="text-zinc-500 text-sm md:text-base leading-relaxed max-w-md">
+                                <p className="text-zinc-500 dark:text-zinc-400 text-sm md:text-base leading-relaxed max-w-md">
                                     {about.missionVision.visionDesc}
                                 </p>
                             </div>
@@ -136,9 +136,9 @@ async function page({ params }: PageProps) {
                 </section>
 
                 {/* Founders Section */}
-                <section className="py-12 md:py-24 relative bg-primary/[0.03] px-6 overflow-hidden">
+                <section className="py-12 md:py-24 relative px-6 overflow-hidden">
                     <div className="space-y-3 md:space-y-4 container mx-auto pb-4">
-                        <h3 className="text-2xl md:text-4xl text-start font-bold max-w-[800px] leading-tight md:leading-12 text-zinc-900">
+                        <h3 className="text-2xl md:text-4xl text-start font-bold max-w-[800px] leading-tight md:leading-12 text-zinc-900 dark:text-white">
                             Meet Our <span className="text-primary">Founders</span>
                         </h3>
                         <p className="text-start text-xs md:text-sm text-gray-500 max-w-[700px]">
@@ -154,10 +154,10 @@ async function page({ params }: PageProps) {
                                         <div className="inline-flex items-center gap-2 bg-primary/10 text-primary px-3 py-1 rounded-full text-[10px] md:text-xs font-bold uppercase tracking-widest">
                                             <span>{about.founders.storyLabel}</span>
                                         </div>
-                                        <h3 className="text-2xl md:text-4xl text-start font-bold max-w-[800px] leading-tight md:leading-12 text-zinc-900">
+                                        <h3 className="text-2xl md:text-4xl text-start font-bold max-w-[800px] leading-tight md:leading-12 text-zinc-900 dark:text-white">
                                             {about.founders.storyTitle}
                                         </h3>
-                                        <p className="text-start text-xs md:text-sm text-zinc-500 max-w-[700px] leading-relaxed">
+                                        <p className="text-start text-xs md:text-sm text-zinc-500 dark:text-zinc-400 max-w-[700px] leading-relaxed">
                                             {about.founders.storyDesc}
                                         </p>
                                     </div>
@@ -165,7 +165,7 @@ async function page({ params }: PageProps) {
                                         <h4 className="text-primary font-bold text-xs uppercase tracking-tighter mb-4">{about.founders.creatorsLabel}</h4>
                                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-8 items-center">
                                             <div className="space-y-4">
-                                                <p className="text-zinc-700 text-base md:text-lg italic leading-relaxed font-medium">
+                                                <p className="text-zinc-700 dark:text-zinc-400 text-base md:text-lg italic leading-relaxed font-medium">
                                                     &quot;{about.founders.quote}&quot;
                                                 </p>
                                                 <div className="flex items-center gap-3">
@@ -174,8 +174,8 @@ async function page({ params }: PageProps) {
                                                         <div className="w-10 h-10 md:w-12 md:h-12 rounded-full border-4 border-white bg-zinc-300 shadow-sm" />
                                                     </div>
                                                     <div className="flex flex-col">
-                                                        <span className="text-xs md:text-sm font-black text-zinc-900 leading-none">{about.founders.foundersLabel}</span>
-                                                        <span className="text-[10px] md:text-xs text-zinc-500 font-medium">{about.founders.foundersSublabel}</span>
+                                                        <span className="text-xs md:text-sm font-black text-zinc-900 dark:text-white leading-none">{about.founders.foundersLabel}</span>
+                                                        <span className="text-[10px] md:text-xs text-zinc-500 dark:text-zinc-400 font-medium">{about.founders.foundersSublabel}</span>
                                                     </div>
                                                 </div>
                                             </div>
@@ -202,7 +202,7 @@ async function page({ params }: PageProps) {
                                             />
                                         </div>
                                         <div className="mt-4 md:mt-6 px-4">
-                                            <h3 className="text-xl md:text-2xl font-black text-zinc-900">{member.name}</h3>
+                                            <h3 className="text-xl md:text-2xl font-black text-zinc-900 dark:text-white">{member.name}</h3>
                                             <p className="text-primary font-bold tracking-widest uppercase text-[10px] md:text-xs">{member.role}</p>
                                         </div>
                                     </div>
