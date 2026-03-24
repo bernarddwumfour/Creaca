@@ -1,7 +1,7 @@
 "use client";
 import { useEffect, useState } from "react";
 
-const CountUp = ({ end, duration = 2000 }: { end: number; duration?: number }) => {
+const CountUp = ({ end, duration = 4000 }: { end: number; duration?: number }) => {
   const [count, setCount] = useState(0);
 
   useEffect(() => {
@@ -9,7 +9,7 @@ const CountUp = ({ end, duration = 2000 }: { end: number; duration?: number }) =
     const step = (timestamp: number) => {
       if (!startTimestamp) startTimestamp = timestamp;
       const progress = Math.min((timestamp - startTimestamp) / duration, 1);
-      
+
       // Applying an ease-out cubic function for a smoother finish
       const easeOut = 1 - Math.pow(1 - progress, 3);
       setCount(Math.floor(easeOut * end));
@@ -24,4 +24,4 @@ const CountUp = ({ end, duration = 2000 }: { end: number; duration?: number }) =
   return <span>{count.toLocaleString()}</span>;
 };
 
-export default  CountUp
+export default CountUp

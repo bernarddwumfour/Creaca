@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button'
 import Link from 'next/link'
 import { Lang } from '@/lib/dictionary/dictionary'
 import LanguageSwitcher from './LanguageSwitcher'
-import { Menu, X, ShoppingCart, Sun, Moon } from 'lucide-react'
+import { Menu, X, Sun, Moon } from 'lucide-react'
 import { useTheme } from 'next-themes'
 
 interface HeaderProps {
@@ -93,25 +93,7 @@ const Header = ({ lang, t }: HeaderProps) => {
           </ul>
         </nav>
 
-        <div className="flex sm:gap-4 items-center">
-          {/* Theme Switcher */}
-          {mounted && (
-            <Button
-              variant="ghost"
-              size="icon"
-              className="rounded-full w-8 h-8"
-              onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
-            >
-              {theme === 'dark' ? <Sun size={18} /> : <Moon size={18} />}
-              <span className="sr-only">Toggle theme</span>
-            </Button>
-          )}
 
-
-          <div className="">
-            <LanguageSwitcher currentLang={lang} />
-          </div>
-        </div>
 
         {/* ACTIONS */}
         <div className="flex items-center md:gap-12 z-[1001]">
@@ -120,17 +102,29 @@ const Header = ({ lang, t }: HeaderProps) => {
 
 
           <div className="flex items-center gap-6">
-            {/* Cart Icon */}
-            <Link href={`/${lang}/cart`} className="relative p-2 hover:text-primary transition-colors">
-              <ShoppingCart size={20} />
-              <span className="absolute top-0 right-0 bg-primary text-primary-foreground text-[10px] font-bold px-1.5 py-0.5 rounded-full min-w-[18px] text-center">
-                0
-              </span>
-            </Link>
+            <div className="flex sm:gap-4 items-center">
+              {/* Theme Switcher */}
+              {mounted && (
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="rounded-full w-8 h-8"
+                  onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
+                >
+                  {theme === 'dark' ? <Sun size={18} /> : <Moon size={18} />}
+                  <span className="sr-only">Toggle theme</span>
+                </Button>
+              )}
+
+
+              <div className="">
+                <LanguageSwitcher currentLang={lang} />
+              </div>
+            </div>
 
 
             <Button asChild size="sm" className="hidden sm:flex rounded-full font-bold px-4 bg-primary text-primary-foreground hover:opacity-90 transition-all text-xs tracking-wide shadow-lg">
-              <Link href={`/${lang}/login`}>{t.trial}</Link> 
+              <Link href={`/${lang}/login`}>{t.trial}</Link>
               {/* <Link href={`/${lang}/#`}>{t.trial}</Link>*/}
 
             </Button>

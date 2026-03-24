@@ -142,7 +142,7 @@ async function page({ params }: PageProps) {
                             Meet Our <span className="text-primary">Founders</span>
                         </h3>
                         <p className="text-start text-xs md:text-sm text-gray-500 max-w-[700px]">
-                            The two educators behind the vision of Qubit, dedicated to bridging the gap in global communication.
+                            The two educators behind the vision of Kyrios, dedicated to bridging the gap in global communication.
                         </p>
                     </div>
 

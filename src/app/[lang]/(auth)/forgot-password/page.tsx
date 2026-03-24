@@ -73,7 +73,7 @@ export default function ForgotPasswordPage({ params }: { params: Promise<{ lang:
 
                 <div className="relative z-10 text-center text-white space-y-2">
                     <h1 className="text-8xl font-black tracking-tighter">
-                        QUBIT<span className="text-zinc-900">.</span>
+                        KYRIOS<span className="text-zinc-900">.</span>
                     </h1>
                     <p className="text-white/90 font-medium text-lg tracking-widest uppercase">
                         Recovery Portal
@@ -84,7 +84,7 @@ export default function ForgotPasswordPage({ params }: { params: Promise<{ lang:
             {/* RIGHT SIDE: THE RESET CARD */}
             <div className="w-full lg:w-1/2 flex flex-col gap-6 items-center justify-center p-6 bg-white dark:bg-[#18181b] relative">
                 <Link href={`/${lang}`}>
-                    <span className='font-black text-xl'>QUBIT<span className="text-primary">.</span></span>
+                    <span className='font-black text-xl'>KYRIOS<span className="text-primary">.</span></span>
                 </Link>
                 <Card className="w-full max-w-md group  rounded-xl  overflow-hidden  transition-all duration-500 hover:-translate-y-2 bg-white dark:bg-[#111114] overflow-hidden rounded-2xl relative z-10 shadow-xl dark:shadow-xl ">
                     <div className="absolute w-[98%] h-[98%] top-[1%] left-[1%] overflow-hidden bg-white dark:bg-[#111114] rounded-xl " />

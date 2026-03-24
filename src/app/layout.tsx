@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { ThemeProvider } from "@/components/ui/theme-provider";
+import NextTopLoader from 'nextjs-toploader';
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -28,7 +29,15 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       ><ThemeProvider attribute="class" defaultTheme="system" enableSystem>
-
+          <NextTopLoader
+            color="#ea580c" // Your Kyrios Primary Orange
+            initialPosition={0.08}
+            crawlSpeed={200}
+            height={3}
+            showSpinner={false}
+            easing="ease"
+            speed={200}
+          />
           {children}
         </ThemeProvider>
 

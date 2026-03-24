@@ -13,15 +13,15 @@ export const faqDict = {
             },
             {
                 question: "Are the classes live or pre-recorded?",
-                answer: "At Qubit, we believe in real-time interaction. All our core sessions are live, allowing you to engage directly with instructors and peers. However, we provide recorded summaries for review."
+                answer: "At Kyrios, we believe in real-time interaction. All our core sessions are live, allowing you to engage directly with instructors and peers. However, we provide recorded summaries for review."
             },
             {
-                question: "What is the 'Qubit Philosophy' in teaching?",
+                question: "What is the 'Kyrios Philosophy' in teaching?",
                 answer: "Our philosophy bridges global communication gaps by focusing on 'Contextual Learning.' We don't just teach vocabulary; we teach you how to navigate professional and social environments naturally."
             },
             {
                 question: "Can I get a certificate upon completion?",
-                answer: "Yes! Every student who completes a course level receives a Qubit Certified Global Communicator certificate, which is recognized by our partner organizations worldwide."
+                answer: "Yes! Every student who completes a course level receives a Kyrios Certified Global Communicator certificate, which is recognized by our partner organizations worldwide."
             }
         ],
         cta: {
@@ -45,15 +45,15 @@ export const faqDict = {
             },
             {
                 question: "Les cours sont-ils en direct ou préenregistrés ?",
-                answer: "Chez Qubit, nous croyons en l'interaction en temps réel. Toutes nos sessions principales sont en direct, vous permettant d'échanger directement avec les instructeurs et vos pairs. Cependant, nous fournissons des résumés enregistrés pour révision."
+                answer: "Chez Kyrios, nous croyons en l'interaction en temps réel. Toutes nos sessions principales sont en direct, vous permettant d'échanger directement avec les instructeurs et vos pairs. Cependant, nous fournissons des résumés enregistrés pour révision."
             },
             {
-                question: "Quelle est la 'Philosophie Qubit' en enseignement ?",
+                question: "Quelle est la 'Philosophie Kyrios' en enseignement ?",
                 answer: "Notre philosophie comble les lacunes de communication mondiales en se concentrant sur l'apprentissage contextuel. Nous n'enseignons pas seulement le vocabulaire ; nous vous apprenons à naviguer naturellement dans les environnements professionnels et sociaux."
             },
             {
                 question: "Puis-je obtenir un certificat à la fin ?",
-                answer: "Oui ! Chaque étudiant qui termine un niveau de cours reçoit un certificat Qubit Certified Global Communicator, reconnu par nos organisations partenaires dans le monde entier."
+                answer: "Oui ! Chaque étudiant qui termine un niveau de cours reçoit un certificat Kyrios Certified Global Communicator, reconnu par nos organisations partenaires dans le monde entier."
             }
         ],
         cta: {
@@ -77,15 +77,15 @@ export const faqDict = {
             },
             {
                 question: "¿Las clases son en vivo o grabadas?",
-                answer: "En Qubit, creemos en la interacción en tiempo real. Todas nuestras sesiones principales son en vivo, lo que te permite interactuar directamente con instructores y compañeros. Sin embargo, proporcionamos resúmenes grabados para repaso."
+                answer: "En Kyrios, creemos en la interacción en tiempo real. Todas nuestras sesiones principales son en vivo, lo que te permite interactuar directamente con instructores y compañeros. Sin embargo, proporcionamos resúmenes grabados para repaso."
             },
             {
-                question: "¿Cuál es la 'Filosofía Qubit' en la enseñanza?",
+                question: "¿Cuál es la 'Filosofía Kyrios' en la enseñanza?",
                 answer: "Nuestra filosofía cierra las brechas de comunicación global enfocándose en el 'Aprendizaje Contextual'. No solo enseñamos vocabulario; te enseñamos cómo navegar entornos profesionales y sociales de forma natural."
             },
             {
                 question: "¿Puedo obtener un certificado al finalizar?",
-                answer: "¡Sí! Cada estudiante que completa un nivel de curso recibe un certificado de Qubit Certified Global Communicator, reconocido por nuestras organizaciones asociadas en todo el mundo."
+                answer: "¡Sí! Cada estudiante que completa un nivel de curso recibe un certificado de Kyrios Certified Global Communicator, reconocido por nuestras organizaciones asociadas en todo el mundo."
             }
         ],
         cta: {
