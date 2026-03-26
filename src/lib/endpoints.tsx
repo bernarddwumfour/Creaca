@@ -6,7 +6,7 @@ export const ENDPOINTS = {
         REGISTER: `${API_VERSION}/accounts/register/`,
         REFRESH: `${API_VERSION}/accounts/token/refresh/`,
         LOGOUT: `${API_VERSION}/accounts/logout/`,
-        ME: `${API_VERSION}/accounts/me/`,
+        PROFILE: `${API_VERSION}/accounts/me/`,
         UPDATE_PROFILE: `${API_VERSION}/accounts/me/update/`,
         CHANGE_PASSWORD: `${API_VERSION}/accounts/password/change/`,
     },

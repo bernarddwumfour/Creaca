@@ -15,22 +15,22 @@ type PageProps = {
 };
 
 // Fixed SocialLink with proper TypeScript types
-const SocialLink = ({ 
-    href, 
-    children, 
-    className, 
-    style 
-}: { 
-    href: string; 
-    children: React.ReactNode; 
-    className?: string; 
-    style?: React.CSSProperties 
+const SocialLink = ({
+    href,
+    children,
+    className,
+    style
+}: {
+    href: string;
+    children: React.ReactNode;
+    className?: string;
+    style?: React.CSSProperties
 }) => (
-    <a 
-        href={href} 
-        target="_blank" 
-        rel="noopener noreferrer" 
-        style={style} 
+    <a
+        href={href}
+        target="_blank"
+        rel="noopener noreferrer"
+        style={style}
         className={className}
     >
         {children}
@@ -144,21 +144,21 @@ async function page({ params }: PageProps) {
                                         <div className="space-y-2">
                                             <p className="text-xs md:text-sm font-black text-zinc-900 ml-1 dark:text-gray-300">{t.form.nameLabel}</p>
                                             <div className="relative">
-                                                <Input className="h-12 md:h-14 rounded-xl border-zinc-200 dark:border-zinc-700 bg-zinc-50/50" placeholder={t.form.namePlaceholder} />
+                                                <Input className="h-12 border-zinc-200 dark:border-zinc-800 focus-visible:ring-primary rounded-xl pr-10" placeholder={t.form.namePlaceholder} />
                                                 <User className="absolute right-4 top-1/2 -translate-y-1/2 text-zinc-400" size={18} />
                                             </div>
                                         </div>
                                         <div className="space-y-2">
                                             <p className="text-xs md:text-sm font-black text-zinc-900 ml-1 dark:text-gray-300">{t.form.emailLabel}</p>
                                             <div className="relative">
-                                                <Input className="h-12 md:h-14 rounded-xl border-zinc-200 dark:border-zinc-700 bg-zinc-50/50" placeholder={t.form.emailPlaceholder} />
+                                                <Input className="h-12 border-zinc-200 dark:border-zinc-800 focus-visible:ring-primary rounded-xl pr-10" placeholder={t.form.emailPlaceholder} />
                                                 <Mail className="absolute right-4 top-1/2 -translate-y-1/2 text-zinc-400" size={18} />
                                             </div>
                                         </div>
                                         <div className="space-y-2">
                                             <p className="text-xs md:text-sm font-black text-zinc-900 ml-1 dark:text-gray-300">{t.form.messageLabel}</p>
                                             <div className="relative">
-                                                <Textarea className="min-h-[120px] rounded-xl border-zinc-200 dark:border-zinc-700 bg-zinc-50/50 pt-4" placeholder={t.form.messagePlaceholder} />
+                                                <Textarea className="min-h-[120px] rounded-xl  border-zinc-200 dark:border-zinc-800 focus-visible:ring-primary  bg-zinc-50/50 pt-4" placeholder={t.form.messagePlaceholder} />
                                                 <MessageCircle className="absolute right-4 top-5 text-zinc-400" size={18} />
                                             </div>
                                         </div>

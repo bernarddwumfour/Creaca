@@ -142,14 +142,14 @@ function SignupForm({ lang, t }: { lang: Lang, t: any }) {
         <FormField control={form.control} name="firstName" render={({ field }) => (
           <FormItem className="space-y-1 pt-3">
             <FormLabel className="text-[10px] font-bold uppercase text-zinc-500 tracking-widest">{t.firstName}</FormLabel>
-            <FormControl><Input {...field} className="h-11 rounded-xl border-zinc-200 dark:border-zinc-800" /></FormControl>
+            <FormControl><Input {...field} className="h-12 border-zinc-200 dark:border-zinc-800 focus-visible:ring-primary rounded-xl pr-10" /></FormControl>
             <FormMessage className="text-[10px]" />
           </FormItem>
         )} />
         <FormField control={form.control} name="lastName" render={({ field }) => (
           <FormItem className="space-y-1">
             <FormLabel className="text-[10px] font-bold uppercase text-zinc-500 tracking-widest">{t.lastName}</FormLabel>
-            <FormControl><Input {...field} className="h-11 rounded-xl border-zinc-200 dark:border-zinc-800" /></FormControl>
+            <FormControl><Input {...field} className="h-12 border-zinc-200 dark:border-zinc-800 focus-visible:ring-primary rounded-xl pr-10" /></FormControl>
             <FormMessage className="text-[10px]" />
           </FormItem>
         )} />
@@ -157,7 +157,7 @@ function SignupForm({ lang, t }: { lang: Lang, t: any }) {
         <FormField control={form.control} name="email" render={({ field }) => (
           <FormItem className="space-y-1">
             <FormLabel className="text-[10px] font-bold uppercase text-zinc-500 tracking-widest">{t.email}</FormLabel>
-            <FormControl><Input {...field} type="email" className="h-11 rounded-xl border-zinc-200 dark:border-zinc-800" /></FormControl>
+            <FormControl><Input {...field} type="email" className="h-12 border-zinc-200 dark:border-zinc-800 focus-visible:ring-primary rounded-xl pr-10" /></FormControl>
             <FormMessage className="text-[10px]" />
           </FormItem>
         )} />
@@ -169,7 +169,7 @@ function SignupForm({ lang, t }: { lang: Lang, t: any }) {
               {password && <span className="text-[9px] font-black uppercase opacity-40">{["Weak", "Weak", "Fair", "Good", "Strong", "Excellent"][strength]}</span>}
             </div>
             <div className="relative">
-              <FormControl><Input {...field} type={showPass ? "text" : "password"} className="h-11 rounded-xl pr-10 border-zinc-200 dark:border-zinc-800" /></FormControl>
+              <FormControl><Input {...field} type={showPass ? "text" : "password"} className="h-11 rounded-xl pr-10 border-zinc-200 dark:border-zinc-800 focus-visible:ring-primary " /></FormControl>
               <button type="button" onClick={() => setShowPass(!showPass)} className="absolute right-3 top-3 text-zinc-400">
                 {showPass ? <EyeOff size={16} /> : <Eye size={16} />}
               </button>
@@ -186,7 +186,7 @@ function SignupForm({ lang, t }: { lang: Lang, t: any }) {
         <FormField control={form.control} name="confirmPassword" render={({ field }) => (
           <FormItem className="space-y-1">
             <FormLabel className="text-[10px] font-bold uppercase text-zinc-500 tracking-widest">{t.confirmPassword}</FormLabel>
-            <FormControl><Input {...field} type={showPass ? "text" : "password"} className="h-11 rounded-xl border-zinc-200 dark:border-zinc-800" /></FormControl>
+            <FormControl><Input {...field} type={showPass ? "text" : "password"} className="h-12 border-zinc-200 dark:border-zinc-800 focus-visible:ring-primary rounded-xl pr-10" /></FormControl>
             <FormMessage className="text-[10px]" />
           </FormItem>
         )} />

@@ -1,16 +1,34 @@
 import axios, { AxiosError, InternalAxiosRequestConfig } from 'axios';
+import Cookies from 'js-cookie';
 import { ENDPOINTS, PUBLIC_URLS } from './endpoints';
+
+const AUTH_COOKIE_KEY = 'kyrios_auth_session';
 
 const api = axios.create({
     baseURL: process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000',
     timeout: 15000,
 });
 
+/**
+ * Helper to get and parse our unified cookie
+ */
+const getSession = () => {
+    const cookie = Cookies.get(AUTH_COOKIE_KEY);
+    if (!cookie) return null;
+    try {
+        return JSON.parse(cookie);
+    } catch {
+        return null;
+    }
+};
+
 api.interceptors.request.use(
     (config: InternalAxiosRequestConfig) => {
         const isPublic = PUBLIC_URLS.some(url => config.url?.includes(url));
-        const token = typeof window !== 'undefined' ? localStorage.getItem('access_token') : null;
+        const session = getSession();
+        const token = session?.tokens?.access;
 
+        // Use the token from our unified cookie if it exists and the route isn't public
         if (token && !isPublic && config.headers) {
             config.headers.Authorization = `Bearer ${token}`;
         }
@@ -19,41 +37,75 @@ api.interceptors.request.use(
     (error) => Promise.reject(error)
 );
 
-
 api.interceptors.response.use(
     (response) => response,
     async (error: AxiosError) => {
         const originalRequest = error.config as any;
         const serverResponse = error.response?.data as any;
 
-
+        // Matching your Django API logic for expired tokens
         if (
             error.response?.status === 401 &&
             serverResponse?.message === "Token has expired" && // Check your backend message
             !originalRequest._retry
         ) {
             originalRequest._retry = true;
+
             try {
-                const refresh = localStorage.getItem('refresh_token');
-                if (!refresh) throw new Error("No refresh token");
+                const session = getSession();
+                const refresh = session?.tokens?.refresh;
 
-                const { data } = await axios.post(`${api.defaults.baseURL}${ENDPOINTS.AUTH.REFRESH}`, {}, {
-                    headers: { Authorization: `Bearer ${refresh}` }
-                });
+                if (!refresh) throw new Error("No refresh token available");
 
-                const newAccess = data.data.tokens.access;
-                localStorage.setItem('access_token', newAccess);
+                const { data } = await axios.post(
+                    `${api.defaults.baseURL}${ENDPOINTS.AUTH.REFRESH}`,
+                    {},
+                    { headers: { Authorization: `Bearer ${refresh}` } }
+                );
 
-                // Update the header for the original failed request
-                originalRequest.headers['Authorization'] = `Bearer ${newAccess}`;
+                const newTokens = data.data.tokens;
+
+                // UPDATE THE UNIFIED COOKIE
+                // We keep the existing user data but swap the tokens
+                if (session) {
+                    const updatedSession = {
+                        ...session,
+                        tokens: {
+                            ...session.tokens,
+                            access: newTokens.access,
+                            refresh: newTokens.refresh || session.tokens.refresh // handle if API sends new refresh
+                        }
+                    };
+
+                    // Save back to cookie so Middleware is updated
+                    Cookies.set(AUTH_COOKIE_KEY, JSON.stringify(updatedSession), {
+                        expires: 7,
+                        secure: true,
+                        sameSite: 'strict'
+                    });
+
+                    // Optional: keep localStorage in sync if you still use it elsewhere
+                    localStorage.setItem('access_token', newTokens.access);
+                }
+
+                // Retry original request with new access token
+                originalRequest.headers['Authorization'] = `Bearer ${newTokens.access}`;
                 return api(originalRequest);
+
             } catch (err) {
+                // If refresh fails, clear session and force login
+                Cookies.remove(AUTH_COOKIE_KEY);
                 localStorage.clear();
-                window.location.href = '/login';
+
+                // Redirecting to login (handle language prefix if necessary)
+                if (typeof window !== 'undefined') {
+                    window.location.href = '/login';
+                }
                 return Promise.reject(err);
             }
         }
         return Promise.reject(error);
     }
 );
+
 export default api;

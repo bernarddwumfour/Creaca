@@ -8,6 +8,7 @@ import * as z from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useTheme } from 'next-themes';
 import { Moon, Sun, Loader2, CheckCircle2, Eye, EyeOff } from 'lucide-react';
+import { useAuth } from '@/context/AuthContext'; // adjust path as needed
 
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -69,6 +70,7 @@ function LoginForm({ lang, t }: { lang: Lang, t: any }) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const isRegistered = searchParams.get('registered') === 'true';
+  const { login } = useAuth();
 
   const form = useForm<z.infer<typeof loginSchema>>({
     resolver: zodResolver(loginSchema),
@@ -77,16 +79,18 @@ function LoginForm({ lang, t }: { lang: Lang, t: any }) {
 
   async function onSubmit(values: z.infer<typeof loginSchema>) {
     setIsLoading(true);
+
     try {
       const { data } = await api.post(ENDPOINTS.AUTH.LOGIN, values);
 
-      // Explicitly check for success status before redirecting
       if (data.status === 'success') {
-        localStorage.setItem('access_token', data.data.tokens.access);
-        localStorage.setItem('refresh_token', data.data.tokens.refresh);
-        // router.push(`/${lang}`);
+
+        router.push(`/`);
+        login({
+          user: data.data.user,
+          tokens: data.data.tokens
+        });
       } else {
-        // Handle 200 OK responses that contain a failure status
         form.setError('root', { message: data.message || t.error });
       }
     } catch (error: any) {

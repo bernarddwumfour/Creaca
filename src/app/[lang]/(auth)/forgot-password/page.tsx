@@ -107,7 +107,7 @@ export default function ForgotPasswordPage({ params }: { params: Promise<{ lang:
                                     id="email"
                                     type="email"
                                     placeholder="name@domain.com"
-                                    className="h-12 border-zinc-200 focus-visible:ring-primary rounded-xl"
+                                    className="h-12 border-zinc-200 dark:border-zinc-800 focus-visible:ring-primary rounded-xl pr-10"
                                 />
                             </div>
                         </CardContent>
