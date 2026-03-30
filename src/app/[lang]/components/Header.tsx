@@ -109,7 +109,7 @@ const Header = ({ lang, t }: HeaderProps) => {
 
   return (
     <header
-      className={`fixed w-full top-0 left-0 z-[1000] transition-all duration-500 ${mobileMenuOpen
+      className={`fixed w-full top-0 left-0 z-[100] transition-all duration-500 ${mobileMenuOpen
         ? 'bg-background'
         : isScrolled
           ? 'bg-background/70 backdrop-blur-md shadow-sm border-b'

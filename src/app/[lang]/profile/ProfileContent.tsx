@@ -21,6 +21,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import api from '@/lib/axios';
 import { ENDPOINTS } from '@/lib/endpoints';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { CustomDialog } from '../../../../widgets/CustomDialog/CustomDialog';
+import { AvatarBuilder } from './AvatarPicker';
 
 // ====================== SCHEMAS ======================
 const profileSchema = z.object({
@@ -102,6 +104,7 @@ function PersonalInfoSection() {
     }, [user, form]);
 
     const [successMessage, setSuccessMessage] = useState<string | null>(null);
+    const [isAvatarModalOpen, setIsAvatarModalOpen] = useState(false);
 
     const onSubmit = (data: z.infer<typeof profileSchema>) => {
         updateMutation.mutate(data);
@@ -121,23 +124,43 @@ function PersonalInfoSection() {
 
                 <CardContent className="pt-8 space-y-8">
                     <div className="flex items-center gap-6">
-                        <div className="relative group/avatar cursor-pointer">
-                            <Avatar className="w-20 h-20 border-2 border-zinc-100 dark:border-zinc-800">
-                                <AvatarImage src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${user?.email}`} />
-                                <AvatarFallback className="font-black">
-                                    {user?.first_name?.[0]}{user?.last_name?.[0] || "BN"}
-                                </AvatarFallback>
-                            </Avatar>
-                            <div className="absolute inset-0 flex items-center justify-center bg-black/40 rounded-full opacity-0 group-hover/avatar:opacity-100 transition-all backdrop-blur-[2px]">
-                                <Camera className="text-white" size={20} />
+                        <>
+                            <div
+                                className="relative group/avatar cursor-pointer"
+                                onClick={() => setIsAvatarModalOpen(true)}
+                            >
+                                <Avatar className="w-20 h-20 border-2 border-zinc-100 dark:border-zinc-800 transition-transform active:scale-95">
+                                    <AvatarImage src={user?.avatar_url || `https://api.dicebear.com/7.x/avataaars/svg?seed=${user?.username}`} />
+                                    <AvatarFallback className="font-black bg-zinc-100 dark:bg-zinc-800">
+                                        {user?.first_name?.[0]}{user?.last_name?.[0]}
+                                    </AvatarFallback>
+                                </Avatar>
+                                <div className="absolute inset-0 flex items-center justify-center bg-black/40 rounded-full opacity-0 group-hover/avatar:opacity-100 transition-all backdrop-blur-[2px]">
+                                    <Camera className="text-white" size={20} />
+                                </div>
                             </div>
-                        </div>
+
+                            <CustomDialog
+                                title="Update Avatar"
+                                description="Select a unique visual identifier for this personnel record."
+                                open={isAvatarModalOpen}
+                                onOpenChange={setIsAvatarModalOpen}
+                                contentWidth='max-w-[1200px]'
+                            >
+                                <AvatarBuilder
+                                    user={user}
+                                    onSuccess={() => {
+                                        setIsAvatarModalOpen(false);
+                                        // refetch(); // Refresh user data to show new avatar
+                                    }}
+                                />
+                            </CustomDialog>
+                        </>
                         <div className="space-y-1">
                             <p className="text-[10px] font-bold uppercase text-primary tracking-widest">Email Address</p>
                             <p className="text-sm font-bold text-zinc-500 italic">{user?.email}</p>
                         </div>
                     </div>
-
                     {/* Success Message */}
                     {successMessage && (
                         <div className="p-3 rounded-lg bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 text-xs font-bold text-center border border-emerald-500/20">

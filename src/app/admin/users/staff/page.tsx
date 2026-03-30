@@ -123,8 +123,7 @@ import {
     UserPlus, Search, Shield, Trash2, Lock,
     Fingerprint, ShieldCheck, RefreshCcw,
     Pencil, UserCheck, Activity, Power, PowerOff,
-    UserCog, CheckCircle2, XCircle, Users,
-    Loader2
+    UserCog, CheckCircle2, XCircle, Users
 } from 'lucide-react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
@@ -132,11 +131,9 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ENDPOINTS } from '@/lib/endpoints';
 import api from '@/lib/axios';
-
-// Internal Widgets
-import { DataTable } from '../../../../widgets/Customtable/DataTable';
-import { CustomDialog } from '../../../../widgets/CustomDialog/CustomDialog';
-import { UpdateUserForm } from './(component)/UpdateUserForm';
+import { DataTable } from '../../../../../widgets/Customtable/DataTable';
+import { CustomDialog } from '../../../../../widgets/CustomDialog/CustomDialog';
+import { UpdateUserForm } from '../(component)/UpdateUserForm';
 
 interface SystemUser {
     id: string;
@@ -219,8 +216,6 @@ export default function UserManagement() {
         setActiveModal(null);
         setSelectedUser(null);
     };
-
-    if (isFetching) return <div className='h-full min-h-[300px] w-full flex items-center justify-center'><Loader2 className='animate-spin 1-12 h-12 m-auto text-primary' /></div>;
 
     return (
         <div className="space-y-8">

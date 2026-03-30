@@ -20,7 +20,14 @@ import {
     Sun,
     Moon,
     UserCircle,
-    ChevronDown
+    ChevronDown,
+    ChevronRight,
+    Library,
+    Layers,
+    BookMarked,
+    GraduationCap,
+    UserCog,
+    Columns3Cog
 } from 'lucide-react';
 
 import { Button } from "@/components/ui/button";
@@ -34,35 +41,59 @@ import {
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 
-// Import your Auth Hook
 import { useAuth } from '@/context/AuthContext';
 
+// Updated structure: Subjects is the Parent, with 3 CRUD submenus
 const SIDEBAR_LINKS = [
     { icon: LayoutDashboard, label: 'Overview', href: '/admin/dashboard' },
-    { icon: BookOpen, label: 'Modules', href: '/admin/modules' },
-    { icon: BrainCircuit, label: 'AI Tutor', href: '/admin/ai-tutor' },
-    { icon: Users, label: 'User Management', href: '/admin/users' },
-    { icon: Terminal, label: 'Audit Logs', href: '/admin/logs' },
+    {
+        icon: Library,
+        label: 'Subjects',
+        isCollapsible: true,
+        children: [
+            { icon: Library, label: 'Manage Subjects', href: '/admin/subjects' },
+            { icon: BookMarked, label: 'Manage Courses', href: '/admin/subjects/courses' },
+            { icon: BookOpen, label: 'Manage Modules', href: '/admin/subjects/modules' },
+        ]
+    },
+    {
+        icon: Users, label: 'User Management', isCollapsible: true, children: [
+            { icon: Users, label: 'Users', href: '/admin/users' },
+            { icon: GraduationCap, label: 'Staff/Admins', href: '/admin/users/staff' },
+
+        ]
+    },
+    {
+        icon: Terminal, label: 'Audit Logs', isCollapsible: true, children:
+            [
+                { icon: UserCog, label: 'User Logs', href: '/admin/logs/users' },
+                { icon: Columns3Cog, label: 'Subject Logs', href: '/admin/logs/subjects' },
+                { icon: Terminal, label: 'System Logs', href: '/admin/logs' },
+            ]
+    },
     { icon: TrendingUp, label: 'Performance', href: '/admin/stats' },
     { icon: Settings, label: 'Settings', href: '/admin/settings' },
 ];
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
     const [isSidebarOpen, setSidebarOpen] = useState(false);
+    const [openMenus, setOpenMenus] = useState<string[]>(['Subjects']); // Keep Subjects open by default for Admin
     const { theme, setTheme } = useTheme();
     const pathname = usePathname();
-
-    // Get real user data and logout function from context
     const { user, logout } = useAuth();
 
-    // Helper to get initials
+    const toggleMenu = (label: string) => {
+        setOpenMenus(prev =>
+            prev.includes(label) ? prev.filter(i => i !== label) : [...prev, label]
+        );
+    };
+
     const getInitials = (firstName?: string, lastName?: string) => {
         return `${firstName?.[0] || 'U'}${lastName?.[0] || ''}`.toUpperCase();
     };
 
     return (
         <div className="min-h-screen bg-zinc-50 dark:bg-[#09090b] flex">
-            {/* Sidebar remains mostly the same, but we remove the static logout button from the bottom */}
             <aside className={`fixed inset-y-0 left-0 z-50 w-64 bg-white dark:bg-[#111114] border-r border-zinc-200 dark:border-zinc-800 transition-transform lg:translate-x-0 ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'}`}>
                 <div className="p-6">
                     <Link href="/" className="flex items-center gap-2">
@@ -72,18 +103,59 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
                 <nav className="px-4 space-y-1 mt-4">
                     {SIDEBAR_LINKS.map((link) => {
+                        const hasChildren = link.isCollapsible && link.children;
+                        const isOpen = openMenus.includes(link.label);
                         const isActive = pathname === link.href;
+
+                        if (hasChildren) {
+                            return (
+                                <div key={link.label} className="space-y-1">
+                                    <button
+                                        onClick={() => toggleMenu(link.label)}
+                                        className={`w-full flex items-center justify-between px-4 py-2 text-sm font-bold rounded-lg transition-all group ${isOpen ? 'bg-white/5' : 'text-zinc-500 hover:text-primary hover:bg-zinc-50 dark:hover:bg-zinc-900/50'
+                                            }`}
+                                    >
+                                        <div className="flex items-center gap-3">
+                                            <link.icon size={20} className={isOpen ? 'text-primary' : 'group-hover:text-primary'} />
+                                            {link.label}
+                                        </div>
+                                        <ChevronDown size={14} className={`transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`} />
+                                    </button>
+
+                                    {isOpen && (
+                                        <div className="ml-4 pl-4 border-l border-zinc-100 dark:border-zinc-800 space-y-1 mt-1">
+                                            {link.children?.map((child) => {
+                                                const isChildActive = pathname === child.href;
+                                                return (
+                                                    <Link
+                                                        key={child.label}
+                                                        href={child.href}
+                                                        className={`flex items-center gap-3 px-3 py-2 text-[11px] font-black uppercase tracking-widest rounded-lg transition-all ${isChildActive
+                                                            ? 'text-primary bg-primary/5'
+                                                            : 'text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300'
+                                                            }`}
+                                                    >
+                                                        <child.icon size={14} className={isChildActive ? 'text-primary' : 'text-zinc-400'} />
+                                                        {child.label}
+                                                    </Link>
+                                                );
+                                            })}
+                                        </div>
+                                    )}
+                                </div>
+                            );
+                        }
+
                         return (
                             <Link
                                 key={link.label}
-                                href={link.href}
-                                onClick={() => setSidebarOpen(false)}
+                                href={(link.href) as string}
                                 className={`flex items-center gap-3 px-4 py-2 text-sm font-bold rounded-lg transition-all group ${isActive
                                     ? 'bg-primary/10 text-primary'
                                     : 'text-zinc-500 hover:text-primary hover:bg-zinc-50 dark:hover:bg-zinc-900/50'
                                     }`}
                             >
-                                <link.icon size={20} className={`${isActive ? 'scale-110' : 'group-hover:scale-110'} transition-transform`} />
+                                <link.icon size={20} />
                                 {link.label}
                             </Link>
                         );
@@ -181,7 +253,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                     </div>
                 </header>
 
-                <div className="p-8 px-12 mx-auto w-full">
+                <div className="p-8 px-12 mx-auto w-full relative">
                     {children}
                 </div>
             </main>

@@ -1,79 +1,170 @@
-import { Button } from "@/components/ui/button";
+'use client';
+
+import React from 'react';
+import Link from 'next/link';
+import {
+    Button
+} from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
-import { Zap, BrainCircuit, BookOpen, Star, Plus } from 'lucide-react';
+import {
+    Zap,
+    BrainCircuit,
+    BookOpen,
+    Users,
+    Plus,
+    ArrowRight,
+    Activity,
+    ShieldCheck,
+    BarChart3,
+    Layers,
+    Clock,
+    ShieldAlert,
+    Globe,
+    MousePointerClick
+} from 'lucide-react';
+import { Badge } from "@/components/ui/badge";
 
-export default function DashboardOverview() {
+export default function AdminDashboard() {
     return (
-        <div className="space-y-8">
-            {/* Header Section */}
-            <div className="flex justify-between items-end">
-                <div>
-                    <h1 className="text-4xl font-black tracking-tight">Welcome, Bernard.</h1>
-                    <p className="text-zinc-500 font-medium">Ready to master Linear Algebra today?</p>
+        <div className="space-y-6">
+            {/* Standardized Admin Header - Matching Kyrios Style */}
+            <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-4">
+                <div className="max-w-lg space-y-1.5">
+                    <p className="text-[10px] font-bold uppercase text-zinc-400 tracking-[0.2em]">
+                        SYSTEM OVERSIGHT
+                    </p>
+                    <h1 className="text-2xl md:text-3xl font-black tracking-tight">
+                        Welcome, <span className="text-orange-600">Bernard.</span>
+                    </h1>
+                    <p className="text-zinc-500 font-medium text-sm">
+                        The <span className="font-black text-primary">Kyrios Engine</span> is operating at 98.4% efficiency.
+                    </p>
                 </div>
-                <Button className="rounded-xl font-bold gap-2">
-                    <Plus size={18} /> New Module
-                </Button>
+
+                <div className="flex gap-2">
+                    <Link href="/admin/logs">
+                        <Button
+                            variant="outline"
+                            className="rounded-xl font-black uppercase tracking-widest text-[9px] h-11 border-zinc-200 dark:border-zinc-800 hover:bg-zinc-50 dark:hover:bg-zinc-900 transition-all"
+                        >
+                            <ShieldCheck size={14} className="mr-2" /> View Logs
+                        </Button>
+                    </Link>
+                    <Link href="/admin/subjects/courses">
+                        <Button className="rounded-xl font-black uppercase tracking-widest bg-primary hover:bg-orange-600 h-11 px-6 text-[10px] transition-all ">
+                            <Layers size={18} className="mr-2" /> Manage Courses
+                        </Button>
+                    </Link>
+                </div>
             </div>
 
-            {/* Quick Stats Grid */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            {/* Stats Grid - Matching your dashboard style */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                 {[
-                    { label: 'Active Streak', val: '12 Days', icon: Zap, color: 'text-orange-500' },
-                    { label: 'AI Accuracy', val: '94.2%', icon: BrainCircuit, color: 'text-blue-500' },
-                    { label: 'Modules Done', val: '08/24', icon: BookOpen, color: 'text-emerald-500' },
-                    { label: 'Skill Points', val: '1,250', icon: Star, color: 'text-amber-500' },
-                ].map((stat) => (
-                    <Card key={stat.label} className="border-none shadow-sm dark:bg-[#111114]">
+                    { label: 'Total Students', val: '4,842', icon: Users, color: 'text-blue-500' },
+                    { label: 'Avg. Accuracy', val: '78.5%', icon: BrainCircuit, color: 'text-orange-500' },
+                    { label: 'Active Modules', val: '156', icon: Layers, color: 'text-emerald-500' },
+                    { label: 'Server Load', val: '24%', icon: Activity, color: 'text-purple-500' },
+                    { label: 'Avg. Session', val: '42m', icon: Clock, color: 'text-amber-500' },
+                    { label: 'Security Alerts', val: '00', icon: ShieldAlert, color: 'text-rose-500' },
+                    { label: 'Live Users', val: '1.2k', icon: Globe, color: 'text-sky-500' },
+                    { label: 'Conversion', val: '12.4%', icon: MousePointerClick, color: 'text-indigo-500' },
+                ].map((stat, i) => (
+                    <Card
+                        key={i}
+                        className="shadow-none  bg-white dark:bg-zinc-900/80 border border-zinc-200 dark:border-zinc-800 group hover:-translate-y-0.5 transition-all py-2"
+                    >
                         <CardContent className="p-6 flex items-center gap-4">
-                            <div className={`p-3 rounded-2xl bg-zinc-100 dark:bg-zinc-900 ${stat.color}`}>
-                                <stat.icon size={24} />
+                            <div className={`p-3 rounded-2xl bg-zinc-100 dark:bg-zinc-800 ${stat.color} transition-all group-hover:scale-110`}>
+                                <stat.icon size={20} />
                             </div>
                             <div>
-                                <p className="text-[10px] font-black uppercase text-zinc-500 tracking-widest">{stat.label}</p>
-                                <p className="text-2xl font-black">{stat.val}</p>
+                                <p className="text-[9px] font-black uppercase text-zinc-400 tracking-[0.2em]">{stat.label}</p>
+                                <p className="text-2xl font-black tracking-tight mt-1">{stat.val}</p>
                             </div>
                         </CardContent>
                     </Card>
                 ))}
             </div>
 
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                {/* Continue Learning */}
-                <Card className="lg:col-span-2 border-none shadow-sm dark:bg-[#111114]">
-                    <CardHeader>
-                        <CardTitle className="text-lg font-black tracking-tight">Continue Learning</CardTitle>
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                {/* Content Pipeline Tracking */}
+                <Card className="shadow-none lg:col-span-2 bg-white dark:bg-zinc-900/80 border border-zinc-200 dark:border-zinc-800  overflow-hidden">
+                    <CardHeader className="border-b border-zinc-100 dark:border-zinc-800/50 pb-6">
+                        <div className="flex justify-between items-center">
+                            <CardTitle className="text-[10px] font-black uppercase tracking-[0.2em] text-zinc-400 flex items-center gap-2">
+                                <BarChart3 size={14} className="text-primary" />
+                                DEPLOYMENT PIPELINE
+                            </CardTitle>
+                            <Badge className="bg-emerald-500/10 text-emerald-600 border-none font-black text-[9px] tracking-widest px-3">
+                                NOMINAL
+                            </Badge>
+                        </div>
                     </CardHeader>
-                    <CardContent className="space-y-6">
-                        <div className="p-6 rounded-2xl border border-zinc-100 dark:border-zinc-800 bg-zinc-50/50 dark:bg-zinc-900/20 group hover:border-primary transition-all">
-                            <div className="flex justify-between items-start mb-4">
+                    <CardContent className="p-8">
+                        <div className="relative p-8 rounded-3xl border border-zinc-100 dark:border-zinc-800 bg-white dark:bg-[#111114] group hover:border-primary/30 transition-all">
+                            <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 mb-8">
                                 <div>
-                                    <h3 className="text-xl font-black">Linear Transformation & Kernels</h3>
-                                    <p className="text-sm text-zinc-500">Advanced Matrix Theory • Module 4</p>
+                                    <h3 className="text-xl font-black tracking-tight">Advanced Calculus II Update</h3>
+                                    <p className="text-sm text-zinc-500 mt-1">4 JSON Modules Pending Review</p>
                                 </div>
-                                <div className="px-3 py-1 bg-primary/10 text-primary text-[10px] font-black rounded-full uppercase tracking-tighter">
-                                    75% Complete
-                                </div>
+                                <span className="text-lg font-black text-orange-600 tracking-tight">URGENT</span>
                             </div>
-                            <Progress value={75} className="h-2 mb-4" />
-                            <Button variant="link" className="p-0 h-auto font-bold text-primary group-hover:translate-x-1 transition-transform">
-                                Resume Solving →
-                            </Button>
+
+                            <Progress value={60} className="h-[6px] bg-zinc-100 dark:bg-zinc-800 mb-8" />
+
+                            <div className="flex justify-between items-center">
+                                <div className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">
+                                    Team: <span className="text-slate-900 dark:text-white font-black">Content A</span>
+                                </div>
+                                <Link href="/admin/curriculum/modules">
+                                    <Button className="rounded-2xl font-black uppercase tracking-widest text-[10px] h-11 px-8 bg-zinc-900 dark:bg-zinc-100 dark:text-zinc-900 hover:bg-primary transition-all">
+                                        Review Schema <ArrowRight size={16} className="ml-2" />
+                                    </Button>
+                                </Link>
+                            </div>
                         </div>
                     </CardContent>
                 </Card>
 
-                {/* AI Recommendations */}
-                <Card className="border-none shadow-sm dark:bg-[#111114]">
-                    <CardHeader>
-                        <CardTitle className="text-lg font-black tracking-tight uppercase tracking-widest text-[10px] text-zinc-500">AI Suggested</CardTitle>
+                {/* System Alerts & Insights */}
+                <Card className="shadow-none  bg-white dark:bg-zinc-900/80 border border-zinc-200 dark:border-zinc-800 ">
+                    <CardHeader className="pb-6">
+                        <CardTitle className="text-[10px] font-black uppercase tracking-[0.2em] text-primary flex items-center gap-2">
+                            <Zap size={14} /> CRITICAL INSIGHTS
+                        </CardTitle>
                     </CardHeader>
-                    <CardContent className="space-y-4">
-                        <div className="p-4 rounded-xl bg-primary/5 border border-primary/10">
-                            <p className="text-xs font-bold text-primary mb-1">Focus on Analysis</p>
-                            <p className="text-sm font-medium leading-relaxed">Your score in Riemann Sums dropped. AI suggests reviewing "Integration Foundations".</p>
-                            <Button size="sm" className="mt-3 rounded-lg font-bold text-[10px] h-8 bg-primary">Optimize Score</Button>
+                    <CardContent className="space-y-6">
+                        <div className="p-6 rounded-3xl bg-orange-500/5 border border-orange-500/10">
+                            <div className="flex items-center gap-3 mb-4">
+                                <div className="p-2 bg-orange-500/10 rounded-xl text-orange-600">
+                                    <BookOpen size={18} />
+                                </div>
+                                <p className="text-[10px] font-black uppercase tracking-widest text-orange-700">Content Bottleneck</p>
+                            </div>
+                            <p className="text-sm font-medium text-zinc-600 dark:text-zinc-400 leading-relaxed">
+                                High failure rate in <span className="font-black text-slate-900 dark:text-white">"Eigenvalues"</span>. Schema requires refinement.
+                            </p>
+                            <Button size="sm" variant="outline" className="mt-5 w-full rounded-2xl font-black text-[9px] uppercase tracking-widest h-10">
+                                Edit Schema
+                            </Button>
+                        </div>
+
+                        <div>
+                            <h4 className="text-[9px] font-black uppercase tracking-widest text-zinc-400 mb-4">REGISTRY HEALTH</h4>
+                            <div className="space-y-3">
+                                {[
+                                    { name: 'Subjects', status: 'OK', color: 'text-emerald-500' },
+                                    { name: 'Courses', status: 'OK', color: 'text-emerald-500' },
+                                    { name: 'Modules', status: '4 DRAFTS', color: 'text-orange-500' },
+                                ].map((item) => (
+                                    <div key={item.name} className="flex justify-between items-center px-2 py-1">
+                                        <p className="text-sm font-medium text-zinc-600 dark:text-zinc-400">{item.name}</p>
+                                        <p className={`text-xs font-black ${item.color}`}>{item.status}</p>
+                                    </div>
+                                ))}
+                            </div>
                         </div>
                     </CardContent>
                 </Card>

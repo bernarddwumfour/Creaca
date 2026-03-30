@@ -24,7 +24,7 @@ export default async function DashboardPage({ params }: PageProps) {
 
                 <div className="container mx-auto px-6 relative z-10">
                     <div className="mx-auto space-y-8">
-                        <div>
+                        <div className='pt-10'>
                             <h1 className="text-3xl md:text-3xl font-black tracking-tighter">
                                 Student <span className="text-primary">Workspace.</span>
                             </h1>

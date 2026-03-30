@@ -94,10 +94,9 @@ function LoginForm({ lang, t }: { lang: Lang, t: any }) {
         form.setError('root', { message: data.message || t.error });
       }
     } catch (error: any) {
-      // Handle actual error codes (401, 404, 500, etc.)
       const serverResponse = error.response?.data;
-      const msg = serverResponse?.message || t.error;
-      form.setError('root', { message: typeof msg === 'string' ? msg : t.error });
+      const msg = serverResponse?.message || "Failed to login";
+      form.setError('root', { message: typeof msg === 'string' ? msg : "Failed to login" });
     } finally {
       setIsLoading(false);
     }

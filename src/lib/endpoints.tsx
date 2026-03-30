@@ -12,8 +12,13 @@ export const ENDPOINTS = {
     },
     ADMIN: {
         USERS: `${API_VERSION}/accounts/admin/users/`,
-        USER_DETAIL: (id: string | number) => `${API_VERSION}/accounts/admin/users/${id}/`,
-        UPDATE_USER: (id: string | number) => `${API_VERSION}/accounts/admin/users/${id}/update/`,
+        USER_DETAIL: `${API_VERSION}/accounts/admin/users/:id/`,
+        UPDATE_USER: `${API_VERSION}/accounts/admin/users/:id/update/`,
+        ACTIVATE_USER: `${API_VERSION}/accounts/admin/users/:id/activate/`,
+        DEACTIVATE_USER: `${API_VERSION}/accounts/admin/users/:id/deactivate/`,
+        CHANGE_ROLE: `${API_VERSION}/accounts/admin/users/:id/change-role/`,
+        BULK_STATUS_UPDATE: `${API_VERSION}/accounts/admin/users/bulk-status/`,
+        BULK_CHANGE_ROLE: `${API_VERSION}/accounts/admin/users/bulk-change-role/`,
     },
 } as const;
 
