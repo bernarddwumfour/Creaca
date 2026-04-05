@@ -255,9 +255,9 @@ export default function UserManagement() {
             {/* DataTable - Now using new theme */}
             <DataTable
                 data={users || []}
-                excludeColumns={['id']}
+                excludeColumns={['id', "avatar_config", "phone_number",]}
                 dots={{ is_active: { "true": 'emerald', "false": 'rose' } }}
-                badges={{ role: { ADMIN: 'blue', STAFF: 'violet', USER: 'zinc' } }}
+                badges={{ role: { ADMIN: 'blue', STAFF: 'violet', USER: 'zinc' }, email_verified: { "true": 'emerald', "false": 'rose' } }}
 
                 actions={[
                     {

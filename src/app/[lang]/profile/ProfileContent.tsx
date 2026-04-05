@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { useForm } from 'react-hook-form';
 import * as z from 'zod';
@@ -8,8 +8,16 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { useTheme } from 'next-themes';
 import {
     User, ShieldCheck, Camera, Palette, Target,
-    BellRing, Eye, EyeOff, Loader2, Clock, Globe
+    BellRing, Eye, EyeOff, Loader2, Clock, Globe, Venus, Mars,
+    Smartphone,
+    ChevronRight,
+    Key,
+    CheckCircle2,
+    Mail,
+    Download,
+    Copy
 } from 'lucide-react';
+import QRCode from 'react-qr-code';
 
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -23,11 +31,17 @@ import { ENDPOINTS } from '@/lib/endpoints';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { CustomDialog } from '../../../../widgets/CustomDialog/CustomDialog';
 import { AvatarBuilder } from './AvatarPicker';
+import { generateAvatarFromUser } from './avatarHelpers';
+import { Switch } from '@/components/ui/switch';
+import { cn } from '@/lib/utils';
+import { toast } from 'sonner';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 
-// ====================== SCHEMAS ======================
 const profileSchema = z.object({
     first_name: z.string().min(1, "First name is required"),
     last_name: z.string().min(1, "Last name is required"),
+    phone_number: z.string().optional(),
+    gender: z.string().optional(),
 });
 
 const passwordSchema = z.object({
@@ -42,44 +56,58 @@ const passwordSchema = z.object({
 // ====================== SUB-COMPONENTS ======================
 
 function PersonalInfoSection() {
-    const queryClient = useQueryClient();   // For invalidation after update
+    const queryClient = useQueryClient();
+    const [isAvatarModalOpen, setIsAvatarModalOpen] = useState(false);
+    const [successMessage, setSuccessMessage] = useState<string | null>(null);
+    const { updateUser } = useAuth(); // Get updateUser from auth context
 
-    const { data: user, isLoading: isFetching } = useQuery({
+    const { data: user, isLoading: isFetching, refetch } = useQuery({
         queryKey: [ENDPOINTS.AUTH.PROFILE],
         queryFn: async () => {
-            const { data } = await api.get(ENDPOINTS.AUTH.PROFILE); // Adjust endpoint as needed
-            return data?.data || data;           // Adjust based on your API response structure
+            const response = await api.get(ENDPOINTS.AUTH.PROFILE);
+            return response.data?.data || response.data;
         },
     });
+
+    // Generate avatar URL using the unified function
+    const avatarUrl = useMemo(() => {
+        if (user) {
+            return generateAvatarFromUser(user);
+        }
+        return '';
+    }, [user]);
 
     const updateMutation = useMutation({
         mutationFn: async (updateData: z.infer<typeof profileSchema>) => {
             const { data } = await api.post(ENDPOINTS.AUTH.UPDATE_PROFILE, {
                 first_name: updateData.first_name,
                 last_name: updateData.last_name,
+                phone_number: updateData.phone_number,
+                gender: updateData.gender,
             });
             return data;
         },
         onSuccess: (response) => {
+            // Update React Query cache
             queryClient.invalidateQueries({ queryKey: [ENDPOINTS.AUTH.PROFILE] });
 
+            // Update local auth context with new user data
+            const updatedUserData = response.data?.data || response.data;
+            if (updatedUserData) {
+                updateUser({
+                    first_name: updatedUserData.first_name,
+                    last_name: updatedUserData.last_name,
+                    phone_number: updatedUserData.phone_number,
+                    gender: updatedUserData.gender,
+                    avatar_config: updatedUserData.avatar_config,
+                });
+            }
 
             setSuccessMessage("Profile updated successfully!");
             setTimeout(() => setSuccessMessage(null), 4000);
         },
         onError: (error: any) => {
             const serverResponse = error.response?.data;
-
-            if (serverResponse?.errors && Array.isArray(serverResponse.errors)) {
-                serverResponse.errors.forEach((err: any) => {
-                    const field = err.field === 'first_name' ? 'first_name' :
-                        err.field === 'last_name' ? 'last_name' : null;
-                    if (field) {
-                        form.setError(field as any, { message: err.message });
-                    }
-                });
-            }
-
             const globalMessage = serverResponse?.message || "Failed to update profile. Please try again.";
             form.setError('root', { message: globalMessage });
         },
@@ -90,21 +118,22 @@ function PersonalInfoSection() {
         defaultValues: {
             first_name: "",
             last_name: "",
+            phone_number: "",
+            gender: "",
         },
     });
 
     // Reset form when user data loads
-    React.useEffect(() => {
+    useEffect(() => {
         if (user) {
             form.reset({
                 first_name: user.first_name || "",
                 last_name: user.last_name || "",
+                phone_number: user.phone_number || "",
+                gender: user.gender || "",
             });
         }
     }, [user, form]);
-
-    const [successMessage, setSuccessMessage] = useState<string | null>(null);
-    const [isAvatarModalOpen, setIsAvatarModalOpen] = useState(false);
 
     const onSubmit = (data: z.infer<typeof profileSchema>) => {
         updateMutation.mutate(data);
@@ -119,56 +148,57 @@ function PersonalInfoSection() {
             <div className="relative z-20">
                 <CardHeader className="border-b border-zinc-100 dark:border-zinc-800/50 pb-16">
                     <CardTitle className="text-xl font-black tracking-tight">Personal Information</CardTitle>
-                    <CardDescription className="text-zinc-500 font-medium">Update your name and profile photo.</CardDescription>
+                    <CardDescription className="text-zinc-500 font-medium">Update your name, contact info, and profile photo.</CardDescription>
                 </CardHeader>
 
                 <CardContent className="pt-8 space-y-8">
                     <div className="flex items-center gap-6">
-                        <>
-                            <div
-                                className="relative group/avatar cursor-pointer"
-                                onClick={() => setIsAvatarModalOpen(true)}
-                            >
-                                <Avatar className="w-20 h-20 border-2 border-zinc-100 dark:border-zinc-800 transition-transform active:scale-95">
-                                    <AvatarImage src={user?.avatar_url || `https://api.dicebear.com/7.x/avataaars/svg?seed=${user?.username}`} />
-                                    <AvatarFallback className="font-black bg-zinc-100 dark:bg-zinc-800">
-                                        {user?.first_name?.[0]}{user?.last_name?.[0]}
-                                    </AvatarFallback>
-                                </Avatar>
-                                <div className="absolute inset-0 flex items-center justify-center bg-black/40 rounded-full opacity-0 group-hover/avatar:opacity-100 transition-all backdrop-blur-[2px]">
-                                    <Camera className="text-white" size={20} />
-                                </div>
-                            </div>
-
-                            <CustomDialog
-                                title="Update Avatar"
-                                description="Select a unique visual identifier for this personnel record."
-                                open={isAvatarModalOpen}
-                                onOpenChange={setIsAvatarModalOpen}
-                                contentWidth='max-w-[1200px]'
-                            >
-                                <AvatarBuilder
-                                    user={user}
-                                    onSuccess={() => {
-                                        setIsAvatarModalOpen(false);
-                                        // refetch(); // Refresh user data to show new avatar
-                                    }}
+                        <div
+                            className="relative group/avatar cursor-pointer"
+                            onClick={() => setIsAvatarModalOpen(true)}
+                        >
+                            <Avatar className="w-20 h-20 border-2 border-zinc-100 dark:border-zinc-800 transition-transform active:scale-95">
+                                <AvatarImage
+                                    src={avatarUrl}
+                                    alt="Avatar"
                                 />
-                            </CustomDialog>
-                        </>
+                                <AvatarFallback className="font-black bg-zinc-100 dark:bg-zinc-800">
+                                    {user?.first_name?.[0]}{user?.last_name?.[0]}
+                                </AvatarFallback>
+                            </Avatar>
+                            <div className="absolute inset-0 flex items-center justify-center bg-black/40 rounded-full opacity-0 group-hover/avatar:opacity-100 transition-all backdrop-blur-[2px]">
+                                <Camera className="text-white" size={20} />
+                            </div>
+                        </div>
+
+                        <CustomDialog
+                            title="Update Avatar"
+                            description="Customize your avatar with different styles and colors."
+                            open={isAvatarModalOpen}
+                            onOpenChange={setIsAvatarModalOpen}
+                            contentWidth='max-w-[1200px]'
+                        >
+                            <AvatarBuilder
+                                user={user}
+                                onSuccess={() => {
+                                    setIsAvatarModalOpen(false);
+                                    refetch(); // Refresh user data to get new avatar config
+                                }}
+                            />
+                        </CustomDialog>
+
                         <div className="space-y-1">
                             <p className="text-[10px] font-bold uppercase text-primary tracking-widest">Email Address</p>
                             <p className="text-sm font-bold text-zinc-500 italic">{user?.email}</p>
                         </div>
                     </div>
-                    {/* Success Message */}
+
                     {successMessage && (
                         <div className="p-3 rounded-lg bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 text-xs font-bold text-center border border-emerald-500/20">
                             {successMessage}
                         </div>
                     )}
 
-                    {/* Global Error */}
                     {form.formState.errors.root && (
                         <div className="p-3 rounded-lg bg-destructive/10 text-destructive text-xs font-bold text-center border border-destructive/20">
                             {form.formState.errors.root.message}
@@ -214,6 +244,65 @@ function PersonalInfoSection() {
                                 />
                             </div>
 
+                            <FormField
+                                control={form.control}
+                                name="phone_number"
+                                render={({ field }) => (
+                                    <FormItem className="space-y-1">
+                                        <FormLabel className="text-[10px] font-bold uppercase text-zinc-500 tracking-widest">Phone Number</FormLabel>
+                                        <FormControl>
+                                            <Input
+                                                {...field}
+                                                placeholder="Add Your Phone Number"
+                                                disabled={isFetching}
+                                                className="h-12 border-zinc-200 dark:border-zinc-800 focus-visible:ring-primary rounded-xl"
+                                            />
+                                        </FormControl>
+                                        <FormMessage className="text-[10px]" />
+                                    </FormItem>
+                                )}
+                            />
+
+                            <FormField
+                                control={form.control}
+                                name="gender"
+                                render={({ field }) => (
+                                    <FormItem className="space-y-1">
+                                        <FormLabel className="text-[10px] font-bold uppercase text-zinc-500 tracking-widest">Gender</FormLabel>
+                                        <Select
+                                            onValueChange={field.onChange}
+                                            defaultValue={field.value}
+                                            value={field.value}
+                                            disabled
+                                        >
+                                            <FormControl>
+                                                <SelectTrigger className="h-12 border-zinc-200 dark:border-zinc-800 focus-visible:ring-primary rounded-xl">
+                                                    <SelectValue placeholder="Select gender" />
+                                                </SelectTrigger>
+                                            </FormControl>
+                                            <SelectContent>
+                                                <SelectItem value="male">
+                                                    <div className="flex items-center gap-2">
+                                                        <Mars size={14} />
+                                                        Male
+                                                    </div>
+                                                </SelectItem>
+                                                <SelectItem value="female">
+                                                    <div className="flex items-center gap-2">
+                                                        <Venus size={14} />
+                                                        Female
+                                                    </div>
+                                                </SelectItem>
+                                                <SelectItem value="prefer_not_to_say">
+                                                    Prefer not to say
+                                                </SelectItem>
+                                            </SelectContent>
+                                        </Select>
+                                        <FormMessage className="text-[10px]" />
+                                    </FormItem>
+                                )}
+                            />
+
                             <Button
                                 type="submit"
                                 disabled={updateMutation.isPending || isFetching}
@@ -236,11 +325,36 @@ function PersonalInfoSection() {
     );
 }
 
-function SecuritySection() {
+export function SecuritySection() {
+    const { user, updateUser } = useAuth();
+    const queryClient = useQueryClient();
     const [showCurrentPassword, setShowCurrentPassword] = useState(false);
     const [showNewPassword, setShowNewPassword] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
-    const [successMessage, setSuccessMessage] = useState<string | null>(null);   // ← New state
+    const [successMessage, setSuccessMessage] = useState<string | null>(null);
+
+    // 2FA States
+    const [twoFactorMethod, setTwoFactorMethod] = useState<'app' | 'email'>('app');
+    const [isSetupModalOpen, setIsSetupModalOpen] = useState(false);
+    const [setupStep, setSetupStep] = useState<'select' | 'verify'>('select');
+    const [verificationCode, setVerificationCode] = useState('');
+    const [qrCodeUri, setQrCodeUri] = useState('');
+    const [secretKey, setSecretKey] = useState('');
+    const [backupCodes, setBackupCodes] = useState<string[]>([]);
+    const [isDisableModalOpen, setIsDisableModalOpen] = useState(false);
+    const [disablePassword, setDisablePassword] = useState('');
+
+    // Fetch MFA status using React Query
+    const { data: mfaData, isLoading: isFetchingMfa } = useQuery({
+        queryKey: ['mfa-status'],
+        queryFn: async () => {
+            const response = await api.get(ENDPOINTS.AUTH.MFA_STATUS);
+            return response.data?.data || response.data;
+        },
+    });
+
+    const is2FAEnabled = mfaData?.mfa_enabled || false;
+    const currentMethod = mfaData?.mfa_method;
 
     const form = useForm<z.infer<typeof passwordSchema>>({
         resolver: zodResolver(passwordSchema),
@@ -253,7 +367,6 @@ function SecuritySection() {
 
     const newPassword = form.watch("new_password");
 
-    // Password Strength Calculator (Same as Signup)
     const getStrength = (pass: string) => {
         let score = 0;
         if (!pass) return 0;
@@ -269,207 +382,515 @@ function SecuritySection() {
     const strengthColor = ["bg-zinc-200", "bg-red-500", "bg-orange-500", "bg-yellow-500", "bg-blue-500", "bg-emerald-500"][strength];
     const strengthLabel = ["", "Weak", "Weak", "Fair", "Good", "Strong", "Excellent"][strength];
 
-    // Handle Password Update
     const handleUpdatePassword = async (data: z.infer<typeof passwordSchema>) => {
         setIsLoading(true);
-        setSuccessMessage(null);        // Clear previous success message
-
+        setSuccessMessage(null);
         try {
-            const response = await api.post(ENDPOINTS.AUTH.CHANGE_PASSWORD, {
+            await api.post(ENDPOINTS.AUTH.CHANGE_PASSWORD, {
                 current_password: data.current_password,
                 new_password: data.new_password,
             });
-
-            console.log("Password updated successfully", response.data);
-
-            // Success handling
             form.reset();
-            setShowCurrentPassword(false);
-            setShowNewPassword(false);
-
-            setSuccessMessage("Password updated successfully!");   // ← Show success
-
-            // Optional: Auto-hide success message after 4 seconds
+            setSuccessMessage("Credentials updated successfully.");
             setTimeout(() => setSuccessMessage(null), 4000);
-
         } catch (error: any) {
-            const serverResponse = error.response?.data;
-
-            if (serverResponse?.errors && Array.isArray(serverResponse.errors)) {
-                serverResponse.errors.forEach((err: any) => {
-                    const fieldMap: Record<string, string> = {
-                        current_password: "current_password",
-                        new_password: "new_password",
-                        confirm_password: "confirm_password"
-                    };
-                    const field = fieldMap[err.field];
-                    if (field) {
-                        form.setError(field as any, { message: err.message });
-                    }
-                });
-            }
-
-            const globalMessage = serverResponse?.message || "Failed to update password. Please try again.";
-            form.setError('root', { message: globalMessage });
+            form.setError('root', { message: error.response?.data?.message || "Update failed." });
         } finally {
             setIsLoading(false);
         }
     };
 
-    return (
-        <Card className="group relative overflow-hidden transition-all duration-500 hover:-translate-y-1 shadow-xl border-none bg-white dark:bg-[#111114]">
-            <div className="absolute w-[calc(100%-4px)] h-[calc(100%-4px)] top-[2px] left-[2px] overflow-hidden bg-white dark:bg-[#111114] rounded-xl z-10" />
-            <div className="absolute inset-[-100%] bg-[conic-gradient(from_0deg,transparent_0deg,transparent_150deg,#ea580c_230deg,transparent_210deg)] opacity-0 group-hover:opacity-100 group-hover:animate-spin transition-opacity duration-500 pointer-events-none z-0"
-                style={{ animationDuration: '3s' }} />
+    // MFA Setup Mutation
+    const setupMFAMutation = useMutation({
+        mutationFn: async (method: 'app' | 'email') => {
+            const response = await api.post(ENDPOINTS.AUTH.MFA_SETUP, { method });
+            return response.data?.data || response.data;
+        },
+        onSuccess: (data) => {
+            if (twoFactorMethod === 'app') {
+                setQrCodeUri(data.otp_uri);
+                setSecretKey(data.secret);
+            }
+            setSetupStep('verify');
+            toast.success(data.message || "Setup initiated. Please verify your code.");
+        },
+        onError: (error: any) => {
+            toast.error(error.response?.data?.message || "Failed to setup MFA");
+        },
+    });
 
-            <div className="relative z-20">
-                <CardHeader className="border-b border-zinc-100 dark:border-zinc-800/50 pb-16">
-                    <CardTitle className="text-xl font-black tracking-tight">Security Settings</CardTitle>
-                    <CardDescription className="text-zinc-500 font-medium">Update your password to keep your account safe.</CardDescription>
-                </CardHeader>
+    // MFA Verify Mutation
+    const verifyMFAMutation = useMutation({
+        mutationFn: async (code: string) => {
+            const response = await api.post(ENDPOINTS.AUTH.MFA_VERIFY, { code });
+            return response.data?.data || response.data;
+        },
+        onSuccess: (data) => {
+            if (data.backup_codes) {
+                setBackupCodes(data.backup_codes);
+            }
 
-                <CardContent className="pt-8 space-y-6 max-w-md">
-                    <Form {...form}>
-                        <form onSubmit={form.handleSubmit(handleUpdatePassword)} className="space-y-6">
+            // Invalidate and refetch MFA status
+            queryClient.invalidateQueries({ queryKey: ['mfa-status'] });
 
-                            {/* SUCCESS MESSAGE - New */}
-                            {successMessage && (
-                                <div className="p-3 rounded-lg bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 text-xs font-bold text-center border border-emerald-500/20">
-                                    {successMessage}
-                                </div>
-                            )}
+            setIsSetupModalOpen(false);
+            setSetupStep('select');
+            setVerificationCode('');
 
-                            {/* Global Error Message */}
-                            {form.formState.errors.root && (
-                                <div className="p-3 rounded-lg bg-destructive/10 text-destructive text-xs font-bold text-center border border-destructive/20">
-                                    {form.formState.errors.root.message}
-                                </div>
-                            )}
+            // Update user context
+            updateUser({
+                mfa_enabled: true,
+                mfa_method: twoFactorMethod
+            });
 
-                            {/* Current Password */}
-                            <FormField
-                                control={form.control}
-                                name="current_password"
-                                render={({ field }) => (
-                                    <FormItem className="space-y-1">
-                                        <FormLabel className="text-[10px] font-bold uppercase text-zinc-500 tracking-widest">
-                                            Current Password
-                                        </FormLabel>
-                                        <div className="relative">
-                                            <FormControl>
-                                                <Input
-                                                    type={showCurrentPassword ? "text" : "password"}
-                                                    {...field}
-                                                    className="h-12 border-zinc-200 dark:border-zinc-800 focus-visible:ring-primary rounded-xl pr-10"
-                                                />
-                                            </FormControl>
-                                            <button
-                                                type="button"
-                                                onClick={() => setShowCurrentPassword(!showCurrentPassword)}
-                                                className="absolute right-3 top-3 text-zinc-400 hover:text-zinc-600"
-                                            >
-                                                {showCurrentPassword ? <EyeOff size={18} /> : <Eye size={18} />}
-                                            </button>
-                                        </div>
-                                        <FormMessage className="text-[10px]" />
-                                    </FormItem>
-                                )}
-                            />
+            if (data.backup_codes) {
+                toast.success("MFA enabled! Save your backup codes.", {
+                    duration: 10000,
+                });
+            } else {
+                toast.success("MFA enabled successfully!");
+            }
+        },
+        onError: (error: any) => {
+            toast.error(error.response?.data?.message || "Invalid verification code");
+        },
+    });
 
-                            {/* New Password with Strength */}
-                            <FormField
-                                control={form.control}
-                                name="new_password"
-                                render={({ field }) => (
-                                    <FormItem className="space-y-1">
-                                        <div className="flex justify-between items-end">
-                                            <FormLabel className="text-[10px] font-bold uppercase text-zinc-500 tracking-widest">
-                                                New Password
-                                            </FormLabel>
-                                            {newPassword && (
-                                                <span className="text-[9px] font-black uppercase opacity-60">
-                                                    {strengthLabel}
-                                                </span>
-                                            )}
-                                        </div>
-                                        <div className="relative">
-                                            <FormControl>
-                                                <Input
-                                                    type={showNewPassword ? "text" : "password"}
-                                                    placeholder="••••••••"
-                                                    {...field}
-                                                    className="h-12 border-zinc-200 dark:border-zinc-800 focus-visible:ring-primary rounded-xl pr-10"
-                                                />
-                                            </FormControl>
-                                            <button
-                                                type="button"
-                                                onClick={() => setShowNewPassword(!showNewPassword)}
-                                                className="absolute right-3 top-3 text-zinc-400 hover:text-zinc-600"
-                                            >
-                                                {showNewPassword ? <EyeOff size={18} /> : <Eye size={18} />}
-                                            </button>
-                                        </div>
+    // MFA Disable Mutation
+    const disableMFAMutation = useMutation({
+        mutationFn: async (password: string) => {
+            const response = await api.post(ENDPOINTS.AUTH.MFA_DISABLE, { password });
+            return response.data?.data || response.data;
+        },
+        onSuccess: () => {
+            // Invalidate and refetch MFA status
+            queryClient.invalidateQueries({ queryKey: ['mfa-status'] });
 
-                                        {newPassword && (
-                                            <div className="flex gap-1 h-1 mt-2">
-                                                {[1, 2, 3, 4, 5].map((s) => (
-                                                    <div
-                                                        key={s}
-                                                        className={`h-full flex-1 rounded-full transition-all duration-500 ${strength >= s ? strengthColor : "bg-zinc-100 dark:bg-zinc-800"}`}
-                                                    />
-                                                ))}
-                                            </div>
-                                        )}
+            setIsDisableModalOpen(false);
+            setDisablePassword('');
 
-                                        <FormMessage className="text-[10px]" />
-                                    </FormItem>
-                                )}
-                            />
+            // Update user context
+            updateUser({
+                mfa_enabled: false,
+                mfa_method: undefined
+            });
 
-                            {/* Confirm New Password */}
-                            <FormField
-                                control={form.control}
-                                name="confirm_password"
-                                render={({ field }) => (
-                                    <FormItem className="space-y-1">
-                                        <FormLabel className="text-[10px] font-bold uppercase text-zinc-500 tracking-widest">
-                                            Confirm New Password
-                                        </FormLabel>
-                                        <FormControl>
-                                            <Input
-                                                type={showNewPassword ? "text" : "password"}
-                                                placeholder="••••••••"
-                                                {...field}
-                                                className="h-12 border-zinc-200 dark:border-zinc-800 focus-visible:ring-primary rounded-xl pr-10"
-                                            />
-                                        </FormControl>
-                                        <FormMessage className="text-[10px]" />
-                                    </FormItem>
-                                )}
-                            />
+            toast.success("MFA disabled successfully");
+        },
+        onError: (error: any) => {
+            toast.error(error.response?.data?.message || "Failed to disable MFA");
+        },
+    });
 
-                            <Button
-                                type="submit"
-                                disabled={isLoading}
-                                className="h-12 px-10 font-bold rounded-xl w-full md:w-auto bg-zinc-900 dark:bg-zinc-100 dark:text-zinc-900 hover:bg-primary transition-all"
-                            >
-                                {isLoading ? (
-                                    <>
-                                        <Loader2 className="animate-spin mr-2" size={18} />
-                                        Updating Password...
-                                    </>
-                                ) : (
-                                    "Update Password"
-                                )}
-                            </Button>
-                        </form>
-                    </Form>
+    const handleSetupMFA = () => {
+        setupMFAMutation.mutate(twoFactorMethod);
+    };
+
+    const handleVerifyMFA = () => {
+        if (!verificationCode) {
+            toast.error("Please enter verification code");
+            return;
+        }
+        verifyMFAMutation.mutate(verificationCode);
+    };
+
+    const handleDisableMFA = () => {
+        if (!disablePassword) {
+            toast.error("Please enter your password");
+            return;
+        }
+        disableMFAMutation.mutate(disablePassword);
+    };
+
+    const copyBackupCodes = () => {
+        const codesText = backupCodes.join('\n');
+        navigator.clipboard.writeText(codesText);
+        toast.success("Backup codes copied to clipboard");
+    };
+
+    const downloadBackupCodes = () => {
+        const blob = new Blob([backupCodes.join('\n')], { type: 'text/plain' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'kyrios-backup-codes.txt';
+        a.click();
+        URL.revokeObjectURL(url);
+        toast.success("Backup codes downloaded");
+    };
+
+    const handleToggle2FA = (enabled: boolean) => {
+        if (enabled) {
+            setIsSetupModalOpen(true);
+        } else {
+            setIsDisableModalOpen(true);
+        }
+    };
+
+    if (isFetchingMfa) {
+        return (
+            <Card className="group relative overflow-hidden transition-all duration-500 shadow-xl border-none bg-white dark:bg-[#111114]">
+                <CardContent className="flex items-center justify-center min-h-[400px]">
+                    <Loader2 className="animate-spin text-orange-600" size={32} />
                 </CardContent>
-            </div>
-        </Card>
+            </Card>
+        );
+    }
+
+    return (
+        <>
+            <Card className="group relative overflow-hidden transition-all duration-500 shadow-xl border-none bg-white dark:bg-[#111114]">
+                <div className="absolute w-[calc(100%-4px)] h-[calc(100%-4px)] top-[2px] left-[2px] overflow-hidden bg-white dark:bg-[#111114] rounded-xl z-10" />
+                <div className="absolute inset-[-100%] bg-[conic-gradient(from_0deg,transparent_0deg,transparent_150deg,#ea580c_230deg,transparent_210deg)] opacity-0 group-hover:opacity-100 group-hover:animate-spin transition-opacity duration-500 pointer-events-none z-0" style={{ animationDuration: '3s' }} />
+
+                <div className="relative z-20">
+                    <CardHeader className="border-b border-zinc-100 dark:border-zinc-800/50 pb-8">
+                        <CardTitle className="text-xl font-black tracking-tight">Security</CardTitle>
+                        <CardDescription className="text-zinc-500 font-medium">Protect your workspace with advanced access controls.</CardDescription>
+                    </CardHeader>
+
+                    <CardContent className="pt-10 flex flex-col lg:flex-row gap-8 lg:gap-12">
+
+                        {/* LEFT: 2FA CONTROL */}
+                        <div className="flex-1 space-y-8">
+                            <div className="space-y-4">
+                                <div className="flex items-center gap-2">
+                                    <ShieldCheck className="text-orange-600" size={16} />
+                                    <span className="text-[10px] font-black uppercase text-zinc-400 tracking-[0.2em]">Multi-Factor Auth</span>
+                                </div>
+
+                                <div className="p-6 rounded-2xl bg-zinc-50 dark:bg-zinc-900/50 border border-zinc-100 dark:border-zinc-800 space-y-6">
+                                    <div className="flex items-start justify-between gap-4">
+                                        <div className="space-y-1">
+                                            <h4 className="text-sm font-bold">2FA Authorization</h4>
+                                            <p className="text-[11px] text-zinc-500 leading-relaxed">
+                                                {is2FAEnabled
+                                                    ? `Your account is protected with 2-factor authentication using ${currentMethod === 'app' ? 'Authenticator App' : 'Email'}.`
+                                                    : "Enable an additional layer of verification to access your account."}
+                                            </p>
+                                        </div>
+                                        <Switch
+                                            checked={is2FAEnabled}
+                                            onCheckedChange={handleToggle2FA}
+                                            className="data-[state=checked]:bg-orange-600"
+                                        />
+                                    </div>
+
+                                    {!is2FAEnabled && (
+                                        <div className="space-y-3 pt-4 border-t border-zinc-200 dark:border-zinc-800">
+                                            <span className="text-[9px] font-black uppercase text-zinc-400 tracking-widest">Select Method</span>
+                                            <div className="grid grid-cols-1 gap-2">
+                                                <button
+                                                    onClick={() => setTwoFactorMethod('app')}
+                                                    className={cn(
+                                                        "flex items-center gap-3 p-3 rounded-xl border transition-all text-left",
+                                                        twoFactorMethod === 'app'
+                                                            ? "bg-white dark:bg-zinc-800 border-orange-600 shadow-sm ring-1 ring-orange-600"
+                                                            : "bg-transparent border-zinc-200 dark:border-zinc-800 opacity-60 hover:opacity-100"
+                                                    )}
+                                                >
+                                                    <div className={cn("w-8 h-8 rounded-lg flex items-center justify-center", twoFactorMethod === 'app' ? "bg-orange-600 text-white" : "bg-zinc-200 dark:bg-zinc-700 text-zinc-500")}>
+                                                        <Smartphone size={16} />
+                                                    </div>
+                                                    <div className="flex-1">
+                                                        <p className="text-[11px] font-bold">Authenticator App</p>
+                                                        <p className="text-[9px] text-zinc-500">Google Auth, Authy, etc.</p>
+                                                    </div>
+                                                    {twoFactorMethod === 'app' && <CheckCircle2 size={14} className="text-orange-600" />}
+                                                </button>
+
+                                                <button
+                                                    onClick={() => setTwoFactorMethod('email')}
+                                                    className={cn(
+                                                        "flex items-center gap-3 p-3 rounded-xl border transition-all text-left",
+                                                        twoFactorMethod === 'email'
+                                                            ? "bg-white dark:bg-zinc-800 border-orange-600 shadow-sm ring-1 ring-orange-600"
+                                                            : "bg-transparent border-zinc-200 dark:border-zinc-800 opacity-60 hover:opacity-100"
+                                                    )}
+                                                >
+                                                    <div className={cn("w-8 h-8 rounded-lg flex items-center justify-center", twoFactorMethod === 'email' ? "bg-orange-600 text-white" : "bg-zinc-200 dark:bg-zinc-700 text-zinc-500")}>
+                                                        <Mail size={16} />
+                                                    </div>
+                                                    <div className="flex-1">
+                                                        <p className="text-[11px] font-bold">Email Code</p>
+                                                        <p className="text-[9px] text-zinc-500">Sent to {user?.email?.replace(/(.{2})(.*)(@)/, '$1***$3')}</p>
+                                                    </div>
+                                                    {twoFactorMethod === 'email' && <CheckCircle2 size={14} className="text-orange-600" />}
+                                                </button>
+                                            </div>
+
+                                            <Button
+                                                onClick={handleSetupMFA}
+                                                disabled={setupMFAMutation.isPending}
+                                                className="w-full mt-2 h-10 bg-orange-600 hover:bg-orange-700 text-white font-bold text-xs rounded-xl"
+                                            >
+                                                {setupMFAMutation.isPending ? <Loader2 className="animate-spin mr-2" size={14} /> : "Enable 2FA"}
+                                            </Button>
+                                        </div>
+                                    )}
+
+                                    {is2FAEnabled && (
+                                        <div className="pt-4 border-t border-zinc-200 dark:border-zinc-800">
+                                            <Alert className="bg-emerald-500/10 border-emerald-500/20">
+                                                <ShieldCheck className="h-4 w-4 text-emerald-600" />
+                                                <AlertDescription className="text-[11px] text-emerald-600">
+                                                    2FA is active using {currentMethod === 'app' ? 'Authenticator App' : 'Email'} method.
+                                                </AlertDescription>
+                                            </Alert>
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+
+                            <div className="space-y-3">
+                                <span className="text-[10px] font-black uppercase text-zinc-400 tracking-[0.2em]">Safety Guidelines</span>
+                                <ul className="space-y-2">
+                                    {[
+                                        "App-based TOTP is recommended over Email.",
+                                        "Codes expire after 30 seconds for security.",
+                                        "Never share your 2FA codes with anyone.",
+                                        is2FAEnabled && "Keep your backup codes in a safe place."
+                                    ].filter(Boolean).map((tip, i) => (
+                                        <li key={i} className="flex items-center gap-2 text-[11px] text-zinc-500 font-medium">
+                                            <ChevronRight size={10} className="text-orange-600" /> {tip}
+                                        </li>
+                                    ))}
+                                </ul>
+                            </div>
+                        </div>
+
+                        {/* RIGHT: PASSWORD CHANGE */}
+                        <div className="flex-[1.2] lg:border-l lg:border-zinc-100 lg:dark:border-zinc-800/50 lg:pl-12">
+                            <div className="flex items-center gap-2 mb-6">
+                                <Key className="text-orange-600" size={16} />
+                                <span className="text-[10px] font-black uppercase text-zinc-400 tracking-[0.2em]">Update Credentials</span>
+                            </div>
+
+                            <Form {...form}>
+                                <form onSubmit={form.handleSubmit(handleUpdatePassword)} className="space-y-5">
+                                    {successMessage && (
+                                        <div className="p-3 rounded-xl bg-emerald-500/10 text-emerald-600 text-[10px] font-black text-center border border-emerald-500/20 uppercase tracking-widest">
+                                            {successMessage}
+                                        </div>
+                                    )}
+
+                                    <FormField
+                                        control={form.control}
+                                        name="current_password"
+                                        render={({ field }) => (
+                                            <FormItem className="space-y-1">
+                                                <FormLabel className="text-[10px] font-bold uppercase text-zinc-500 tracking-widest">Current Password</FormLabel>
+                                                <div className="relative">
+                                                    <FormControl>
+                                                        <Input type={showCurrentPassword ? "text" : "password"} {...field} className="h-12 border-zinc-200 dark:border-zinc-800 focus-visible:ring-orange-600 rounded-xl pr-10" />
+                                                    </FormControl>
+                                                    <button type="button" onClick={() => setShowCurrentPassword(!showCurrentPassword)} className="absolute right-3 top-3.5 text-zinc-400 hover:text-orange-600 transition-colors">
+                                                        {showCurrentPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                                                    </button>
+                                                </div>
+                                                <FormMessage className="text-[10px]" />
+                                            </FormItem>
+                                        )}
+                                    />
+
+                                    <FormField
+                                        control={form.control}
+                                        name="new_password"
+                                        render={({ field }) => (
+                                            <FormItem className="space-y-1">
+                                                <div className="flex justify-between items-end">
+                                                    <FormLabel className="text-[10px] font-bold uppercase text-zinc-500 tracking-widest">New Password</FormLabel>
+                                                    {newPassword && <span className="text-[9px] font-black uppercase text-orange-600">{strengthLabel}</span>}
+                                                </div>
+                                                <div className="relative">
+                                                    <FormControl>
+                                                        <Input type={showNewPassword ? "text" : "password"} {...field} className="h-12 border-zinc-200 dark:border-zinc-800 focus-visible:ring-orange-600 rounded-xl pr-10" />
+                                                    </FormControl>
+                                                    <button type="button" onClick={() => setShowNewPassword(!showNewPassword)} className="absolute right-3 top-3.5 text-zinc-400 hover:text-orange-600 transition-colors">
+                                                        {showNewPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                                                    </button>
+                                                </div>
+                                                {newPassword && (
+                                                    <div className="flex gap-1 h-1 mt-2">
+                                                        {[1, 2, 3, 4, 5].map((s) => (
+                                                            <div key={s} className={`h-full flex-1 rounded-full transition-all duration-500 ${strength >= s ? strengthColor : "bg-zinc-100 dark:bg-zinc-800"}`} />
+                                                        ))}
+                                                    </div>
+                                                )}
+                                            </FormItem>
+                                        )}
+                                    />
+
+                                    <FormField
+                                        control={form.control}
+                                        name="confirm_password"
+                                        render={({ field }) => (
+                                            <FormItem className="space-y-1">
+                                                <FormLabel className="text-[10px] font-bold uppercase text-zinc-500 tracking-widest">Confirm Password</FormLabel>
+                                                <FormControl>
+                                                    <Input type={showNewPassword ? "text" : "password"} {...field} className="h-12 border-zinc-200 dark:border-zinc-800 focus-visible:ring-orange-600 rounded-xl" />
+                                                </FormControl>
+                                                <FormMessage className="text-[10px]" />
+                                            </FormItem>
+                                        )}
+                                    />
+
+                                    <Button type="submit" disabled={isLoading} className="h-14 bg-zinc-900 dark:bg-zinc-100 dark:text-zinc-900 font-black uppercase tracking-[0.3em] text-[10px] rounded-xl w-full hover:bg-orange-600 dark:hover:bg-orange-600 dark:hover:text-white transition-all shadow-lg shadow-zinc-900/10">
+                                        {isLoading ? <Loader2 className="animate-spin mr-2" size={16} /> : "Authorize Update"}
+                                    </Button>
+                                </form>
+                            </Form>
+                        </div>
+                    </CardContent>
+                </div>
+            </Card>
+
+            {/* MFA Setup Modal - Using CustomDialog */}
+            <CustomDialog
+                title={setupStep === 'select' ? "Enable 2FA" : "Verify Setup"}
+                description={setupStep === 'select'
+                    ? "Choose your preferred method for two-factor authentication."
+                    : "Enter the verification code to complete setup."}
+                open={isSetupModalOpen}
+                onOpenChange={setIsSetupModalOpen}
+                contentWidth="max-w-md"
+            >
+                {setupStep === 'select' && (
+                    <div className="space-y-4 py-4">
+                        <div className="grid grid-cols-2 gap-3">
+                            <button
+                                onClick={() => setTwoFactorMethod('app')}
+                                className={cn(
+                                    "p-4 rounded-xl border-2 transition-all text-center",
+                                    twoFactorMethod === 'app'
+                                        ? "border-orange-600 bg-orange-50 dark:bg-orange-950/20"
+                                        : "border-zinc-200 dark:border-zinc-800"
+                                )}
+                            >
+                                <Smartphone className="mx-auto mb-2" size={24} />
+                                <p className="text-sm font-bold">App</p>
+                                <p className="text-[10px] text-zinc-500">Authenticator</p>
+                            </button>
+                            <button
+                                onClick={() => setTwoFactorMethod('email')}
+                                className={cn(
+                                    "p-4 rounded-xl border-2 transition-all text-center",
+                                    twoFactorMethod === 'email'
+                                        ? "border-orange-600 bg-orange-50 dark:bg-orange-950/20"
+                                        : "border-zinc-200 dark:border-zinc-800"
+                                )}
+                            >
+                                <Mail className="mx-auto mb-2" size={24} />
+                                <p className="text-sm font-bold">Email</p>
+                                <p className="text-[10px] text-zinc-500">Verification Code</p>
+                            </button>
+                        </div>
+                        <Button onClick={handleSetupMFA} disabled={setupMFAMutation.isPending} className="w-full bg-orange-600 hover:bg-orange-700">
+                            {setupMFAMutation.isPending ? <Loader2 className="animate-spin mr-2" size={16} /> : "Continue"}
+                        </Button>
+                    </div>
+                )}
+
+                {setupStep === 'verify' && twoFactorMethod === 'app' && (
+                    <div className="space-y-4 py-4">
+                        <div className="flex justify-center">
+                            {qrCodeUri && (
+                                <div className="p-4 bg-white rounded-xl">
+                                    <QRCode value={qrCodeUri} size={200} />
+                                </div>
+                            )}
+                        </div>
+                        <div className="text-center">
+                            <p className="text-xs text-zinc-500 mb-2">Or enter this code manually:</p>
+                            <code className="px-3 py-2 bg-zinc-100 dark:bg-zinc-800 rounded-lg text-sm font-mono">
+                                {secretKey}
+                            </code>
+                        </div>
+                        <Input
+                            placeholder="Enter 6-digit code"
+                            value={verificationCode}
+                            onChange={(e) => setVerificationCode(e.target.value)}
+                            className="text-center text-lg font-mono"
+                            maxLength={6}
+                        />
+                        <Button onClick={handleVerifyMFA} disabled={verifyMFAMutation.isPending} className="w-full bg-orange-600 hover:bg-orange-700">
+                            {verifyMFAMutation.isPending ? <Loader2 className="animate-spin mr-2" size={16} /> : "Verify & Enable"}
+                        </Button>
+                    </div>
+                )}
+
+                {setupStep === 'verify' && twoFactorMethod === 'email' && (
+                    <div className="space-y-4 py-4">
+                        <Alert>
+                            <Mail className="h-4 w-4" />
+                            <AlertDescription>
+                                A verification code has been sent to {user?.email}
+                            </AlertDescription>
+                        </Alert>
+                        <Input
+                            placeholder="Enter 6-digit code"
+                            value={verificationCode}
+                            onChange={(e) => setVerificationCode(e.target.value)}
+                            className="text-center text-lg font-mono"
+                            maxLength={6}
+                        />
+                        <Button onClick={handleVerifyMFA} disabled={verifyMFAMutation.isPending} className="w-full bg-orange-600 hover:bg-orange-700">
+                            {verifyMFAMutation.isPending ? <Loader2 className="animate-spin mr-2" size={16} /> : "Verify & Enable"}
+                        </Button>
+                    </div>
+                )}
+
+                {backupCodes.length > 0 && (
+                    <div className="mt-4 p-4 bg-amber-50 dark:bg-amber-950/20 rounded-xl border border-amber-200 dark:border-amber-800">
+                        <p className="text-sm font-bold mb-2">⚠️ Save your backup codes</p>
+                        <div className="grid grid-cols-2 gap-2 font-mono text-xs">
+                            {backupCodes.map((code, i) => (
+                                <div key={i} className="bg-white dark:bg-zinc-900 p-2 rounded text-center">
+                                    {code}
+                                </div>
+                            ))}
+                        </div>
+                        <div className="flex gap-2 mt-3">
+                            <Button variant="outline" size="sm" onClick={copyBackupCodes} className="flex-1">
+                                <Copy size={14} className="mr-2" /> Copy
+                            </Button>
+                            <Button variant="outline" size="sm" onClick={downloadBackupCodes} className="flex-1">
+                                <Download size={14} className="mr-2" /> Download
+                            </Button>
+                        </div>
+                    </div>
+                )}
+            </CustomDialog>
+
+            {/* Disable MFA Modal - Using CustomDialog */}
+            <CustomDialog
+                title="Disable 2FA"
+                description="Enter your password to confirm disabling two-factor authentication."
+                open={isDisableModalOpen}
+                onOpenChange={setIsDisableModalOpen}
+                contentWidth="max-w-md"
+            >
+                <div className="space-y-4 py-4">
+                    <Input
+                        type="password"
+                        placeholder="Enter your password"
+                        value={disablePassword}
+                        onChange={(e) => setDisablePassword(e.target.value)}
+                        className="h-12"
+                    />
+                    <Button
+                        onClick={handleDisableMFA}
+                        disabled={disableMFAMutation.isPending}
+                        variant="destructive"
+                        className="w-full"
+                    >
+                        {disableMFAMutation.isPending ? <Loader2 className="animate-spin mr-2" size={16} /> : "Disable 2FA"}
+                    </Button>
+                </div>
+            </CustomDialog>
+        </>
     );
 }
-
 
 function AppearanceSection({ lang, theme, setTheme }: {
     lang: string;
@@ -478,7 +899,6 @@ function AppearanceSection({ lang, theme, setTheme }: {
 }) {
     return (
         <Card className="group relative overflow-hidden transition-all duration-500 hover:-translate-y-1 shadow-xl border-none bg-white dark:bg-[#111114]">
-            {/* Same animated overlay as above */}
             <div className="absolute w-[calc(100%-4px)] h-[calc(100%-4px)] top-[2px] left-[2px] overflow-hidden bg-white dark:bg-[#111114] rounded-xl z-10" />
             <div className="absolute inset-[-100%] bg-[conic-gradient(from_0deg,transparent_0deg,transparent_150deg,#ea580c_230deg,transparent_210deg)] opacity-0 group-hover:opacity-100 group-hover:animate-spin transition-opacity duration-500 pointer-events-none z-0"
                 style={{ animationDuration: '3s' }} />
@@ -525,7 +945,6 @@ function AppearanceSection({ lang, theme, setTheme }: {
     );
 }
 
-// 4. Study Goals Component
 function StudyGoalsSection() {
     return (
         <Card className="group relative overflow-hidden transition-all duration-500 hover:-translate-y-1 shadow-xl border-none bg-white dark:bg-[#111114]">
@@ -582,19 +1001,7 @@ function StudyGoalsSection() {
 export default function ProfileContent({ lang }: { lang: string }) {
     const { user } = useAuth();
     const { theme, setTheme } = useTheme();
-
-    // API handlers (implement these with your actual API calls)
-    const handleUpdateProfile = async (data: z.infer<typeof profileSchema>) => {
-        console.log("Updating profile:", data);
-        // TODO: Call your update profile API here
-        // Example: await api.patch('/user/profile', data);
-    };
-
-    const handleUpdatePassword = async (data: z.infer<typeof passwordSchema>) => {
-        console.log("Updating password:", data);
-        // TODO: Call your update password API here
-        // Example: await api.post('/auth/change-password', data);
-    };
+    const [isCollapsed, setIsCollapsed] = useState(false);
 
     return (
         <div className="w-full mx-auto">
@@ -606,31 +1013,81 @@ export default function ProfileContent({ lang }: { lang: string }) {
             `}</style>
 
             <Tabs defaultValue="personal" className="flex flex-col md:!flex-row gap-8 items-start">
+
                 {/* NAVIGATION SIDEBAR */}
-                <div className="w-full md:w-64 shrink-0">
-                    <TabsList className="flex flex-col h-auto w-full bg-transparent space-y-1 p-0 justify-start items-start">
-                        <div className="px-4 py-2 mb-1">
-                            <p className="text-[10px] font-bold uppercase text-zinc-400 tracking-[0.2em]">Account</p>
+                <div className={cn(
+                    "shrink-0 transition-all duration-500 ease-in-out relative border-r border-zinc-100 dark:border-zinc-800/50",
+                    isCollapsed ? "w-14" : "w-full md:w-64"
+                )}>
+                    {/* Collapse Toggle Button - Matches your UI aesthetic */}
+                    <button
+                        onClick={() => setIsCollapsed(!isCollapsed)}
+                        className="absolute -right-3 top-10 z-50 w-6 h-6 bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-full flex items-center justify-center text-zinc-400 hover:text-orange-600 transition-all shadow-sm active:scale-90"
+                    >
+                        <ChevronRight className={cn("transition-transform duration-500", !isCollapsed && "rotate-180")} size={12} />
+                    </button>
+
+                    <TabsList className={cn(
+                        "flex flex-col h-auto w-full bg-transparent space-y-1 p-0 justify-start items-start transition-all duration-500",
+                        isCollapsed ? "items-center" : "items-start"
+                    )}>
+
+                        {/* Section: Account */}
+                        <div className={cn("px-4 py-2 mb-1 transition-opacity duration-300", isCollapsed ? "opacity-0 h-8" : "opacity-100")}>
+                            {!isCollapsed && <p className="text-[10px] font-bold uppercase text-zinc-400 tracking-[0.2em] whitespace-nowrap">Account</p>}
                         </div>
-                        <TabsTrigger value="personal" className="gradient-tab w-full justify-start gap-3 px-4 py-3 font-bold text-xs uppercase tracking-wider rounded-xl transition-all data-[state=inactive]:hover:bg-zinc-100 dark:data-[state=inactive]:hover:bg-zinc-900">
-                            <User size={16} /> Personal Info
-                        </TabsTrigger>
-                        <TabsTrigger value="security" className="gradient-tab w-full justify-start gap-3 px-4 py-3 font-bold text-xs uppercase tracking-wider rounded-xl transition-all data-[state=inactive]:hover:bg-zinc-100 dark:data-[state=inactive]:hover:bg-zinc-900">
-                            <ShieldCheck size={16} /> Security
+
+                        <TabsTrigger
+                            value="personal"
+                            className={cn(
+                                "gradient-tab w-full flex items-center px-4 py-3 font-bold text-xs uppercase tracking-wider rounded-xl transition-all data-[state=inactive]:hover:bg-zinc-100 dark:data-[state=inactive]:hover:bg-zinc-900",
+                                isCollapsed ? "justify-center py-6" : "justify-start gap-3"
+                            )}
+                        >
+                            <User size={16} className="shrink-0" />
+                            {!isCollapsed && <span className="truncate">Personal Info</span>}
                         </TabsTrigger>
 
-                        <div className="px-4 py-2 mt-6 mb-1">
-                            <p className="text-[10px] font-bold uppercase text-zinc-400 tracking-[0.2em]">Preferences</p>
+                        <TabsTrigger
+                            value="security"
+                            className={cn(
+                                "gradient-tab w-full flex items-center px-4 py-3 font-bold text-xs uppercase tracking-wider rounded-xl transition-all data-[state=inactive]:hover:bg-zinc-100 dark:data-[state=inactive]:hover:bg-zinc-900",
+                                isCollapsed ? "justify-center py-6" : "justify-start gap-3"
+                            )}
+                        >
+                            <ShieldCheck size={16} className="shrink-0" />
+                            {!isCollapsed && <span className="truncate">Security</span>}
+                        </TabsTrigger>
+
+                        {/* Section: Preferences */}
+                        <div className={cn("px-4 py-2 mt-6 mb-1 transition-opacity duration-300", isCollapsed ? "opacity-0 h-8" : "opacity-100")}>
+                            {!isCollapsed && <p className="text-[10px] font-bold uppercase text-zinc-400 tracking-[0.2em] whitespace-nowrap">Preferences</p>}
                         </div>
-                        <TabsTrigger value="display" className="gradient-tab w-full justify-start gap-3 px-4 py-3 font-bold text-xs uppercase tracking-wider rounded-xl transition-all data-[state=inactive]:hover:bg-zinc-100 dark:data-[state=inactive]:hover:bg-zinc-900">
-                            <Palette size={16} /> Appearance
+
+                        <TabsTrigger
+                            value="display"
+                            className={cn(
+                                "gradient-tab w-full flex items-center px-4 py-3 font-bold text-xs uppercase tracking-wider rounded-xl transition-all data-[state=inactive]:hover:bg-zinc-100 dark:data-[state=inactive]:hover:bg-zinc-900",
+                                isCollapsed ? "justify-center py-6" : "justify-start gap-3"
+                            )}
+                        >
+                            <Palette size={16} className="shrink-0" />
+                            {!isCollapsed && <span className="truncate">Appearance</span>}
                         </TabsTrigger>
-                        <TabsTrigger value="learning" className="gradient-tab w-full justify-start gap-3 px-4 py-3 font-bold text-xs uppercase tracking-wider rounded-xl transition-all data-[state=inactive]:hover:bg-zinc-100 dark:data-[state=inactive]:hover:bg-zinc-900">
-                            <Target size={16} /> Study Goals
+
+                        <TabsTrigger
+                            value="learning"
+                            className={cn(
+                                "gradient-tab w-full flex items-center px-4 py-3 font-bold text-xs uppercase tracking-wider rounded-xl transition-all data-[state=inactive]:hover:bg-zinc-100 dark:data-[state=inactive]:hover:bg-zinc-900",
+                                isCollapsed ? "justify-center py-6" : "justify-start gap-3"
+                            )}
+                        >
+                            <Target size={16} className="shrink-0" />
+                            {!isCollapsed && <span className="truncate">Study Goals</span>}
                         </TabsTrigger>
+
                     </TabsList>
                 </div>
-
                 {/* MAIN CONTENT AREA */}
                 <div className="flex-1 w-full">
                     <TabsContent value="personal" className="mt-0 outline-none">

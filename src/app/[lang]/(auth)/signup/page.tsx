@@ -1,22 +1,30 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useForm } from 'react-hook-form';
 import * as z from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useTheme } from 'next-themes';
-import { Moon, Sun, Loader2, Eye, EyeOff } from 'lucide-react';
+import { Moon, Sun, Loader2, Eye, EyeOff, Venus, Mars } from 'lucide-react';
 
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import LanguageSwitcher from '../../components/LanguageSwitcher';
 import { Lang } from '@/lib/dictionary/dictionary';
 import api from '@/lib/axios';
 import { ENDPOINTS } from '@/lib/endpoints';
+import { useAuth } from '@/context/AuthContext';
+
+declare global {
+  interface Window {
+    google: any;
+  }
+}
 
 const signupDict = {
   en: {
@@ -27,7 +35,13 @@ const signupDict = {
     email: "Email Address",
     password: "Password",
     confirmPassword: "Confirm Password",
+    gender: "Gender",
+    genderMale: "Male",
+    genderFemale: "Female",
+    genderPreferNot: "Prefer not to say",
+    genderRequired: "Please select your gender",
     button: "Get Started",
+    googleButton: "Continue with Google",
     hasAccount: "Already have an account?",
     action: "Log in",
     error: "Registration failed.",
@@ -40,7 +54,13 @@ const signupDict = {
     email: "Adresse Email",
     password: "Mot de passe",
     confirmPassword: "Confirmer le mot de passe",
+    gender: "Genre",
+    genderMale: "Homme",
+    genderFemale: "Femme",
+    genderPreferNot: "Préfère ne pas dire",
+    genderRequired: "Veuillez sélectionner votre genre",
     button: "Commencer",
+    googleButton: "Continuer avec Google",
     hasAccount: "Déjà inscrit ?",
     action: "Se connecter",
     error: "Échec de l'inscription.",
@@ -53,19 +73,27 @@ const signupDict = {
     email: "Correo Electrónico",
     password: "Contraseña",
     confirmPassword: "Confirmar Contraseña",
+    gender: "Género",
+    genderMale: "Hombre",
+    genderFemale: "Mujer",
+    genderPreferNot: "Prefiero no decirlo",
+    genderRequired: "Por favor seleccione su género",
     button: "Empezar",
+    googleButton: "Continuar con Google",
     hasAccount: "¿Ya tienes cuenta?",
     action: "Inicia sesión",
     error: "Error al registrarse.",
   }
 };
 
+// Updated schema with gender as required
 const signupSchema = z.object({
   firstName: z.string().min(2, "Required"),
   lastName: z.string().min(2, "Required"),
   email: z.string().email("Invalid email"),
   password: z.string().min(8, "Min 8 characters"),
-  confirmPassword: z.string()
+  confirmPassword: z.string(),
+  gender: z.string().min(1, "Gender is required"),
 }).refine((data) => data.password === data.confirmPassword, {
   message: "Passwords don't match",
   path: ["confirmPassword"],
@@ -73,12 +101,22 @@ const signupSchema = z.object({
 
 function SignupForm({ lang, t }: { lang: Lang, t: any }) {
   const [isLoading, setIsLoading] = useState(false);
+  const [isGoogleLoading, setIsGoogleLoading] = useState(false);
   const [showPass, setShowPass] = useState(false);
+  const [scriptLoaded, setScriptLoaded] = useState(false);
   const router = useRouter();
+  const { login } = useAuth();
 
   const form = useForm<z.infer<typeof signupSchema>>({
     resolver: zodResolver(signupSchema),
-    defaultValues: { firstName: "", lastName: "", email: "", password: "", confirmPassword: "" },
+    defaultValues: {
+      firstName: "",
+      lastName: "",
+      email: "",
+      password: "",
+      confirmPassword: "",
+      gender: ""
+    },
   });
 
   const password = form.watch("password");
@@ -105,6 +143,7 @@ function SignupForm({ lang, t }: { lang: Lang, t: any }) {
         password: values.password,
         first_name: values.firstName,
         last_name: values.lastName,
+        gender: values.gender,
       });
 
       if (data.status === 'success') {
@@ -113,15 +152,15 @@ function SignupForm({ lang, t }: { lang: Lang, t: any }) {
     } catch (error: any) {
       const serverResponse = error.response?.data;
 
-      // 1. Map specific field errors (errors array)
       if (serverResponse?.errors && Array.isArray(serverResponse.errors)) {
         serverResponse.errors.forEach((err: any) => {
-          const field = err.field === 'first_name' ? 'firstName' : err.field === 'last_name' ? 'lastName' : err.field;
+          const field = err.field === 'first_name' ? 'firstName' :
+            err.field === 'last_name' ? 'lastName' :
+              err.field === 'gender' ? 'gender' : err.field;
           form.setError(field as any, { message: err.message });
         });
       }
 
-      // 2. Map global message (e.g., "Validation failed" or custom server message)
       const globalMessage = serverResponse?.message || t.error;
       form.setError('root', { message: globalMessage });
 
@@ -129,6 +168,84 @@ function SignupForm({ lang, t }: { lang: Lang, t: any }) {
       setIsLoading(false);
     }
   }
+
+  // Google Sign-In handler
+  const handleGoogleSignup = useCallback(() => {
+    if (!scriptLoaded || !window.google) {
+      console.error('Google script not loaded');
+      return;
+    }
+
+    setIsGoogleLoading(true);
+
+    try {
+      const client = window.google.accounts.oauth2.initCodeClient({
+        client_id: process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID,
+        scope: 'email profile openid',
+        ux_mode: 'popup',
+        callback: async (response: any) => {
+          if (response.code) {
+            try {
+              const { data } = await api.post(ENDPOINTS.AUTH.GOOGLE, {
+                code: response.code
+              });
+
+              if (data.status === 'success') {
+                login({
+                  user: data.data.user,
+                  tokens: data.data.tokens
+                });
+                router.push('/');
+              } else {
+                form.setError('root', { message: data.message || 'Google signup failed' });
+              }
+            } catch (error: any) {
+              const serverResponse = error.response?.data;
+              form.setError('root', { message: serverResponse?.message || 'Google signup failed' });
+            } finally {
+              setIsGoogleLoading(false);
+            }
+          } else {
+            setIsGoogleLoading(false);
+            if (response.error) {
+              console.error('Google auth error:', response.error);
+            }
+          }
+        },
+      });
+
+      client.requestCode();
+    } catch (error) {
+      console.error('Google signup failed:', error);
+      setIsGoogleLoading(false);
+      form.setError('root', { message: 'Failed to initialize Google signup' });
+    }
+  }, [scriptLoaded, router, login, form]);
+
+  // Load Google Identity Services script
+  useEffect(() => {
+    if (document.querySelector('script[src="https://accounts.google.com/gsi/client"]')) {
+      setScriptLoaded(true);
+      return;
+    }
+
+    const script = document.createElement('script');
+    script.src = 'https://accounts.google.com/gsi/client';
+    script.async = true;
+    script.defer = true;
+    script.onload = () => {
+      console.log('Google script loaded');
+      setScriptLoaded(true);
+    };
+    document.body.appendChild(script);
+
+    return () => {
+      const existingScript = document.querySelector('script[src="https://accounts.google.com/gsi/client"]');
+      if (existingScript) {
+        existingScript.remove();
+      }
+    };
+  }, []);
 
   return (
     <Form {...form}>
@@ -138,18 +255,58 @@ function SignupForm({ lang, t }: { lang: Lang, t: any }) {
             {form.formState.errors.root.message}
           </div>
         )}
+        <div className="flex gap-4 pt-4">
 
-        <FormField control={form.control} name="firstName" render={({ field }) => (
-          <FormItem className="space-y-1 pt-3">
-            <FormLabel className="text-[10px] font-bold uppercase text-zinc-500 tracking-widest">{t.firstName}</FormLabel>
-            <FormControl><Input {...field} className="h-12 border-zinc-200 dark:border-zinc-800 focus-visible:ring-primary rounded-xl pr-10" /></FormControl>
-            <FormMessage className="text-[10px]" />
-          </FormItem>
-        )} />
-        <FormField control={form.control} name="lastName" render={({ field }) => (
+          <FormField control={form.control} name="firstName" render={({ field }) => (
+            <FormItem className="space-y-1 pt-3">
+              <FormLabel className="text-[10px] font-bold uppercase text-zinc-500 tracking-widest">{t.firstName}</FormLabel>
+              <FormControl><Input {...field} className="h-12 border-zinc-200 dark:border-zinc-800 focus-visible:ring-primary rounded-xl pr-10" /></FormControl>
+              <FormMessage className="text-[10px]" />
+            </FormItem>
+          )} />
+
+          <FormField control={form.control} name="lastName" render={({ field }) => (
+            <FormItem className="space-y-1">
+              <FormLabel className="text-[10px] font-bold uppercase text-zinc-500 tracking-widest">{t.lastName}</FormLabel>
+              <FormControl><Input {...field} className="h-12 border-zinc-200 dark:border-zinc-800 focus-visible:ring-primary rounded-xl pr-10" /></FormControl>
+              <FormMessage className="text-[10px]" />
+            </FormItem>
+          )} />
+        </div>
+
+        <FormField control={form.control} name="gender" render={({ field }) => (
           <FormItem className="space-y-1">
-            <FormLabel className="text-[10px] font-bold uppercase text-zinc-500 tracking-widest">{t.lastName}</FormLabel>
-            <FormControl><Input {...field} className="h-12 border-zinc-200 dark:border-zinc-800 focus-visible:ring-primary rounded-xl pr-10" /></FormControl>
+            <FormLabel className="text-[10px] font-bold uppercase text-zinc-500 tracking-widest">
+              {t.gender} <span className="text-red-500">*</span>
+            </FormLabel>
+            <Select
+              onValueChange={field.onChange}
+              defaultValue={field.value}
+              value={field.value}
+            >
+              <FormControl>
+                <SelectTrigger className="h-14 py-6 w-full border-zinc-200 dark:border-zinc-800 focus-visible:ring-primary rounded-lg">
+                  <SelectValue placeholder="Select gender" />
+                </SelectTrigger>
+              </FormControl>
+              <SelectContent>
+                <SelectItem className='py-3' value="male">
+                  <div className="flex items-center gap-2">
+                    <Mars size={14} />
+                    {t.genderMale}
+                  </div>
+                </SelectItem>
+                <SelectItem className='py-3' value="female">
+                  <div className="flex items-center gap-2">
+                    <Venus size={14} />
+                    {t.genderFemale}
+                  </div>
+                </SelectItem>
+                <SelectItem className='py-3' value="prefer_not_to_say">
+                  {t.genderPreferNot}
+                </SelectItem>
+              </SelectContent>
+            </Select>
             <FormMessage className="text-[10px]" />
           </FormItem>
         )} />
@@ -194,6 +351,38 @@ function SignupForm({ lang, t }: { lang: Lang, t: any }) {
         <Button disabled={isLoading} className="w-full h-12 mt-4 bg-zinc-900 dark:bg-zinc-100 dark:text-zinc-900 hover:bg-primary dark:hover:bg-primary dark:hover:text-white font-bold rounded-xl transition-all">
           {isLoading ? <Loader2 className="animate-spin" /> : t.button}
         </Button>
+
+        {/* Divider */}
+        <div className="relative my-4">
+          <div className="absolute inset-0 flex items-center">
+            <div className="w-full border-t border-zinc-200 dark:border-zinc-800"></div>
+          </div>
+          <div className="relative flex justify-center text-xs uppercase">
+            <span className="bg-white dark:bg-[#111114] px-2 text-zinc-500">or</span>
+          </div>
+        </div>
+
+        {/* Google Sign-In Button */}
+        <Button
+          onClick={handleGoogleSignup}
+          disabled={isGoogleLoading}
+          variant={"ghost"}
+          className="w-full h-12 bg-white hover:bg-gray-50 text-gray-700 font-medium rounded-lg border border-gray-300 shadow-sm hover:shadow transition-all duration-200 flex items-center justify-center gap-3"
+        >
+          {isGoogleLoading ? (
+            <Loader2 className="animate-spin" size={20} />
+          ) : (
+            <>
+              <svg width="20" height="20" viewBox="0 0 24 24">
+                <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4" />
+                <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853" />
+                <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05" />
+                <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335" />
+              </svg>
+              <span>{t.googleButton}</span>
+            </>
+          )}
+        </Button>
       </form>
     </Form>
   );
@@ -232,7 +421,7 @@ export default function SignupPage({ params }: { params: Promise<{ lang: Lang }>
           <div className="relative p-2">
             <CardHeader><CardTitle className="text-3xl font-black">{t.title}</CardTitle><CardDescription>{t.subtitle}</CardDescription></CardHeader>
             <CardContent><SignupForm lang={lang} t={t} /></CardContent>
-            <CardFooter className="justify-center border-t border-zinc-100 dark:border-zinc-800/50 mt-4 pt-6 text-sm text-zinc-500">
+            <CardFooter className="justify-center border-t border-zinc-100 dark:border-zinc-800/50 mt-2 pt-2 text-sm text-zinc-500">
               {t.hasAccount} <Link href={`/${lang}/login`} className="text-primary font-bold ml-1 hover:underline">{t.action}</Link>
             </CardFooter>
           </div>

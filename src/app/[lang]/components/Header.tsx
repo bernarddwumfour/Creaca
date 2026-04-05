@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { Button } from '@/components/ui/button'
 import Link from 'next/link'
 import { Lang } from '@/lib/dictionary/dictionary'
@@ -22,6 +22,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { ScrollArea } from "@/components/ui/scroll-area"
+import { generateAvatarFromUser } from '../profile/avatarHelpers'
 
 interface HeaderProps {
   lang: Lang;
@@ -97,6 +98,11 @@ const Header = ({ lang, t }: HeaderProps) => {
       document.body.style.overflow = 'unset'
     }
   }, [mobileMenuOpen])
+
+  const avatarUrl = useMemo(() => {
+    return generateAvatarFromUser(user);
+  }, [user]);
+
 
   const navItems = [
     { label: t.home, href: `/${lang}` },
@@ -221,11 +227,15 @@ const Header = ({ lang, t }: HeaderProps) => {
                     <DropdownMenuTrigger asChild>
                       <button className="flex items-center gap-2 outline-none group">
                         <Avatar className="w-8 h-8 border-2 border-primary/20 p-0.5 transition-transform group-hover:scale-105">
-                          <AvatarImage src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${user.email}`} />
+                          <AvatarImage
+                            src={avatarUrl}
+                            alt={user?.first_name || 'Avatar'}
+                          />
                           <AvatarFallback className="bg-primary text-white text-[10px] font-black">
-                            {user.first_name?.[0]}{user.last_name?.[0]}
+                            {user?.first_name?.[0]}{user?.last_name?.[0]}
                           </AvatarFallback>
                         </Avatar>
+
                         <ChevronDown size={14} className="text-muted-foreground transition-transform group-data-[state=open]:rotate-180" />
                       </button>
                     </DropdownMenuTrigger>

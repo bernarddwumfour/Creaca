@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { createAvatar } from '@dicebear/core';
 import { avataaars } from '@dicebear/collection';
 import { Loader2, Save, RefreshCw, User, UserCheck, Palette, Smile } from 'lucide-react';
@@ -9,9 +9,9 @@ import { toast } from 'sonner';
 import api from '@/lib/axios';
 import { ENDPOINTS } from '@/lib/endpoints';
 import { cn } from '@/lib/utils';
+import { useAuth } from '@/context/AuthContext';
 
 // Use the actual valid values from the library
-// These are the correct values that work with the library
 const HAIR_STYLES = {
     male: [
         { label: "Short Flat", value: "shortFlat" as const },
@@ -39,14 +39,13 @@ const CLOTHING = [
     { label: "V-Neck", value: "shirtVNeck" as const },
 ] as const;
 
-// Use the exact values that the library expects
 const FACIAL_HAIR = [
     { label: "None", value: "none" as const },
     { label: "Light Beard", value: "beardLight" as const },
     { label: "Majestic Beard", value: "beardMajestic" as const },
     { label: "Medium Beard", value: "beardMedium" as const },
-    { label: "Moustache", value: "moustacheFancy" as const }, // Using moustacheFancy which exists in type
-    { label: "Fancy Moustache", value: "moustacheMagnum" as const }, // Using moustacheMagnum which exists in type
+    { label: "Moustache", value: "moustacheFancy" as const },
+    { label: "Fancy Moustache", value: "moustacheMagnum" as const },
 ] as const;
 
 const EYES = [
@@ -64,7 +63,6 @@ const MOUTH = [
     { label: "Smile", value: "smile" as const },
     { label: "Grin", value: "twinkle" as const },
     { label: "Serious", value: "serious" as const },
-    { label: "Vomit", value: "vomit" as const },
     { label: "Eating", value: "eating" as const },
     { label: "Concerned", value: "concerned" as const },
     { label: "Sad", value: "sad" as const },
@@ -88,7 +86,6 @@ const COLORS = {
 } as const;
 
 // Type helpers
-type ValueOf<T> = T[keyof T];
 type HairValue = typeof HAIR_STYLES.male[number]['value'] | typeof HAIR_STYLES.female[number]['value'];
 type ClothingValue = typeof CLOTHING[number]['value'];
 type FacialHairValue = typeof FACIAL_HAIR[number]['value'];
@@ -100,66 +97,147 @@ type HairColorValue = typeof COLORS.hair[number];
 type ClothesColorValue = typeof COLORS.clothes[number];
 type FacialHairColorValue = typeof COLORS.facialHair[number];
 
-export function AvatarBuilder({ user, onSuccess }: { user: any; onSuccess: () => void }) {
-    const [loading, setLoading] = useState(false);
-    const [genderFilter, setGenderFilter] = useState<'male' | 'female'>('male');
+// ====================== UNIFIED AVATAR GENERATION ======================
+export const generateAvatar = (options: {
+    seed?: string;
+    gender?: 'male' | 'female';
+    config?: {
+        top?: string;
+        clothing?: string;
+        facial_hair?: string;
+        eyes?: string;
+        mouth?: string;
+        accessories?: string;
+        skin_color?: string;
+        hair_color?: string;
+        clothes_color?: string;
+        facial_hair_color?: string;
+    };
+}): string => {
+    const { seed = 'default', gender = 'male', config = {} } = options;
 
-    const [features, setFeatures] = useState({
-        top: "shortFlat" as HairValue,
-        clothing: "blazerAndShirt" as ClothingValue,
-        facialHair: "none" as FacialHairValue,
-        eyes: "default" as EyesValue,
-        mouth: "smile" as MouthValue,
-        accessories: "none" as AccessoriesValue,
-        skinColor: "f2d3b1" as SkinColorValue,
-        hairColor: "2c1b18" as HairColorValue,
-        clothesColor: "3c4f5c" as ClothesColorValue,
-        facialHairColor: "2c1b18" as FacialHairColorValue,
+    const shouldHaveFacialHair = gender === 'male' && config.facial_hair && config.facial_hair !== 'none';
+
+    const avatar = createAvatar(avataaars, {
+        seed: seed,
+
+        // Hair
+        top: config.top ? [config.top as any] : ['shortFlat'],
+        hairColor: config.hair_color ? [config.hair_color as any] : ['2c1b18'],
+
+        // Clothing
+        clothing: config.clothing ? [config.clothing as any] : ['blazerAndShirt'],
+        clothesColor: config.clothes_color ? [config.clothes_color as any] : ['3c4f5c'],
+
+        // Facial Hair - with probability
+        facialHair: shouldHaveFacialHair ? [config.facial_hair as any] : [],
+        facialHairColor: shouldHaveFacialHair && config.facial_hair_color ? [config.facial_hair_color as any] : [],
+        facialHairProbability: shouldHaveFacialHair ? 100 : 0,
+
+        // Eyes and mouth
+        eyes: config.eyes ? [config.eyes as any] : ['default'],
+        mouth: config.mouth ? [config.mouth as any] : ['smile'],
+
+        // Accessories - with probability
+        accessories: config.accessories && config.accessories !== 'none' ? [config.accessories as any] : [],
+        accessoriesProbability: config.accessories && config.accessories !== 'none' ? 100 : 0,
+
+        // Skin color
+        skinColor: config.skin_color ? [config.skin_color as any] : ['f2d3b1'],
     });
 
+    return avatar.toDataUri();
+};
+
+// Helper to convert camelCase features to snake_case for API
+export const featuresToApiConfig = (features: any) => {
+    return {
+        top: features.top,
+        clothing: features.clothing,
+        facial_hair: features.facialHair,
+        eyes: features.eyes,
+        mouth: features.mouth,
+        accessories: features.accessories,
+        skin_color: features.skinColor,
+        hair_color: features.hairColor,
+        clothes_color: features.clothesColor,
+        facial_hair_color: features.facialHairColor,
+    };
+};
+
+// Helper to convert snake_case API config to camelCase
+export const apiConfigToFeatures = (config: any) => {
+    if (!config) return null;
+
+    return {
+        top: config.top || 'shortFlat',
+        clothing: config.clothing || 'blazerAndShirt',
+        facialHair: config.facial_hair || 'none',
+        eyes: config.eyes || 'default',
+        mouth: config.mouth || 'smile',
+        accessories: config.accessories || 'none',
+        skinColor: config.skin_color || 'f2d3b1',
+        hairColor: config.hair_color || '2c1b18',
+        clothesColor: config.clothes_color || '3c4f5c',
+        facialHairColor: config.facial_hair_color || '2c1b18',
+    };
+};
+
+// ====================== AVATAR BUILDER COMPONENT ======================
+export function AvatarBuilder({ user, onSuccess }: { user: any; onSuccess: () => void }) {
+    const [loading, setLoading] = useState(false);
+    const [genderFilter, setGenderFilter] = useState<'male' | 'female'>(user?.gender || 'male');
+    const { updateUser } = useAuth();
+
+
+    // Load existing avatar config from user
+    const userFeatures = apiConfigToFeatures(user?.avatar_config);
+
+    const [features, setFeatures] = useState({
+        top: (userFeatures?.top || "shortFlat") as HairValue,
+        clothing: (userFeatures?.clothing || "blazerAndShirt") as ClothingValue,
+        facialHair: (userFeatures?.facialHair || "none") as FacialHairValue,
+        eyes: (userFeatures?.eyes || "default") as EyesValue,
+        mouth: (userFeatures?.mouth || "smile") as MouthValue,
+        accessories: (userFeatures?.accessories || "none") as AccessoriesValue,
+        skinColor: (userFeatures?.skinColor || "f2d3b1") as SkinColorValue,
+        hairColor: (userFeatures?.hairColor || "2c1b18") as HairColorValue,
+        clothesColor: (userFeatures?.clothesColor || "3c4f5c") as ClothesColorValue,
+        facialHairColor: (userFeatures?.facialHairColor || "2c1b18") as FacialHairColorValue,
+    });
+
+    // Update gender filter when user gender changes
+    useEffect(() => {
+        if (user?.gender) {
+            setGenderFilter(user.gender);
+        }
+    }, [user?.gender]);
+
+    // Use the unified generateAvatar function
     const avatarUri = useMemo(() => {
-        // Prepare facial hair - use proper values
-        const shouldHaveFacialHair = genderFilter === 'male' && features.facialHair !== 'none';
-
-        // Create avatar with proper type assertions
-        const avatar = createAvatar(avataaars, {
-            seed: user?.username || "BN",
-
-            // Hair
-            top: [features.top as any],
-            hairColor: [features.hairColor as any],
-
-            // Clothing
-            clothing: [features.clothing as any],
-            clothesColor: [features.clothesColor as any],
-
-            // Facial Hair - use proper values that match library expectations
-            facialHair: shouldHaveFacialHair ? [features.facialHair as any] : [],
-            facialHairColor: shouldHaveFacialHair ? [features.facialHairColor as any] : [],
-            facialHairProbability: shouldHaveFacialHair ? 100 : 0,
-
-            // Eyes and mouth
-            eyes: [features.eyes as any],
-            mouth: [features.mouth as any],
-
-            // Accessories
-            accessories: features.accessories === 'none' ? [] : [features.accessories as any],
-            accessoriesProbability: features.accessories === 'none' ? 0 : 100,
-
-            // Skin color
-            skinColor: [features.skinColor as any],
+        return generateAvatar({
+            seed: user?.username || user?.email || 'default',
+            gender: genderFilter,
+            config: {
+                top: features.top,
+                clothing: features.clothing,
+                facial_hair: features.facialHair,
+                eyes: features.eyes,
+                mouth: features.mouth,
+                accessories: features.accessories,
+                skin_color: features.skinColor,
+                hair_color: features.hairColor,
+                clothes_color: features.clothesColor,
+                facial_hair_color: features.facialHairColor,
+            }
         });
-
-        return avatar.toDataUri();
     }, [features, user, genderFilter]);
 
     const handleUpdate = (key: keyof typeof features, value: any) => {
-        console.log(`Updating ${key} to:`, value);
         setFeatures(prev => ({ ...prev, [key]: value }));
     };
 
     const handleRandomize = () => {
-        // Filter hair styles by gender
         const availableHair = genderFilter === 'male' ? HAIR_STYLES.male : HAIR_STYLES.female;
         const randomTop = availableHair[Math.floor(Math.random() * availableHair.length)].value;
         const randomClothing = CLOTHING[Math.floor(Math.random() * CLOTHING.length)].value;
@@ -167,7 +245,6 @@ export function AvatarBuilder({ user, onSuccess }: { user: any; onSuccess: () =>
         const randomMouth = MOUTH[Math.floor(Math.random() * MOUTH.length)].value;
         const randomAccessories = ACCESSORIES[Math.floor(Math.random() * ACCESSORIES.length)].value;
 
-        // For facial hair, sometimes randomize to none
         let randomFacialHair: FacialHairValue = "none";
         if (genderFilter === 'male') {
             const facialHairOptions = FACIAL_HAIR;
@@ -193,15 +270,28 @@ export function AvatarBuilder({ user, onSuccess }: { user: any; onSuccess: () =>
     const handleSave = async () => {
         setLoading(true);
         try {
-            await api.patch(ENDPOINTS.AUTH.PROFILE || '/user/profile', {
-                avatar: avatarUri,
-                avatarFeatures: features,
+            const avatarConfig = featuresToApiConfig(features);
+
+            const response = await api.post(ENDPOINTS.AUTH.UPDATE_AVATAR, {
+                avatar_config: avatarConfig,
+                gender: genderFilter,
             });
+
+            // Update local auth context with new avatar config and gender
+            const updatedUserData = response.data?.data || response.data;
+            if (updatedUserData) {
+                updateUser({
+                    avatar_config: updatedUserData.avatar_config,
+                    gender: updatedUserData.gender,
+                });
+            }
+
             toast.success("Avatar saved successfully!");
             onSuccess();
-        } catch (error) {
+        } catch (error: any) {
             console.error('Save error:', error);
-            toast.error("Failed to save avatar.");
+            const errorMessage = error.response?.data?.message || "Failed to save avatar.";
+            toast.error(errorMessage);
         } finally {
             setLoading(false);
         }
@@ -328,8 +418,6 @@ export function AvatarBuilder({ user, onSuccess }: { user: any; onSuccess: () =>
                     </div>
                     <ColorPicker current={features.skinColor} options={COLORS.skin} onSelect={(v: any) => handleUpdate('skinColor', v)} />
                 </div>
-
-
             </div>
         </div>
     );
@@ -398,3 +486,12 @@ function ColorPicker({ current, options, onSelect }: any) {
         </div>
     );
 }
+
+// Export helper for use in other components
+export const generateAvatarFromUser = (user: any): string => {
+    return generateAvatar({
+        seed: user?.username || user?.email || 'default',
+        gender: user?.gender || 'male',
+        config: user?.avatar_config,
+    });
+};

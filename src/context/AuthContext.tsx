@@ -6,12 +6,35 @@ import { useRouter } from 'next/navigation';
 
 const AUTH_COOKIE_KEY = 'kyrios_auth_session';
 
+// Avatar configuration interface
+interface AvatarConfig {
+    top?: string;
+    clothing?: string;
+    facial_hair?: string;
+    eyes?: string;
+    mouth?: string;
+    accessories?: string;
+    skin_color?: string;
+    hair_color?: string;
+    clothes_color?: string;
+    facial_hair_color?: string;
+}
+
 interface User {
     id: number;
     email: string;
     first_name: string;
     last_name: string;
     role: string;
+    gender?: string;
+    avatar_config?: AvatarConfig;
+    phone_number?: string;
+    email_verified?: boolean;
+    profile_picture?: string;
+
+    mfa_enabled?: boolean;
+    mfa_method?: 'app' | 'email';
+    mfa_email_verified?: boolean;
 }
 
 interface Tokens {
@@ -31,6 +54,7 @@ interface AuthContextType {
     tokens: Tokens | null;
     login: (session: AuthSession) => void;
     logout: () => void;
+    updateUser: (userData: Partial<User>) => void;
     isLoading: boolean;
 }
 
@@ -82,12 +106,33 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         router.push('/');
     };
 
+    const updateUser = (userData: Partial<User>) => {
+        if (session) {
+            const updatedSession = {
+                ...session,
+                user: {
+                    ...session.user,
+                    ...userData
+                }
+            };
+            setSession(updatedSession);
+
+            // Update cookie with new user data
+            Cookies.set(AUTH_COOKIE_KEY, JSON.stringify(updatedSession), {
+                expires: 7,
+                secure: true,
+                sameSite: 'strict'
+            });
+        }
+    };
+
     return (
         <AuthContext.Provider value={{
             user: session?.user || null,
             tokens: session?.tokens || null,
             login,
             logout,
+            updateUser,
             isLoading
         }}>
             {children}

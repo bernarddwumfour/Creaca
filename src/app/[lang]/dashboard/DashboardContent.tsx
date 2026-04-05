@@ -1,12 +1,13 @@
 "use client";
 
-import React from 'react';
+import React, { useState } from 'react';
 import {
     LayoutDashboard, BookOpen, Target,
     Trophy, Clock, PlayCircle,
     Star, CheckCircle2,
     Zap, Award, GraduationCap,
     Lock,
+    ChevronRight,
 } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
@@ -15,8 +16,11 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
+import { cn } from '@/lib/utils';
 
 export default function DashboardContent({ lang }: { lang: string }) {
+    const [isCollapsed, setIsCollapsed] = useState(false);
+
     const COURSES_DATA = [
         {
             id: "linear-algebra",
@@ -85,27 +89,77 @@ export default function DashboardContent({ lang }: { lang: string }) {
             <Tabs defaultValue="overview" className="flex flex-col md:!flex-row gap-8 items-start">
 
                 {/* NAVIGATION SIDEBAR */}
-                <div className="w-full md:w-64 shrink-0">
-                    <TabsList className="flex flex-col h-auto w-full bg-transparent space-y-1 p-0 justify-start items-start">
-                        <div className="px-4 py-2 mb-1">
-                            <p className="text-[10px] font-bold uppercase text-zinc-400 tracking-[0.2em]">Learning</p>
+                <div className={cn(
+                    "shrink-0 transition-all duration-500 ease-in-out relative border-r border-zinc-100 dark:border-zinc-800/50",
+                    isCollapsed ? "w-14" : "w-full md:w-64"
+                )}>
+                    {/* Collapse Toggle Button */}
+                    <button
+                        onClick={() => setIsCollapsed(!isCollapsed)}
+                        className="absolute -right-3 top-10 z-50 w-6 h-6 bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-full flex items-center justify-center text-zinc-400 hover:text-orange-600 transition-all shadow-sm active:scale-90"
+                    >
+                        <ChevronRight className={cn("transition-transform duration-500", !isCollapsed && "rotate-180")} size={12} />
+                    </button>
+
+                    <TabsList className={cn(
+                        "flex flex-col h-auto w-full bg-transparent space-y-1 p-0 justify-start items-start transition-all duration-500",
+                        isCollapsed ? "items-center" : "items-start"
+                    )}>
+
+                        {/* Section: Learning */}
+                        <div className={cn("px-4 py-2 mb-1 transition-opacity duration-300", isCollapsed ? "opacity-0 h-8" : "opacity-100")}>
+                            {!isCollapsed && <p className="text-[10px] font-bold uppercase text-zinc-400 tracking-[0.2em] whitespace-nowrap">Learning</p>}
                         </div>
-                        <TabsTrigger value="overview" className="gradient-tab w-full justify-start gap-3 px-4 py-3 font-bold text-xs uppercase tracking-wider rounded-xl transition-all data-[state=inactive]:hover:bg-zinc-100 dark:data-[state=inactive]:hover:bg-zinc-900">
-                            <LayoutDashboard size={16} /> Overview
-                        </TabsTrigger>
-                        <TabsTrigger value="courses" className="gradient-tab w-full justify-start gap-3 px-4 py-3 font-bold text-xs uppercase tracking-wider rounded-xl transition-all data-[state=inactive]:hover:bg-zinc-100 dark:data-[state=inactive]:hover:bg-zinc-900">
-                            <BookOpen size={16} /> My Courses
+
+                        <TabsTrigger
+                            value="overview"
+                            className={cn(
+                                "gradient-tab w-full flex items-center px-4 font-bold text-xs uppercase tracking-wider rounded-xl transition-all data-[state=inactive]:hover:bg-zinc-100 dark:data-[state=inactive]:hover:bg-zinc-900",
+                                isCollapsed ? "justify-center py-6" : "justify-start gap-3 py-3"
+                            )}
+                        >
+                            <LayoutDashboard size={16} className="shrink-0" />
+                            {!isCollapsed && <span className="truncate">Overview</span>}
                         </TabsTrigger>
 
-                        <div className="px-4 py-2 mt-6 mb-1">
-                            <p className="text-[10px] font-bold uppercase text-zinc-400 tracking-[0.2em]">Progress</p>
+                        <TabsTrigger
+                            value="courses"
+                            className={cn(
+                                "gradient-tab w-full flex items-center px-4 font-bold text-xs uppercase tracking-wider rounded-xl transition-all data-[state=inactive]:hover:bg-zinc-100 dark:data-[state=inactive]:hover:bg-zinc-900",
+                                isCollapsed ? "justify-center py-6" : "justify-start gap-3 py-3"
+                            )}
+                        >
+                            <BookOpen size={16} className="shrink-0" />
+                            {!isCollapsed && <span className="truncate">My Courses</span>}
+                        </TabsTrigger>
+
+                        {/* Section: Progress */}
+                        <div className={cn("px-4 py-2 mt-6 mb-1 transition-opacity duration-300", isCollapsed ? "opacity-0 h-8" : "opacity-100")}>
+                            {!isCollapsed && <p className="text-[10px] font-bold uppercase text-zinc-400 tracking-[0.2em] whitespace-nowrap">Progress</p>}
                         </div>
-                        <TabsTrigger value="stats" className="gradient-tab w-full justify-start gap-3 px-4 py-3 font-bold text-xs uppercase tracking-wider rounded-xl transition-all data-[state=inactive]:hover:bg-zinc-100 dark:data-[state=inactive]:hover:bg-zinc-900">
-                            <Target size={16} /> Performance
+
+                        <TabsTrigger
+                            value="stats"
+                            className={cn(
+                                "gradient-tab w-full flex items-center px-4 font-bold text-xs uppercase tracking-wider rounded-xl transition-all data-[state=inactive]:hover:bg-zinc-100 dark:data-[state=inactive]:hover:bg-zinc-900",
+                                isCollapsed ? "justify-center py-6" : "justify-start gap-3 py-3"
+                            )}
+                        >
+                            <Target size={16} className="shrink-0" />
+                            {!isCollapsed && <span className="truncate">Performance</span>}
                         </TabsTrigger>
-                        <TabsTrigger value="achievements" className="gradient-tab w-full justify-start gap-3 px-4 py-3 font-bold text-xs uppercase tracking-wider rounded-xl transition-all data-[state=inactive]:hover:bg-zinc-100 dark:data-[state=inactive]:hover:bg-zinc-900">
-                            <Trophy size={16} /> Achievements
+
+                        <TabsTrigger
+                            value="achievements"
+                            className={cn(
+                                "gradient-tab w-full flex items-center px-4 font-bold text-xs uppercase tracking-wider rounded-xl transition-all data-[state=inactive]:hover:bg-zinc-100 dark:data-[state=inactive]:hover:bg-zinc-900",
+                                isCollapsed ? "justify-center py-6" : "justify-start gap-3 py-3"
+                            )}
+                        >
+                            <Trophy size={16} className="shrink-0" />
+                            {!isCollapsed && <span className="truncate">Achievements</span>}
                         </TabsTrigger>
+
                     </TabsList>
                 </div>
 
