@@ -13,7 +13,6 @@ export const ENDPOINTS = {
         RESEND_VERIFICATION: `${API_VERSION}/accounts/email/resend-verification/`,
         VERIFY_EMAIL: `${API_VERSION}/accounts/email/verify/`,
 
-
         //Reset password
         FORGOT_PASSWORD: `${API_VERSION}/accounts/password/forgot/`,
         RESET_PASSWORD: `${API_VERSION}/accounts/password/reset/`,
@@ -46,6 +45,22 @@ export const ENDPOINTS = {
         BULK_STATUS_UPDATE: `${API_VERSION}/accounts/admin/users/bulk-status/`,
         BULK_CHANGE_ROLE: `${API_VERSION}/accounts/admin/users/bulk-change-role/`,
     },
+    SUBJECTS: {
+        LIST_SUBJECTS: `${API_VERSION}/subjects/`,
+        CREATE_SUBJECT: `${API_VERSION}/subjects/create/`,
+        SUBJECT_DETAIL: `${API_VERSION}/subjects/:id/`,
+        UPDATE_SUBJECT: `${API_VERSION}/subjects/:id/update/`,
+        DELETE_SUBJECT: `${API_VERSION}/subjects/:id/delete/`,
+        BULK_ACTION: `${API_VERSION}/subjects/bulk-action/`,
+    },
+    COURSES: {
+        LIST_COURSES: `${API_VERSION}/subjects/courses/`,
+        CREATE_COURSE: `${API_VERSION}/subjects/courses/create/`,
+        COURSE_DETAIL: `${API_VERSION}/subjects/courses/:id/`,
+        UPDATE_COURSE: `${API_VERSION}/subjects/courses/:id/update/`,
+        DELETE_COURSE: `${API_VERSION}/subjects/courses/:id/delete/`,
+        BULK_ACTION: `${API_VERSION}/subjects/courses/bulk-action/`,
+    }
 } as const;
 
 export const PUBLIC_URLS = [

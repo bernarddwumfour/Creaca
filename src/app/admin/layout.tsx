@@ -43,6 +43,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 
 import { useAuth } from '@/context/AuthContext';
+import { generateAvatarFromUser } from '../[lang]/profile/avatarHelpers';
 
 const SIDEBAR_LINKS = [
     { icon: LayoutDashboard, label: 'Overview', href: '/admin/dashboard' },
@@ -86,8 +87,10 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     const { theme, setTheme } = useTheme();
     const pathname = usePathname();
     const { user, logout } = useAuth();
+    const avatarUrl = useMemo(() => {
+        return generateAvatarFromUser(user);
+    }, [user]);
 
-    // --- 1. Navigation Search Logic ---
     const flatLinks = useMemo(() => {
         const links: { label: string; href: string; icon: any; parent?: string }[] = [];
         SIDEBAR_LINKS.forEach(link => {
@@ -110,16 +113,16 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         ).slice(0, 5);
     }, [searchQuery, flatLinks]);
 
-    // --- 2. MFA Global Status (React Query) ---
-    const { data: mfaData } = useQuery({
-        queryKey: ['mfa-status'],
-        queryFn: async () => {
-            // Replace with your actual api instance and endpoints
-            const response = await fetch('/api/auth/mfa-status');
-            return response.json();
-        },
-        refetchOnWindowFocus: false
-    });
+    // --- 2. MFA Global Status (React QueryhandleUpdateStatus) ---
+    // const { data: mfaData } = useQuery({
+    //     queryKey: ['mfa-status'],
+    //     queryFn: async () => {
+    //         // Replace with your actual api instance and endpoints
+    //         const response = await fetch('/api/auth/mfa-status');
+    //         return response.json();
+    //     },
+    //     refetchOnWindowFocus: false
+    // });
 
     // --- Helpers ---
     const toggleMenu = (label: string) => {
@@ -302,10 +305,16 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                                         <span className="text-xs font-black tracking-tight leading-none">{user?.first_name} {user?.last_name?.[0]}.</span>
                                         <span className="text-[9px] font-bold text-zinc-500 uppercase tracking-wider">{user?.role || 'Admin'}</span>
                                     </div>
-                                    <Avatar className="w-9 h-9 border-2 border-orange-600/20 p-0.5">
-                                        <AvatarImage src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${user?.email}`} />
-                                        <AvatarFallback className="bg-orange-600 text-white text-[10px]">{getInitials(user?.first_name, user?.last_name)}</AvatarFallback>
+                                    <Avatar className="w-8 h-8 border-2 border-primary/20 p-0.5 transition-transform group-hover:scale-105">
+                                        <AvatarImage
+                                            src={avatarUrl}
+                                            alt={user?.first_name || 'Avatar'}
+                                        />
+                                        <AvatarFallback className="bg-primary text-white text-[10px] font-black">
+                                            {user?.first_name?.[0]}{user?.last_name?.[0]}
+                                        </AvatarFallback>
                                     </Avatar>
+
                                 </Button>
                             </DropdownMenuTrigger>
                             <DropdownMenuContent align="end" className="w-56 mt-2 border-none shadow-2xl rounded-2xl p-2 dark:bg-[#111114]">
@@ -314,11 +323,11 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                                         <UserCircle size={18} className="text-zinc-500" /> Profile Settings
                                     </Link>
                                 </DropdownMenuItem>
-                                {mfaData?.mfa_enabled && (
+                                {/* {mfaData?.mfa_enabled && (
                                     <DropdownMenuItem className="flex items-center gap-3 p-3 py-3.5 text-xs font-bold text-emerald-600">
                                         <ShieldCheck size={18} /> 2FA Active
                                     </DropdownMenuItem>
-                                )}
+                                )} */}
                                 <DropdownMenuSeparator />
                                 <DropdownMenuItem onClick={logout} className="flex items-center gap-3 p-3 py-3.5 text-xs font-bold text-red-500 rounded-xl cursor-pointer hover:bg-red-50 dark:hover:bg-red-950/20">
                                     <LogOut size={18} /> Sign Out

@@ -177,6 +177,11 @@ function LoginForm({ lang, t }: { lang: Lang, t: any }) {
           return;
         }
 
+        login({
+          user: data.data.user,
+          tokens: data.data.tokens
+        });
+
         if (isNotVerified) {
           setUnverifiedEmail(values.email);
           setShowVerificationPrompt(true);
@@ -184,10 +189,6 @@ function LoginForm({ lang, t }: { lang: Lang, t: any }) {
           return;
         }
 
-        login({
-          user: data.data.user,
-          tokens: data.data.tokens
-        });
         router.push('/');
       } else {
         form.setError('root', { message: data.message || t.error });
@@ -227,17 +228,17 @@ function LoginForm({ lang, t }: { lang: Lang, t: any }) {
               if (data.status === 'success') {
                 const isNotVerified = data.data?.email_verified === false || data.data?.user?.email_verified === false;
 
+                login({
+                  user: data.data.user,
+                  tokens: data.data.tokens
+                });
+
                 if (isNotVerified) {
                   setUnverifiedEmail(data.data.user.email);
                   setShowVerificationPrompt(true);
                   setIsGoogleLoading(false);
                   return;
                 }
-
-                login({
-                  user: data.data.user,
-                  tokens: data.data.tokens
-                });
                 router.push('/');
               } else {
                 form.setError('root', { message: data.message || t.error });

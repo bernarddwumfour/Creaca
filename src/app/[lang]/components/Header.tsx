@@ -111,7 +111,7 @@ const Header = ({ lang, t }: HeaderProps) => {
     { label: t.contact, href: `/${lang}/contact` },
   ]
 
-  const dashboardPath = user?.role === 'ADMIN' ? `/admin` : `/${lang}/dashboard`;
+  const dashboardPath = user?.role === 'ADMIN' || user?.role === 'STAFF' ? `/admin` : `/${lang}/dashboard`;
 
   return (
     <header

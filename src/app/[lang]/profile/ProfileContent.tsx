@@ -273,7 +273,7 @@ function PersonalInfoSection() {
                                             onValueChange={field.onChange}
                                             defaultValue={field.value}
                                             value={field.value}
-                                            disabled
+                                            disabled={!!field.value}
                                         >
                                             <FormControl>
                                                 <SelectTrigger className="h-12 border-zinc-200 dark:border-zinc-800 focus-visible:ring-primary rounded-xl">

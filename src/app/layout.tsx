@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
+import { Toaster } from 'sonner'; // Add this import
 import "./globals.css";
 import { ThemeProvider } from "@/components/ui/theme-provider";
 import NextTopLoader from 'nextjs-toploader';
@@ -51,6 +52,21 @@ export default function RootLayout({
             <Providers>
               {children}
             </Providers>
+
+            {/* Add Toaster component here - it will render toasts at the top of your app */}
+            <Toaster
+              position="top-right"
+              richColors
+              closeButton
+              toastOptions={{
+                style: {
+                  background: 'var(--background)',
+                  color: 'var(--foreground)',
+                  border: '1px solid var(--border)',
+                },
+                className: 'font-medium',
+              }}
+            />
 
           </ThemeProvider>
         </AuthProvider>
