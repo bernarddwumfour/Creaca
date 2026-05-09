@@ -142,6 +142,7 @@ function LoginForm({ lang, t }: { lang: Lang, t: any }) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const isRegistered = searchParams.get('registered') === 'true';
+  const redirectTo = searchParams.get('redirect') || '/';
   const { login } = useAuth();
 
   const form = useForm<z.infer<typeof loginSchema>>({
@@ -189,7 +190,8 @@ function LoginForm({ lang, t }: { lang: Lang, t: any }) {
           return;
         }
 
-        router.push('/');
+        // Redirect to the stored redirect URL or home
+        router.push(`/en${redirectTo}`);
       } else {
         form.setError('root', { message: data.message || t.error });
       }
@@ -239,7 +241,7 @@ function LoginForm({ lang, t }: { lang: Lang, t: any }) {
                   setIsGoogleLoading(false);
                   return;
                 }
-                router.push('/');
+                router.push(`/en${redirectTo}`);
               } else {
                 form.setError('root', { message: data.message || t.error });
               }
@@ -265,7 +267,7 @@ function LoginForm({ lang, t }: { lang: Lang, t: any }) {
       setIsGoogleLoading(false);
       form.setError('root', { message: 'Failed to initialize Google login' });
     }
-  }, [scriptLoaded, router, login, form, t.error]);
+  }, [scriptLoaded, router, login, form, t.error, redirectTo]);
 
   const handleResendVerification = async () => {
     setResendLoading(true);
@@ -309,7 +311,8 @@ function LoginForm({ lang, t }: { lang: Lang, t: any }) {
           user: data.data.user,
           tokens: data.data.tokens
         });
-        router.push('/');
+        // Redirect to the stored redirect URL or home after MFA
+        router.push(`/en${redirectTo}`);
       } else {
         setMfaError(data.message || t.mfaError);
         mfaForm.setError('code', { message: data.message || t.mfaError });
@@ -399,7 +402,7 @@ function LoginForm({ lang, t }: { lang: Lang, t: any }) {
             </Button>
 
             <Button asChild variant="ghost" className="w-full font-bold">
-              <Link href={"/"}>
+              <Link href={`/en${redirectTo}`}>
                 {t.verifyLater}
               </Link>
             </Button>
@@ -545,6 +548,8 @@ export default function LoginPage({ params }: { params: Promise<{ lang: Lang }> 
   const { lang } = React.use(params);
   const t = loginDict[lang] || loginDict.en;
   const { theme, setTheme } = useTheme();
+  const searchParams = useSearchParams();
+  const redirectTo = searchParams.get('redirect') || '/';
 
   return (
     <div className="min-h-screen flex w-full bg-zinc-50 dark:bg-[#09090b] relative overflow-hidden transition-colors duration-500">
@@ -587,7 +592,7 @@ export default function LoginPage({ params }: { params: Promise<{ lang: Lang }> 
             <CardFooter className="flex flex-col space-y-4">
               <p className="text-sm text-center text-zinc-500 font-medium">
                 {t.noAccount}{' '}
-                <Link href={`/${lang}/signup`} className="text-primary font-bold hover:underline">{t.action}</Link>
+                <Link href={`/${lang}/signup?redirect=${encodeURIComponent(redirectTo)}`} className="text-primary font-bold hover:underline">{t.action}</Link>
               </p>
             </CardFooter>
           </div>

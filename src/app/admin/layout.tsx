@@ -28,7 +28,9 @@ import {
     GraduationCap,
     UserCog,
     Columns3Cog,
-    ShieldCheck
+    ShieldCheck,
+    Package,
+    CreditCard
 } from 'lucide-react';
 
 import { Button } from "@/components/ui/button";
@@ -55,6 +57,15 @@ const SIDEBAR_LINKS = [
             { icon: Library, label: 'Manage Subjects', href: '/admin/subjects' },
             { icon: BookMarked, label: 'Manage Courses', href: '/admin/subjects/courses' },
             { icon: BookOpen, label: 'Manage Modules', href: '/admin/subjects/modules' },
+        ]
+    },
+    {
+        icon: Package,
+        label: 'Packages',
+        isCollapsible: true,
+        children: [
+            { icon: Package, label: 'Manage Packages', href: '/admin/packages' },
+            { icon: CreditCard, label: 'Manage Subscriptions', href: '/admin/packages/subscriptions' },
         ]
     },
     {

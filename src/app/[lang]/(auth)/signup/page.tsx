@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { useForm } from 'react-hook-form';
 import * as z from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -99,7 +99,7 @@ const signupSchema = z.object({
   path: ["confirmPassword"],
 });
 
-function SignupForm({ lang, t }: { lang: Lang, t: any }) {
+function SignupForm({ lang, t, redirectTo }: { lang: Lang, t: any, redirectTo: string }) {
   const [isLoading, setIsLoading] = useState(false);
   const [isGoogleLoading, setIsGoogleLoading] = useState(false);
   const [showPass, setShowPass] = useState(false);
@@ -147,7 +147,9 @@ function SignupForm({ lang, t }: { lang: Lang, t: any }) {
       });
 
       if (data.status === 'success') {
-        router.push(`/${lang}/login?registered=true`);
+        // Pass the redirect parameter to login page
+        const loginUrl = `/${lang}/login?registered=true${redirectTo ? `&redirect=${encodeURIComponent(redirectTo)}` : ''}`;
+        router.push(loginUrl);
       }
     } catch (error: any) {
       const serverResponse = error.response?.data;
@@ -195,7 +197,8 @@ function SignupForm({ lang, t }: { lang: Lang, t: any }) {
                   user: data.data.user,
                   tokens: data.data.tokens
                 });
-                router.push('/');
+                // Redirect to the stored redirect URL or home
+                router.push(`/${lang}${redirectTo}` || '/');
               } else {
                 form.setError('root', { message: data.message || 'Google signup failed' });
               }
@@ -220,7 +223,7 @@ function SignupForm({ lang, t }: { lang: Lang, t: any }) {
       setIsGoogleLoading(false);
       form.setError('root', { message: 'Failed to initialize Google signup' });
     }
-  }, [scriptLoaded, router, login, form]);
+  }, [scriptLoaded, router, login, form, redirectTo]);
 
   // Load Google Identity Services script
   useEffect(() => {
@@ -392,6 +395,8 @@ export default function SignupPage({ params }: { params: Promise<{ lang: Lang }>
   const { lang } = React.use(params);
   const t = signupDict[lang] || signupDict.en;
   const { theme, setTheme } = useTheme();
+  const searchParams = useSearchParams();
+  const redirectTo = searchParams.get('redirect') || '/';
 
   return (
     <div className="min-h-screen flex w-full bg-zinc-50 dark:bg-[#09090b] relative overflow-hidden">
@@ -420,9 +425,9 @@ export default function SignupPage({ params }: { params: Promise<{ lang: Lang }>
           <div className="absolute inset-[-100%] bg-[conic-gradient(from_0deg,transparent_0deg,transparent_150deg,#ea580c_230deg,transparent_210deg)] opacity-0 group-hover:opacity-100 group-hover:animate-spin transition-opacity duration-500 pointer-events-none -z-1" style={{ animationDuration: '4s' }} />
           <div className="relative p-2">
             <CardHeader><CardTitle className="text-3xl font-black">{t.title}</CardTitle><CardDescription>{t.subtitle}</CardDescription></CardHeader>
-            <CardContent><SignupForm lang={lang} t={t} /></CardContent>
+            <CardContent><SignupForm lang={lang} t={t} redirectTo={redirectTo} /></CardContent>
             <CardFooter className="justify-center border-t border-zinc-100 dark:border-zinc-800/50 mt-2 pt-2 text-sm text-zinc-500">
-              {t.hasAccount} <Link href={`/${lang}/login`} className="text-primary font-bold ml-1 hover:underline">{t.action}</Link>
+              {t.hasAccount} <Link href={`/${lang}/login${redirectTo ? `?redirect=${encodeURIComponent(redirectTo)}` : ''}`} className="text-primary font-bold ml-1 hover:underline">{t.action}</Link>
             </CardFooter>
           </div>
         </Card>

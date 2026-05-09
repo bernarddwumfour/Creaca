@@ -60,6 +60,24 @@ export const ENDPOINTS = {
         UPDATE_COURSE: `${API_VERSION}/subjects/courses/:id/update/`,
         DELETE_COURSE: `${API_VERSION}/subjects/courses/:id/delete/`,
         BULK_ACTION: `${API_VERSION}/subjects/courses/bulk-action/`,
+        REGISTER_FOR_COURSE: `${API_VERSION}/subjects/courses/registrations/register/`,
+        MY_REGISTRATIONS: `${API_VERSION}/subjects/courses/registrations/me/`,
+    },
+    PACKAGES: {
+        LIST_PACKAGES: `${API_VERSION}/packages/`,
+        CREATE_PACKAGE: `${API_VERSION}/packages/create/`,
+        PACKAGE_DETAIL: `${API_VERSION}/packages/:id/`,
+        UPDATE_PACKAGE: `${API_VERSION}/packages/:id/update/`,
+        DELETE_PACKAGE: `${API_VERSION}/packages/:id/delete/`,
+        BULK_ACTION: `${API_VERSION}/packages/bulk-action/`,
+    },
+    SUBSCRIPTIONS: {
+        LIST_SUBSCRIPTIONS: `${API_VERSION}/packages/subscriptions/`,
+        UPDATE_SUBSCRIPTION: `${API_VERSION}/packages/subscriptions/:id/update/`,
+        MY_SUBSCRIPTION: `${API_VERSION}/packages/subscriptions/me/`,
+        SUBSCRIPTION_HISTORY: `${API_VERSION}/packages/subscriptions/history/`,
+        CANCEL_SUBSCRIPTION: `${API_VERSION}/packages/subscriptions/cancel/`,
+        SUBSCRIBE: `${API_VERSION}/packages/subscriptions/subscribe/`,
     }
 } as const;
 

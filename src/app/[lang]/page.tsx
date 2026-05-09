@@ -6,9 +6,10 @@ import { Button } from "@/components/ui/button";
 import Image from "next/image";
 import { ArrowRightCircle, Check, Clock } from "lucide-react";
 import CountUp from "./components/CountUp";
-import PricingCarousel from "./components/PricingCarousel";
+// import PricingCarousel from "./components/PricingCarousel";
 import HowItWorks from "./HowItWorks";
 import Testimonials from "./Testimonials";
+import PricingSection from "./components/PricingSection";
 
 type PageProps = {
   params: {
@@ -28,7 +29,8 @@ export default async function Home({ params }: PageProps) {
       {/* We pass both aboutSection and tutorials to keep WhyChooseUs dynamic */}
       <AboutCresca t={home.aboutSection} aboutSection={home.aboutSection} />
       <HowItWorks t={home.tutorials} />
-      <PricingSection t={home.pricing} />
+      {/* <PricingCarousel /> */}
+      <PricingSection />
       <Testimonials t={home.testimonials} />
       <Footer lang={lang} t={t.footer} />
     </div>
@@ -91,7 +93,7 @@ function Hero({ t, nav }: { t: any, nav: any }) {
               <Image src="/home3.png" fill className="scale-100 md:scale-130 transform-origin-bottom p-0 w-full object-contain object-bottom" alt="Students" priority />
             </div>
           </div>
-          </div>
+        </div>
       </div>
 
       <div className="container mx-auto py-2 md:py-6">
@@ -226,7 +228,7 @@ function WhyChooseUs({ t }: { t: any }) {
   return (
     <div className="relative">
       <div className="container mx-auto pb-9 md:pb-16 px-6 relative">
-      
+
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 py-8 md:py-16 gap-6 md:gap-10 justify-center mx-auto">
           {t.map((step: any, i: number) => (
             <div key={i} className="group relative flex flex-col p-6 py-10 rounded-lg overflow-hidden border border-slate-100 dark:border-zinc-800 shadow-2xl shadow-black/[0.03] bg-white/80 dark:bg-zinc-900/80 backdrop-blur-xl transition-all duration-500 hover:-translate-y-2 hover:bg-primary">
@@ -245,56 +247,3 @@ function WhyChooseUs({ t }: { t: any }) {
   );
 }
 
-function PricingSection({ t }: { t: any }) {
-  return (
-    <section className="bg-white dark:bg-[#18181b] py-42 overflow-hidden relative transition-colors duration-500">
-      <div className="absolute bottom-[-35%] right-[-5%] w-[65%] h-[55%] bg-orange-500/25 dark:bg-orange-600/10 rounded-full blur-[130px] pointer-events-none z-0 animate-[pulse_10s_ease-in-out_infinite]" />
-      <div className="absolute top-[-50%] left-[-15%] w-[70%] h-[60%] bg-primary/20 dark:bg-primary/10 rounded-full blur-[120px] pointer-events-none z-0 animate-[pulse_8s_ease-in-out_infinite]" />
-      <div className="lg:container mx-auto px-6 relative z-10">
-        <div className="max-w-xl space-y-4 mb-14">
-          <h2 className="text-primary font-bold uppercase tracking-[0.3em] text-xs">{t.subtitle}</h2>
-          <h3 className="text-3xl md:text-4xl font-black text-slate-900 dark:text-white tracking-tight leading-tight">
-            {t.title} <span className="text-orange-600 relative inline-block">
-              {t.titleAccent}
-              <span className="absolute -bottom-2 left-0 w-full h-1 bg-gradient-to-r from-orange-600/0 via-orange-600/50 to-orange-600/0 blur-sm"></span>
-            </span>
-          </h3>
-        </div>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-10">
-          {t.plans.map((tier: any, i: number) => (
-            <div key={i} className="group relative p-[2px] rounded-3xl transition-all duration-700 hover:-translate-y-2 overflow-hidden bg-slate-100/50 dark:bg-zinc-900 shadow-xs hover:shadow-sm">
-              <div className="absolute w-[95%] h-[95%] top-[2.5%] left-[2.5%] z-1 bg-slate-100 dark:bg-zinc-900 rounded-3xl" />
-              <div className="absolute inset-[-100%] bg-[conic-gradient(from_0deg,transparent_0deg,transparent_150deg,#ea580c_230deg,transparent_210deg)] opacity-0 group-hover:opacity-100 group-hover:animate-spin transition-opacity duration-500 pointer-events-none" style={{ animationDuration: '3s' }} />
-              <div className="relative h-full flex flex-col p-8 rounded-3xl bg-white/50 dark:bg-[#111114]/80 backdrop-blur-2xl z-10 border border-slate-100 dark:border-white/5 overflow-hidden">
-                <div className="absolute top-0 -inset-full h-full w-1/2 z-5 block transform -skew-x-20 bg-gradient-to-r from-transparent via-white/2 to-transparent animate-[shimmer_3s_infinite]" />
-                <div className="mt-10 mb-5">
-                  <h4 className="text-xl font-black text-slate-900 dark:text-white mb-2">{tier.title}</h4>
-                  <p className="text-slate-500 dark:text-zinc-400 text-[13px] font-medium leading-relaxed">{tier.features[0]}</p>
-                </div>
-                <div className="flex items-center gap-2 text-slate-400 dark:text-zinc-500 text-xs font-bold mb-6">
-                  <Clock className="w-4 h-4 text-orange-600" />
-                  Monthly
-                </div>
-                <div className="space-y-4 mb-10 flex-grow">
-                  {tier.features.map((feature: string, idx: number) => (
-                    <div key={idx} className="flex items-start gap-3 text-[13px] font-bold text-slate-700 dark:text-zinc-300">
-                      <Check className="w-3 h-3 text-primary" strokeWidth={4} />
-                      <span className="leading-tight">{feature}</span>
-                    </div>
-                  ))}
-                </div>
-                <div className="pt-6 border-t border-slate-100 dark:border-white/10 mb-6">
-                  <div className="flex items-baseline gap-2">
-                    <span className="text-4xl font-black text-slate-900 dark:text-white tracking-tighter">${tier.price}</span>
-                  </div>
-                </div>
-                <Button className="rounded-[2rem]">{tier.buttonText}</Button>
-              </div>
-            </div>
-          ))}
-        </div>
-      </div>
-      <style dangerouslySetInnerHTML={{ __html: `@keyframes shimmer { 0% { transform: translateX(-150%) skewX(-20deg); } 100% { transform: translateX(450%) skewX(-20deg); } }` }} />
-    </section>
-  );
-}

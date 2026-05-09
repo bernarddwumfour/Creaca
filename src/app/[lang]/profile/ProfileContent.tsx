@@ -1,4 +1,4 @@
-"use client";
+'use client';
 
 import React, { useState, useEffect, useMemo } from 'react';
 import { useAuth } from '@/context/AuthContext';
@@ -15,7 +15,18 @@ import {
     CheckCircle2,
     Mail,
     Download,
-    Copy
+    Copy,
+    CreditCard,
+    Calendar,
+    Package as PackageIcon,
+    AlertCircle,
+    XCircle,
+    Ban,
+    ArrowRight,
+    History,
+    Zap,
+    Check,
+    Package
 } from 'lucide-react';
 import QRCode from 'react-qr-code';
 
@@ -26,16 +37,20 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Badge } from "@/components/ui/badge";
 import api from '@/lib/axios';
 import { ENDPOINTS } from '@/lib/endpoints';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { CustomDialog } from '../../../../widgets/CustomDialog/CustomDialog';
+import { ConfirmDialog } from '../../../../widgets/ConfirmDialog/ConfirmDialog';
 import { AvatarBuilder } from './AvatarPicker';
 import { generateAvatarFromUser } from './avatarHelpers';
 import { Switch } from '@/components/ui/switch';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 import { Alert, AlertDescription } from '@/components/ui/alert';
+import Link from 'next/link';
+
 
 const profileSchema = z.object({
     first_name: z.string().min(1, "First name is required"),
@@ -53,7 +68,545 @@ const passwordSchema = z.object({
     path: ["confirm_password"],
 });
 
-// ====================== SUB-COMPONENTS ======================
+// ====================== SUBSCRIPTION TYPES ======================
+
+interface Subscription {
+    id: string;
+    package: {
+        id: string;
+        name: string;
+        price: number;
+        currency: string;
+        billing_cycle: string;
+        description: string;
+    };
+    status: 'active' | 'trial' | 'cancelled' | 'expired' | 'inactive';
+    start_date: string;
+    end_date: string | null;
+    trial_ends_at: string | null;
+    auto_renew: boolean;
+    created_at: string;
+    updated_at: string;
+    cancelled_at?: string;
+    cancellation_reason?: string;
+}
+
+// ====================== SUBSCRIPTION SECTION ======================
+
+// ====================== SUBSCRIPTION SECTION ======================
+
+// ====================== SUBSCRIPTION SECTION ======================
+
+function SubscriptionSection() {
+    const queryClient = useQueryClient();
+    const [isCancelModalOpen, setIsCancelModalOpen] = useState(false);
+    const [isPackagesModalOpen, setIsPackagesModalOpen] = useState(false);
+    const [isCancelling, setIsCancelling] = useState(false);
+    const [cancellationReason, setCancellationReason] = useState('');
+    const [cancellationNote, setCancellationNote] = useState('');
+    const [isSubscribing, setIsSubscribing] = React.useState<string | null>(null);
+
+
+    // Fetch current subscription
+    const { data: currentSubscription, isLoading: isLoadingCurrent, refetch: refetchCurrent } = useQuery({
+        queryKey: ['my-subscription'],
+        queryFn: async () => {
+            try {
+                const response = await api.get(ENDPOINTS.SUBSCRIPTIONS.MY_SUBSCRIPTION);
+                return response.data?.data || response.data;
+            } catch (error: any) {
+                if (error.response?.status === 400) {
+                    return null; // No active subscription
+                }
+                throw error;
+            }
+        },
+    });
+
+    // Fetch available packages for browsing
+    const { data: packagesResponse, isLoading: isLoadingPackages } = useQuery({
+        queryKey: [ENDPOINTS.PACKAGES.LIST_PACKAGES],
+        queryFn: async () => {
+            const response = await api.get(ENDPOINTS.PACKAGES.LIST_PACKAGES, {
+                params: { page_size: 50 }
+            });
+            return response.data?.data || response.data;
+        },
+    });
+
+    // Fetch subscription history
+    const { data: historyResponse, isLoading: isLoadingHistory } = useQuery({
+        queryKey: ['subscription-history'],
+        queryFn: async () => {
+            const response = await api.get(ENDPOINTS.SUBSCRIPTIONS.SUBSCRIPTION_HISTORY);
+            return response.data?.data || response.data;
+        },
+    });
+
+    const packages = packagesResponse?.results || [];
+    const subscriptionHistory = historyResponse?.results || [];
+
+    // Subscribe to package
+    const handleSubscribe = async (packageId: string) => {
+        setIsSubscribing(packageId);
+        try {
+            const response = await api.post(ENDPOINTS.SUBSCRIPTIONS.SUBSCRIBE, {
+                package_id: packageId
+            });
+            toast.success(response.data?.message || "Successfully subscribed!");
+            refetchCurrent();
+            queryClient.invalidateQueries({ queryKey: [ENDPOINTS.PACKAGES.LIST_PACKAGES], exact: false })
+            setIsPackagesModalOpen(false);
+        } catch (error: any) {
+            toast.error(error.response?.data?.message || "Failed to subscribe");
+        } finally {
+            setIsSubscribing(null);
+        }
+    };
+
+    // Cancel subscription function
+    const handleCancelSubscription = async () => {
+        setIsCancelling(true);
+        try {
+            const response = await api.post(ENDPOINTS.SUBSCRIPTIONS.CANCEL_SUBSCRIPTION, {
+                reason: cancellationReason,
+                note: cancellationNote
+            });
+            toast.success(response.data?.message || "Subscription cancelled successfully");
+            refetchCurrent();
+            queryClient.invalidateQueries({ queryKey: [ENDPOINTS.PACKAGES.LIST_PACKAGES], exact: false })
+            setIsCancelModalOpen(false);
+            setCancellationReason('');
+            setCancellationNote('');
+        } catch (error: any) {
+            toast.error(error.response?.data?.message || "Failed to cancel subscription");
+        } finally {
+            setIsCancelling(false);
+        }
+    };
+
+    const formatDate = (date: string | null) => {
+        if (!date) return 'N/A';
+        return new Date(date).toLocaleDateString('en-US', {
+            year: 'numeric',
+            month: 'long',
+            day: 'numeric'
+        });
+    };
+
+    const formatPrice = (price: number, currency: string) => {
+        return new Intl.NumberFormat('en-US', {
+            style: 'currency',
+            currency: currency,
+            minimumFractionDigits: 0,
+            maximumFractionDigits: 2
+        }).format(price);
+    };
+
+    const getStatusBadge = (status: string) => {
+        switch (status) {
+            case 'active':
+                return <Badge className="bg-emerald-500/10 text-emerald-600 border-none">Active</Badge>;
+            case 'trial':
+                return <Badge className="bg-blue-500/10 text-blue-600 border-none">Trial</Badge>;
+            case 'cancelled':
+                return <Badge className="bg-rose-500/10 text-rose-600 border-none">Cancelled</Badge>;
+            case 'expired':
+                return <Badge className="bg-amber-500/10 text-amber-600 border-none">Expired</Badge>;
+            default:
+                return <Badge className="bg-zinc-500/10 text-zinc-600 border-none">{status}</Badge>;
+        }
+    };
+
+    const getBillingLabel = (cycle: string) => {
+        switch (cycle) {
+            case 'monthly': return '/month';
+            case 'yearly': return '/year';
+            case 'quarterly': return '/quarter';
+            case 'lifetime': return ' (Lifetime)';
+            default: return '';
+        }
+    };
+
+    const getDaysRemaining = (endDate: string | null) => {
+        if (!endDate) return null;
+        const end = new Date(endDate);
+        const now = new Date();
+        const diffTime = end.getTime() - now.getTime();
+        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+        return diffDays;
+    };
+
+    if (isLoadingCurrent) {
+        return (
+            <Card className="group relative overflow-hidden transition-all duration-500 hover:-translate-y-1 shadow-xl border-none bg-white dark:bg-[#111114]">
+                <div className="absolute w-[calc(100%-4px)] h-[calc(100%-4px)] top-[2px] left-[2px] overflow-hidden bg-white dark:bg-[#111114] rounded-xl z-10" />
+                <div className="absolute inset-[-100%] bg-[conic-gradient(from_0deg,transparent_0deg,transparent_150deg,#ea580c_230deg,transparent_210deg)] opacity-0 group-hover:opacity-100 group-hover:animate-spin transition-opacity duration-500 pointer-events-none z-0" style={{ animationDuration: '3s' }} />
+                <CardContent className="relative z-20 flex items-center justify-center min-h-[400px]">
+                    <Loader2 className="animate-spin text-orange-600" size={32} />
+                </CardContent>
+            </Card>
+        );
+    }
+
+    return (
+        <div className="space-y-6">
+            {/* Current Subscription Card */}
+            <Card className="group relative overflow-hidden transition-all duration-500 hover:-translate-y-1 shadow-xl border-none bg-white dark:bg-[#111114]">
+                <div className="absolute w-[calc(100%-4px)] h-[calc(100%-4px)] top-[2px] left-[2px] overflow-hidden bg-white dark:bg-[#111114] rounded-xl z-10" />
+                <div className="absolute inset-[-100%] bg-[conic-gradient(from_0deg,transparent_0deg,transparent_150deg,#ea580c_230deg,transparent_210deg)] opacity-0 group-hover:opacity-100 group-hover:animate-spin transition-opacity duration-500 pointer-events-none z-0" style={{ animationDuration: '3s' }} />
+
+                <div className="relative z-20">
+                    <CardHeader className="border-b border-zinc-100 dark:border-zinc-800/50 pb-16">
+                        <CardTitle className="text-xl font-black tracking-tight flex items-center gap-2">
+                            <CreditCard size={20} className="text-orange-600" />
+                            Current Subscription
+                        </CardTitle>
+                        <CardDescription className="text-zinc-500 font-medium">
+                            Your active plan and its details
+                        </CardDescription>
+                    </CardHeader>
+
+                    <CardContent className="pt-8">
+                        {currentSubscription ? (
+                            <div className="space-y-6">
+                                <div className="grid md:grid-cols-2 gap-6">
+                                    <div className="space-y-3">
+                                        <div className="flex items-center justify-between p-3 rounded-xl bg-zinc-50 dark:bg-zinc-900/50">
+                                            <span className="text-sm font-medium text-zinc-500">Plan</span>
+                                            <span className="font-bold text-lg">{currentSubscription.package?.name}</span>
+                                        </div>
+                                        <div className="flex items-center justify-between p-3 rounded-xl bg-zinc-50 dark:bg-zinc-900/50">
+                                            <span className="text-sm font-medium text-zinc-500">Price</span>
+                                            <span className="font-bold">
+                                                {formatPrice(currentSubscription.package?.price, currentSubscription.package?.currency)}
+                                                {getBillingLabel(currentSubscription.package?.billing_cycle)}
+                                            </span>
+                                        </div>
+                                        <div className="flex items-center justify-between p-3 rounded-xl bg-zinc-50 dark:bg-zinc-900/50">
+                                            <span className="text-sm font-medium text-zinc-500">Status</span>
+                                            {getStatusBadge(currentSubscription.status)}
+                                        </div>
+                                    </div>
+                                    <div className="space-y-3">
+                                        <div className="flex items-center justify-between p-3 rounded-xl bg-zinc-50 dark:bg-zinc-900/50">
+                                            <span className="text-sm font-medium text-zinc-500">Started</span>
+                                            <span className="font-medium">{formatDate(currentSubscription.start_date)}</span>
+                                        </div>
+                                        {currentSubscription.trial_ends_at && (
+                                            <div className="flex items-center justify-between p-3 rounded-xl bg-blue-50 dark:bg-blue-950/20">
+                                                <span className="text-sm font-medium text-blue-600">Trial Ends</span>
+                                                <span className="font-medium text-blue-600">{formatDate(currentSubscription.trial_ends_at)}</span>
+                                            </div>
+                                        )}
+                                        {currentSubscription.end_date && (
+                                            <div className="flex items-center justify-between p-3 rounded-xl bg-amber-50 dark:bg-amber-950/20">
+                                                <span className="text-sm font-medium text-amber-600">Expires</span>
+                                                <span className="font-medium text-amber-600">
+                                                    {formatDate(currentSubscription.end_date)}
+                                                    {getDaysRemaining(currentSubscription.end_date) !== null && getDaysRemaining(currentSubscription.end_date)! > 0 && (
+                                                        <span className="ml-2 text-xs">
+                                                            ({getDaysRemaining(currentSubscription.end_date)} days left)
+                                                        </span>
+                                                    )}
+                                                </span>
+                                            </div>
+                                        )}
+                                    </div>
+                                </div>
+
+                                {currentSubscription.status === 'active' && (
+                                    <div className="pt-4">
+                                        <Alert className="bg-amber-50 dark:bg-amber-950/20 border-amber-200 dark:border-amber-800">
+                                            <AlertCircle className="h-4 w-4 text-amber-600" />
+                                            <AlertDescription className="text-sm text-amber-600">
+                                                Auto-renewal is {currentSubscription.auto_renew ? 'enabled' : 'disabled'}.
+                                                {currentSubscription.auto_renew && ' Your subscription will automatically renew at the end of the period.'}
+                                            </AlertDescription>
+                                        </Alert>
+                                    </div>
+                                )}
+
+                                <Button
+                                    variant="destructive"
+                                    onClick={() => setIsCancelModalOpen(true)}
+                                    className="w-full md:w-auto bg-rose-600 hover:bg-rose-700"
+                                    disabled={isCancelling}
+                                >
+                                    {isCancelling ? <Loader2 className="animate-spin mr-2" size={16} /> : <Ban size={16} className="mr-2" />}
+                                    Cancel Subscription
+                                </Button>
+                            </div>
+                        ) : (
+                            <div className="text-center py-12">
+                                <CreditCard className="mx-auto h-12 w-12 text-zinc-400 mb-4" />
+                                <h3 className="text-lg font-bold text-zinc-600 dark:text-zinc-400">No Active Subscription</h3>
+                                <p className="text-sm text-zinc-500 mt-1">You don't have an active subscription.</p>
+
+                                <Button
+                                    asChild
+                                    className="mt-4 bg-orange-600 hover:bg-orange-700"
+
+                                ><Link href={'/en/packages'}>
+                                        <Package className="mr-2 h-5 w-5" />
+                                        Browse Packages
+                                    </Link>
+
+
+                                </Button>
+                            </div>
+                        )}
+                    </CardContent>
+                </div>
+            </Card>
+
+            {/* Subscription History Card */}
+            {subscriptionHistory.length > 0 && (
+                <Card className="group relative overflow-hidden transition-all duration-500 hover:-translate-y-1 shadow-xl border-none bg-white dark:bg-[#111114]">
+                    <div className="absolute w-[calc(100%-4px)] h-[calc(100%-4px)] top-[2px] left-[2px] overflow-hidden bg-white dark:bg-[#111114] rounded-xl z-10" />
+                    <div className="absolute inset-[-100%] bg-[conic-gradient(from_0deg,transparent_0deg,transparent_150deg,#ea580c_230deg,transparent_210deg)] opacity-0 group-hover:opacity-100 group-hover:animate-spin transition-opacity duration-500 pointer-events-none z-0" style={{ animationDuration: '3s' }} />
+
+                    <div className="relative z-20">
+                        <CardHeader className="border-b border-zinc-100 dark:border-zinc-800/50 pb-16">
+                            <CardTitle className="text-xl font-black tracking-tight flex items-center gap-2">
+                                <History size={20} className="text-orange-600" />
+                                Subscription History
+                            </CardTitle>
+                            <CardDescription className="text-zinc-500 font-medium">
+                                Your past subscriptions and plan changes
+                            </CardDescription>
+                        </CardHeader>
+
+                        <CardContent className="pt-8">
+                            <div className="space-y-3">
+                                {subscriptionHistory.map((sub: Subscription) => (
+                                    <div
+                                        key={sub.id}
+                                        className="p-4 rounded-xl border border-zinc-200 dark:border-zinc-800 hover:bg-zinc-50 dark:hover:bg-zinc-900/50 transition-all"
+                                    >
+                                        <div className="flex flex-wrap items-center justify-between gap-4">
+                                            <div className="space-y-1">
+                                                <div className="flex items-center gap-2">
+                                                    <PackageIcon size={14} className="text-orange-500" />
+                                                    <span className="font-bold text-sm">{sub.package?.name}</span>
+                                                    {getStatusBadge(sub.status)}
+                                                </div>
+                                                <div className="text-xs text-zinc-500">
+                                                    {formatPrice(sub.package?.price, sub.package?.currency)}
+                                                    {getBillingLabel(sub.package?.billing_cycle)}
+                                                </div>
+                                            </div>
+                                            <div className="text-right">
+                                                <div className="text-xs text-zinc-500">
+                                                    {formatDate(sub.start_date)} → {formatDate(sub.end_date)}
+                                                </div>
+                                                {sub.cancelled_at && (
+                                                    <div className="text-xs text-rose-500 mt-1">
+                                                        Cancelled: {formatDate(sub.cancelled_at)}
+                                                        {sub.cancellation_reason && ` (${sub.cancellation_reason})`}
+                                                    </div>
+                                                )}
+                                            </div>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        </CardContent>
+                    </div>
+                </Card>
+            )}
+
+            <div className="text-center mt-12">
+
+                <Button
+                    asChild
+                    variant="outline"
+                    className="rounded-2xl px-8 py-6 text-base font-bold border-2 hover:bg-primary hover:text-white hover:border-primary transition-all"
+                ><Link href={'/en/packages'}>
+                        <Package className="mr-2 h-5 w-5" />
+                        Browse All Subscription Plans
+                    </Link>
+
+
+                </Button>
+            </div>
+
+            {/* Cancel Subscription Dialog */}
+            <ConfirmDialog
+                open={isCancelModalOpen}
+                onOpenChange={setIsCancelModalOpen}
+                title="Cancel Subscription"
+                warning={`Are you sure you want to cancel your "${currentSubscription?.package?.name}" subscription? You will lose access to premium features at the end of your billing period.`}
+                confirmText="Cancel Subscription"
+                confirmIcon={Ban}
+                onConfirm={handleCancelSubscription}
+                variant="destructive"
+            >
+                <div className="space-y-4 mt-4">
+                    <div className="space-y-2">
+                        <label className="text-[10px] font-bold uppercase text-zinc-500 tracking-widest">Reason (Optional)</label>
+                        <Select value={cancellationReason} onValueChange={setCancellationReason}>
+                            <SelectTrigger className="h-12 border-zinc-200 dark:border-zinc-800 rounded-xl">
+                                <SelectValue placeholder="Select a reason" />
+                            </SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="too_expensive">Too expensive</SelectItem>
+                                <SelectItem value="not_using">Not using enough</SelectItem>
+                                <SelectItem value="switching_plan">Switching to another plan</SelectItem>
+                                <SelectItem value="technical_issues">Technical issues</SelectItem>
+                                <SelectItem value="other">Other</SelectItem>
+                            </SelectContent>
+                        </Select>
+                    </div>
+                    <div className="space-y-2">
+                        <label className="text-[10px] font-bold uppercase text-zinc-500 tracking-widest">Additional Notes (Optional)</label>
+                        <Input
+                            placeholder="Tell us how we can improve..."
+                            value={cancellationNote}
+                            onChange={(e) => setCancellationNote(e.target.value)}
+                            className="h-12 border-zinc-200 dark:border-zinc-800 rounded-xl"
+                        />
+                    </div>
+                </div>
+            </ConfirmDialog>
+        </div>
+    );
+}
+
+export default function ProfileContent({ lang }: { lang: string }) {
+    const { user } = useAuth();
+    const { theme, setTheme } = useTheme();
+    const [isCollapsed, setIsCollapsed] = useState(false);
+
+    return (
+        <div className="w-full mx-auto">
+            <style jsx global>{`
+                .gradient-tab[data-state=active] {
+                    background: linear-gradient(135deg, #ea580c 0%, #f97316 100%) !important;
+                    color: white !important;
+                }
+            `}</style>
+
+            <Tabs defaultValue="personal" className="flex flex-col md:!flex-row gap-8 items-start">
+
+                {/* NAVIGATION SIDEBAR */}
+                <div className={cn(
+                    "shrink-0 transition-all duration-500 ease-in-out relative border-r border-zinc-100 dark:border-zinc-800/50",
+                    isCollapsed ? "w-14" : "w-full md:w-64"
+                )}>
+                    <button
+                        onClick={() => setIsCollapsed(!isCollapsed)}
+                        className="absolute -right-3 top-10 z-50 w-6 h-6 bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-full flex items-center justify-center text-zinc-400 hover:text-orange-600 transition-all shadow-sm active:scale-90"
+                    >
+                        <ChevronRight className={cn("transition-transform duration-500", !isCollapsed && "rotate-180")} size={12} />
+                    </button>
+
+                    <TabsList className={cn(
+                        "flex flex-col h-auto w-full bg-transparent space-y-1 p-0 justify-start items-start transition-all duration-500",
+                        isCollapsed ? "items-center" : "items-start"
+                    )}>
+
+                        {/* Section: Account */}
+                        <div className={cn("px-4 py-2 mb-1 transition-opacity duration-300", isCollapsed ? "opacity-0 h-8" : "opacity-100")}>
+                            {!isCollapsed && <p className="text-[10px] font-bold uppercase text-zinc-400 tracking-[0.2em] whitespace-nowrap">Account</p>}
+                        </div>
+
+                        <TabsTrigger
+                            value="personal"
+                            className={cn(
+                                "gradient-tab w-full flex items-center px-4 py-3 font-bold text-xs uppercase tracking-wider rounded-xl transition-all data-[state=inactive]:hover:bg-zinc-100 dark:data-[state=inactive]:hover:bg-zinc-900",
+                                isCollapsed ? "justify-center py-6" : "justify-start gap-3"
+                            )}
+                        >
+                            <User size={16} className="shrink-0" />
+                            {!isCollapsed && <span className="truncate">Personal Info</span>}
+                        </TabsTrigger>
+
+                        <TabsTrigger
+                            value="security"
+                            className={cn(
+                                "gradient-tab w-full flex items-center px-4 py-3 font-bold text-xs uppercase tracking-wider rounded-xl transition-all data-[state=inactive]:hover:bg-zinc-100 dark:data-[state=inactive]:hover:bg-zinc-900",
+                                isCollapsed ? "justify-center py-6" : "justify-start gap-3"
+                            )}
+                        >
+                            <ShieldCheck size={16} className="shrink-0" />
+                            {!isCollapsed && <span className="truncate">Security</span>}
+                        </TabsTrigger>
+
+                        {/* Section: Preferences */}
+                        <div className={cn("px-4 py-2 mt-6 mb-1 transition-opacity duration-300", isCollapsed ? "opacity-0 h-8" : "opacity-100")}>
+                            {!isCollapsed && <p className="text-[10px] font-bold uppercase text-zinc-400 tracking-[0.2em] whitespace-nowrap">Preferences</p>}
+                        </div>
+
+                        <TabsTrigger
+                            value="display"
+                            className={cn(
+                                "gradient-tab w-full flex items-center px-4 py-3 font-bold text-xs uppercase tracking-wider rounded-xl transition-all data-[state=inactive]:hover:bg-zinc-100 dark:data-[state=inactive]:hover:bg-zinc-900",
+                                isCollapsed ? "justify-center py-6" : "justify-start gap-3"
+                            )}
+                        >
+                            <Palette size={16} className="shrink-0" />
+                            {!isCollapsed && <span className="truncate">Appearance</span>}
+                        </TabsTrigger>
+
+                        <TabsTrigger
+                            value="learning"
+                            className={cn(
+                                "gradient-tab w-full flex items-center px-4 py-3 font-bold text-xs uppercase tracking-wider rounded-xl transition-all data-[state=inactive]:hover:bg-zinc-100 dark:data-[state=inactive]:hover:bg-zinc-900",
+                                isCollapsed ? "justify-center py-6" : "justify-start gap-3"
+                            )}
+                        >
+                            <Target size={16} className="shrink-0" />
+                            {!isCollapsed && <span className="truncate">Study Goals</span>}
+                        </TabsTrigger>
+
+                        {/* Section: Billing */}
+                        <div className={cn("px-4 py-2 mt-6 mb-1 transition-opacity duration-300", isCollapsed ? "opacity-0 h-8" : "opacity-100")}>
+                            {!isCollapsed && <p className="text-[10px] font-bold uppercase text-zinc-400 tracking-[0.2em] whitespace-nowrap">Billing</p>}
+                        </div>
+
+                        <TabsTrigger
+                            value="subscription"
+                            className={cn(
+                                "gradient-tab w-full flex items-center px-4 py-3 font-bold text-xs uppercase tracking-wider rounded-xl transition-all data-[state=inactive]:hover:bg-zinc-100 dark:data-[state=inactive]:hover:bg-zinc-900",
+                                isCollapsed ? "justify-center py-6" : "justify-start gap-3"
+                            )}
+                        >
+                            <CreditCard size={16} className="shrink-0" />
+                            {!isCollapsed && <span className="truncate">Subscription</span>}
+                        </TabsTrigger>
+
+                    </TabsList>
+                </div>
+
+                {/* MAIN CONTENT AREA */}
+                <div className="flex-1 w-full">
+                    <TabsContent value="personal" className="mt-0 outline-none">
+                        <PersonalInfoSection />
+                    </TabsContent>
+
+                    <TabsContent value="security" className="mt-0 outline-none">
+                        <SecuritySection />
+                    </TabsContent>
+
+                    <TabsContent value="display" className="mt-0 outline-none">
+                        <AppearanceSection lang={lang} theme={theme} setTheme={setTheme} />
+                    </TabsContent>
+
+                    <TabsContent value="learning" className="mt-0 outline-none">
+                        <StudyGoalsSection />
+                    </TabsContent>
+
+                    <TabsContent value="subscription" className="mt-0 outline-none">
+                        <SubscriptionSection />
+                    </TabsContent>
+                </div>
+            </Tabs>
+        </div>
+    );
+}
+
+
 
 function PersonalInfoSection() {
     const queryClient = useQueryClient();
@@ -994,119 +1547,5 @@ function StudyGoalsSection() {
                 </CardContent>
             </div>
         </Card>
-    );
-}
-
-// ====================== MAIN COMPONENT ======================
-export default function ProfileContent({ lang }: { lang: string }) {
-    const { user } = useAuth();
-    const { theme, setTheme } = useTheme();
-    const [isCollapsed, setIsCollapsed] = useState(false);
-
-    return (
-        <div className="w-full mx-auto">
-            <style jsx global>{`
-                .gradient-tab[data-state=active] {
-                    background: linear-gradient(135deg, #ea580c 0%, #f97316 100%) !important;
-                    color: white !important;
-                }
-            `}</style>
-
-            <Tabs defaultValue="personal" className="flex flex-col md:!flex-row gap-8 items-start">
-
-                {/* NAVIGATION SIDEBAR */}
-                <div className={cn(
-                    "shrink-0 transition-all duration-500 ease-in-out relative border-r border-zinc-100 dark:border-zinc-800/50",
-                    isCollapsed ? "w-14" : "w-full md:w-64"
-                )}>
-                    {/* Collapse Toggle Button - Matches your UI aesthetic */}
-                    <button
-                        onClick={() => setIsCollapsed(!isCollapsed)}
-                        className="absolute -right-3 top-10 z-50 w-6 h-6 bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-full flex items-center justify-center text-zinc-400 hover:text-orange-600 transition-all shadow-sm active:scale-90"
-                    >
-                        <ChevronRight className={cn("transition-transform duration-500", !isCollapsed && "rotate-180")} size={12} />
-                    </button>
-
-                    <TabsList className={cn(
-                        "flex flex-col h-auto w-full bg-transparent space-y-1 p-0 justify-start items-start transition-all duration-500",
-                        isCollapsed ? "items-center" : "items-start"
-                    )}>
-
-                        {/* Section: Account */}
-                        <div className={cn("px-4 py-2 mb-1 transition-opacity duration-300", isCollapsed ? "opacity-0 h-8" : "opacity-100")}>
-                            {!isCollapsed && <p className="text-[10px] font-bold uppercase text-zinc-400 tracking-[0.2em] whitespace-nowrap">Account</p>}
-                        </div>
-
-                        <TabsTrigger
-                            value="personal"
-                            className={cn(
-                                "gradient-tab w-full flex items-center px-4 py-3 font-bold text-xs uppercase tracking-wider rounded-xl transition-all data-[state=inactive]:hover:bg-zinc-100 dark:data-[state=inactive]:hover:bg-zinc-900",
-                                isCollapsed ? "justify-center py-6" : "justify-start gap-3"
-                            )}
-                        >
-                            <User size={16} className="shrink-0" />
-                            {!isCollapsed && <span className="truncate">Personal Info</span>}
-                        </TabsTrigger>
-
-                        <TabsTrigger
-                            value="security"
-                            className={cn(
-                                "gradient-tab w-full flex items-center px-4 py-3 font-bold text-xs uppercase tracking-wider rounded-xl transition-all data-[state=inactive]:hover:bg-zinc-100 dark:data-[state=inactive]:hover:bg-zinc-900",
-                                isCollapsed ? "justify-center py-6" : "justify-start gap-3"
-                            )}
-                        >
-                            <ShieldCheck size={16} className="shrink-0" />
-                            {!isCollapsed && <span className="truncate">Security</span>}
-                        </TabsTrigger>
-
-                        {/* Section: Preferences */}
-                        <div className={cn("px-4 py-2 mt-6 mb-1 transition-opacity duration-300", isCollapsed ? "opacity-0 h-8" : "opacity-100")}>
-                            {!isCollapsed && <p className="text-[10px] font-bold uppercase text-zinc-400 tracking-[0.2em] whitespace-nowrap">Preferences</p>}
-                        </div>
-
-                        <TabsTrigger
-                            value="display"
-                            className={cn(
-                                "gradient-tab w-full flex items-center px-4 py-3 font-bold text-xs uppercase tracking-wider rounded-xl transition-all data-[state=inactive]:hover:bg-zinc-100 dark:data-[state=inactive]:hover:bg-zinc-900",
-                                isCollapsed ? "justify-center py-6" : "justify-start gap-3"
-                            )}
-                        >
-                            <Palette size={16} className="shrink-0" />
-                            {!isCollapsed && <span className="truncate">Appearance</span>}
-                        </TabsTrigger>
-
-                        <TabsTrigger
-                            value="learning"
-                            className={cn(
-                                "gradient-tab w-full flex items-center px-4 py-3 font-bold text-xs uppercase tracking-wider rounded-xl transition-all data-[state=inactive]:hover:bg-zinc-100 dark:data-[state=inactive]:hover:bg-zinc-900",
-                                isCollapsed ? "justify-center py-6" : "justify-start gap-3"
-                            )}
-                        >
-                            <Target size={16} className="shrink-0" />
-                            {!isCollapsed && <span className="truncate">Study Goals</span>}
-                        </TabsTrigger>
-
-                    </TabsList>
-                </div>
-                {/* MAIN CONTENT AREA */}
-                <div className="flex-1 w-full">
-                    <TabsContent value="personal" className="mt-0 outline-none">
-                        <PersonalInfoSection />
-                    </TabsContent>
-
-                    <TabsContent value="security" className="mt-0 outline-none">
-                        <SecuritySection />
-                    </TabsContent>
-
-                    <TabsContent value="display" className="mt-0 outline-none">
-                        <AppearanceSection lang={lang} theme={theme} setTheme={setTheme} />
-                    </TabsContent>
-
-                    <TabsContent value="learning" className="mt-0 outline-none">
-                        <StudyGoalsSection />
-                    </TabsContent>
-                </div>
-            </Tabs>
-        </div>
     );
 }
