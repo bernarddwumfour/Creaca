@@ -442,7 +442,7 @@ function SubscriptionSection() {
                 onConfirm={handleCancelSubscription}
                 variant="destructive"
             >
-                <div className="space-y-4 mt-4">
+                {/* <div className="space-y-4 mt-4">
                     <div className="space-y-2">
                         <label className="text-[10px] font-bold uppercase text-zinc-500 tracking-widest">Reason (Optional)</label>
                         <Select value={cancellationReason} onValueChange={setCancellationReason}>
@@ -467,7 +467,7 @@ function SubscriptionSection() {
                             className="h-12 border-zinc-200 dark:border-zinc-800 rounded-xl"
                         />
                     </div>
-                </div>
+                </div> */}
             </ConfirmDialog>
         </div>
     );
