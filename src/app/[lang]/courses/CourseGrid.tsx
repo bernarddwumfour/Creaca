@@ -145,7 +145,7 @@ export default function CourseGrid({ lang }: { lang: Lang }) {
         if (registrationsResponse?.data?.results) {
             const registeredIds = new Set(
                 registrationsResponse.data.results.map((reg: any) => reg.course.id)
-            );
+            ) as Set<string>;
             setRegisteredCourses(registeredIds);
         }
     }, [registrationsResponse]);

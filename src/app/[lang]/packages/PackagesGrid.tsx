@@ -30,6 +30,7 @@ interface Package {
     is_unlimited: boolean;
     max_courses: number | null;
     max_students: number | null;
+    max_difficulty: string;
     includes_certificate: boolean;
     can_download_materials: boolean;
     includes_video_lessons: boolean;
