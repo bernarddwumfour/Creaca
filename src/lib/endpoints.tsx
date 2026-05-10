@@ -62,6 +62,15 @@ export const ENDPOINTS = {
         BULK_ACTION: `${API_VERSION}/subjects/courses/bulk-action/`,
         REGISTER_FOR_COURSE: `${API_VERSION}/subjects/courses/registrations/register/`,
         MY_REGISTRATIONS: `${API_VERSION}/subjects/courses/registrations/me/`,
+
+        MY_PURCHASES: `${API_VERSION}/subjects/courses/purchases/`,
+        PURCHASE_COURSE: `${API_VERSION}/subjects/courses/purchases/buy/`,
+        DEACTIVATE_PURCHASE: `${API_VERSION}/subjects/courses/purchases/:id/deactivate/`,
+        REACTIVATE_PURCHASE: `${API_VERSION}/subjects/courses/purchases/:id/reactivate/`,
+        UPDATE_PROGRESS: `${API_VERSION}/subjects/courses/progress/:course_id/update/`,
+
+        MY_PROGRESS: `${API_VERSION}/subjects/courses/my-progress/`,
+        ADMIN_LIST_REGISTRATIONS: `${API_VERSION}/subjects/courses/registrations/`
     },
     PACKAGES: {
         LIST_PACKAGES: `${API_VERSION}/packages/`,
@@ -78,6 +87,7 @@ export const ENDPOINTS = {
         SUBSCRIPTION_HISTORY: `${API_VERSION}/packages/subscriptions/history/`,
         CANCEL_SUBSCRIPTION: `${API_VERSION}/packages/subscriptions/cancel/`,
         SUBSCRIBE: `${API_VERSION}/packages/subscriptions/subscribe/`,
+
     }
 } as const;
 

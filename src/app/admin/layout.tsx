@@ -56,6 +56,7 @@ const SIDEBAR_LINKS = [
         children: [
             { icon: Library, label: 'Manage Subjects', href: '/admin/subjects' },
             { icon: BookMarked, label: 'Manage Courses', href: '/admin/subjects/courses' },
+            { icon: BookMarked, label: 'Course regiatrations', href: '/admin/subjects/course_registrations' },
             { icon: BookOpen, label: 'Manage Modules', href: '/admin/subjects/modules' },
         ]
     },

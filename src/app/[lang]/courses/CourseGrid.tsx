@@ -21,6 +21,8 @@ interface Course {
     difficulty: 'beginner' | 'intermediate' | 'advanced' | 'expert';
     duration: number | null;
     status: string;
+    is_purchasable: boolean;
+    price: number;
     subject: {
         id: string;
         name: string;
@@ -116,6 +118,7 @@ export default function CourseGrid({ lang }: { lang: Lang }) {
     const [showLoginDialog, setShowLoginDialog] = useState(false);
     const [selectedCourse, setSelectedCourse] = useState<Course | null>(null);
     const [registeredCourses, setRegisteredCourses] = useState<Set<string>>(new Set());
+    const [isPurchasing, setIsPurchasing] = useState<string | null>(null)
 
     // Fetch courses from API
     const { data: coursesResponse, isLoading, error } = useQuery<CoursesResponse>({
@@ -139,6 +142,28 @@ export default function CourseGrid({ lang }: { lang: Lang }) {
         },
         enabled: !!user,
     });
+
+    const handlePurchase = async (course: Course) => {
+        if (!user) {
+            setSelectedCourse(course);
+            setShowLoginDialog(true);
+            return;
+        }
+
+        setIsPurchasing(course.id);
+        try {
+            const response = await api.post(ENDPOINTS.COURSES.PURCHASE_COURSE, {
+                course_id: course.id,
+                payment_reference: `manual_${Date.now()}` // Integrate with actual payment
+            });
+            toast.success(response.data?.message || `Successfully purchased ${course.name}`);
+            // Redirect to course or refresh
+        } catch (error: any) {
+            toast.error(error.response?.data?.message || "Purchase failed");
+        } finally {
+            setIsPurchasing(null);
+        }
+    };
 
     // Update registered courses set when data loads
     useEffect(() => {
@@ -291,8 +316,26 @@ export default function CourseGrid({ lang }: { lang: Lang }) {
                                         </div>
                                     </div>
 
-                                    <div className="flex gap-3 mt-6">
-                                        {isRegistered && <Button asChild variant="outline" className="flex-1 rounded-xl font-bold py-6">
+
+                                    <div>
+                                        {course.is_purchasable && (
+                                            <Button
+                                                onClick={() => handlePurchase(course)}
+                                                disabled={isPurchasing === course.id}
+                                                variant="outline"
+                                                className="flex-1 w-full"
+                                            >
+                                                {isPurchasing === course.id ? (
+                                                    <Loader2 className="animate-spin h-4 w-4" />
+                                                ) : (
+                                                    `Buy Now $${course.price}`
+                                                )}
+                                            </Button>
+                                        )}
+                                    </div>
+
+                                    <div className="flex gap-3">
+                                        {isRegistered && <Button asChild variant="outline" className="flex-1  font-bold py-6">
                                             <Link href={`/${lang}/courses/${course.slug}`}>
                                                 {t.learnMore} <ArrowRightCircle className="ml-2 w-4 h-4" />
                                             </Link>
@@ -301,7 +344,7 @@ export default function CourseGrid({ lang }: { lang: Lang }) {
                                         <Button
                                             onClick={() => handleRegister(course)}
                                             disabled={isRegisteringThis || isRegistered}
-                                            className={`flex-1 rounded-xl font-bold py-6 ${isRegistered
+                                            className={`flex-1  font-bold py-6 ${isRegistered
                                                 ? 'bg-emerald-600 hover:bg-emerald-700'
                                                 : 'bg-primary hover:bg-orange-600'
                                                 }`}
@@ -314,6 +357,8 @@ export default function CourseGrid({ lang }: { lang: Lang }) {
                                                 t.register
                                             )}
                                         </Button>
+
+
                                     </div>
                                 </div>
                             </div>

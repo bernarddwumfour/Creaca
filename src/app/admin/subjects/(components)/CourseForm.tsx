@@ -15,7 +15,7 @@ import api from '@/lib/axios';
 import { ENDPOINTS } from '@/lib/endpoints';
 import { CustomSelect } from '../../../../../widgets/CustomSelect/CustomSelect';
 
-// Course schema matching Django model
+// Course schema matching Django model with price
 const courseSchema = z.object({
     name: z.string()
         .min(1, "Course name is required")
@@ -29,6 +29,10 @@ const courseSchema = z.object({
         .positive("Duration must be a positive number")
         .nullable(),
     status: z.enum(['active', 'inactive', 'draft']),
+    price: z.number()
+        .min(0, "Price cannot be negative")
+        .nullable()
+        .optional(),
 });
 
 type CourseFormData = z.infer<typeof courseSchema>;
@@ -45,6 +49,7 @@ interface CourseFormProps {
         subject_id?: string;
         duration?: number | null;
         status?: 'active' | 'inactive' | 'draft';
+        price?: number | null;
     } | null;
     onSuccess: () => void;
 }
@@ -92,6 +97,7 @@ export function CourseForm({ type = 'CREATE', initialData, onSuccess, courseId, 
             subject_id: initialData?.subject_id ?? subjectId ?? "",
             duration: initialData?.duration ?? null,
             status: initialData?.status ?? "active",
+            price: initialData?.price ?? null,
         },
     });
 
@@ -102,27 +108,23 @@ export function CourseForm({ type = 'CREATE', initialData, onSuccess, courseId, 
     const onSubmit = async (values: CourseFormData) => {
         setIsLoading(true);
         try {
+            const payload = {
+                name: values.name,
+                description: values.description,
+                difficulty: values.difficulty,
+                subject: values.subject_id,
+                duration: values.duration,
+                status: values.status,
+                price: values.price,
+            };
+
             if (type === 'CREATE') {
-                const response = await api.post(ENDPOINTS.COURSES.CREATE_COURSE, {
-                    name: values.name,
-                    description: values.description,
-                    difficulty: values.difficulty,
-                    subject: values.subject_id,
-                    duration: values.duration,
-                    status: values.status,
-                });
+                const response = await api.post(ENDPOINTS.COURSES.CREATE_COURSE, payload);
                 toast.success(response.data?.message || "Course created successfully.");
             } else {
                 const response = await api.patch(
                     ENDPOINTS.COURSES.UPDATE_COURSE.replace(':id', courseId!),
-                    {
-                        name: values.name,
-                        description: values.description,
-                        difficulty: values.difficulty,
-                        subject: subjectId || values.subject_id,
-                        duration: values.duration,
-                        status: values.status,
-                    }
+                    payload
                 );
                 toast.success(response.data?.message || "Course updated successfully.");
             }
@@ -282,6 +284,42 @@ export function CourseForm({ type = 'CREATE', initialData, onSuccess, courseId, 
                             <FormMessage className="text-[10px]" />
                             <p className="text-[10px] text-zinc-400 mt-1">
                                 Optional: Estimated total course duration in minutes.
+                            </p>
+                        </FormItem>
+                    )}
+                />
+
+                {/* Price (Optional - One-time purchase) */}
+                <FormField
+                    control={form.control}
+                    name="price"
+                    render={({ field }) => (
+                        <FormItem className="space-y-1">
+                            <FormLabel className="text-[10px] font-bold uppercase text-zinc-500 tracking-widest">
+                                Price (USD)
+                            </FormLabel>
+                            <FormControl>
+                                <div className="relative">
+                                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-400 font-bold">$</span>
+                                    <Input
+                                        type="number"
+                                        step="0.01"
+                                        min="0"
+                                        value={field.value ?? ''}
+                                        onChange={(e) => {
+                                            const val = e.target.value;
+                                            field.onChange(val === '' ? null : parseFloat(val));
+                                        }}
+                                        onBlur={field.onBlur}
+                                        placeholder="49.99"
+                                        className="h-12 pl-8 border-zinc-200 dark:border-zinc-800 focus-visible:ring-primary rounded-xl font-medium"
+                                        disabled={isLoading}
+                                    />
+                                </div>
+                            </FormControl>
+                            <FormMessage className="text-[10px]" />
+                            <p className="text-[10px] text-zinc-400 mt-1">
+                                Optional: Set a price for one-time purchase. Leave empty for subscription only.
                             </p>
                         </FormItem>
                     )}

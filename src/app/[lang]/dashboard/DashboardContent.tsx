@@ -1,14 +1,16 @@
 "use client";
 
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import {
     LayoutDashboard, BookOpen, Target,
     Trophy, Clock, PlayCircle,
-    Star, CheckCircle2,
+    CheckCircle2,
     Zap, Award, GraduationCap,
     Lock,
     ChevronRight,
-    Loader2
+    Loader2,
+    ShoppingBag,
+    EyeOff
 } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
@@ -16,14 +18,16 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
-import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { cn } from '@/lib/utils';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '@/context/AuthContext';
+import { toast } from 'sonner';
 import api from '@/lib/axios';
 import { ENDPOINTS } from '@/lib/endpoints';
 import Link from 'next/link';
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 
+// Types
 interface Course {
     id: string;
     name: string;
@@ -37,49 +41,295 @@ interface Course {
         name: string;
         slug: string;
     };
-    created_at?: string;
-    updated_at?: string;
+    completed_at?: string | null;
+    progress?: number;
+    is_completed?: boolean;
 }
 
 interface Registration {
     id: string;
-    course: {
-        id: string;
-        name: string;
-        slug: string;
-        difficulty: string;
-        duration: number | null;
-        subject: {
-            id: string;
-            name: string;
-        }
-    };
+    course: Course;
     status: 'active' | 'completed' | 'dropped';
-    progress: number;
     enrolled_at: string;
+    course_id: string;
     completed_at: string | null;
+    progress: number;
+    is_completed: boolean;
 }
 
-const getDifficultyInfo = (difficulty: string) => {
-    const map: Record<string, { display: string; level: number }> = {
-        beginner: { display: 'Beginner', level: 1 },
-        intermediate: { display: 'Intermediate', level: 2 },
-        advanced: { display: 'Advanced', level: 3 },
-        expert: { display: 'Expert', level: 4 },
-    };
-    return map[difficulty] || { display: difficulty, level: 2 };
-};
+interface PurchasedCourse {
+    id: string;
+    course: Course;
+    price_paid: string;
+    status: 'active' | 'deactivated';
+    deactivated_by_student: boolean;
+    purchased_at: string;
+}
+
+interface CourseProgress {
+    id: string;
+    completed_at: string | null;
+    updated_at: string;
+}
+
+interface EnrolledCourse {
+    id: string;
+    title: string;
+    slug: string;
+    tutor: string;
+    modulesCount: number;
+    progress: number;
+    status: string;
+    icon: string;
+    color: string;
+    modules: Array<{
+        name: string;
+        status: string;
+        duration: string;
+        locked: boolean;
+    }>;
+}
+
+// Update the PurchasedCourseCard component to include modules accordion
+function PurchasedCourseCard({ purchase, progress, onDeactivate }: { purchase: PurchasedCourse; progress: number; onDeactivate: () => void }) {
+    const isCompleted = progress === 100;
+
+    // Dummy modules data for purchased courses
+    const modules = [
+        { name: "Introduction to " + purchase.course.name, status: progress > 0 ? "Done" : "Locked", duration: "30 mins", locked: progress === 0 },
+        { name: "Core Concepts & Fundamentals", status: progress > 25 ? "Done" : progress > 0 ? "Current" : "Locked", duration: "45 mins", locked: progress < 25 },
+        { name: "Advanced Topics & Applications", status: progress > 50 ? "Done" : progress > 25 ? "Current" : "Locked", duration: "60 mins", locked: progress < 50 },
+        { name: "Mastery & Final Assessment", status: progress > 75 ? (progress === 100 ? "Done" : "Current") : "Locked", duration: "45 mins", locked: progress < 75 },
+    ];
+
+    return (
+        <div className="border border-zinc-200 dark:border-zinc-800 rounded-2xl overflow-hidden bg-white dark:bg-zinc-900/80">
+            <div className="p-5">
+                <div className="flex items-start justify-between gap-2 mb-2">
+                    <h4 className="font-bold text-lg tracking-tight">{purchase.course.name}</h4>
+                    <div className="flex gap-2">
+                        <Badge className="bg-primary/10 text-primary border-none text-[10px]">
+                            Purchased
+                        </Badge>
+                        {isCompleted && (
+                            <Badge className="bg-emerald-500/10 text-emerald-600 border-none text-[10px]">
+                                Completed
+                            </Badge>
+                        )}
+                    </div>
+                </div>
+
+                <p className="text-[10px] font-semibold uppercase text-zinc-400 tracking-widest">
+                    {purchase.course.subject.name} • Lifetime Access
+                </p>
+                <p className="text-xs text-zinc-500 mt-1">
+                    Purchased on {new Date(purchase.purchased_at).toLocaleDateString()} • ${purchase.price_paid}
+                </p>
+
+
+
+                {/* Modules Accordion */}
+                <Accordion type="single" collapsible className="mt-4">
+                    <AccordionItem value="modules" className="border border-zinc-200 dark:border-zinc-800 rounded-xl overflow-hidden">
+                        <AccordionTrigger className="px-4 py-3 text-sm font-bold hover:no-underline">
+                            Course Modules ({modules.filter(m => m.status === 'Done').length}/{modules.length} completed)
+                        </AccordionTrigger>
+                        <AccordionContent className="px-0 pb-2 pt-0">
+                            <div className="flex flex-col">
+                                {modules.map((module, idx) => (
+                                    <div
+                                        key={idx}
+                                        className={`p-3 flex items-center justify-between hover:bg-zinc-50 dark:hover:bg-zinc-900/40 transition-colors border-b border-zinc-100 dark:border-zinc-800/20 last:border-0 ${module.status === 'Current' ? 'bg-primary/5 dark:bg-primary/10' : ''}`}
+                                    >
+                                        <div className="flex items-center gap-3">
+                                            <div className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-black transition-all ${module.status === 'Done'
+                                                ? 'bg-emerald-500/10 text-emerald-500'
+                                                : module.status === 'Current'
+                                                    ? 'bg-primary text-white shadow-lg shadow-primary/20'
+                                                    : 'bg-zinc-100 dark:bg-zinc-800 text-zinc-500'
+                                                }`}>
+                                                {module.status === 'Done' ? <CheckCircle2 size={14} /> : idx + 1}
+                                            </div>
+                                            <div>
+                                                <p className={`text-sm font-medium ${module.status === 'Current' ? 'text-zinc-900 dark:text-white' : 'text-zinc-600 dark:text-zinc-400'}`}>
+                                                    {module.name}
+                                                </p>
+                                                <p className="text-[10px] text-zinc-400">{module.duration}</p>
+                                            </div>
+                                        </div>
+                                        {module.status === 'Locked' ? (
+                                            <Lock size={14} className="text-zinc-300" />
+                                        ) : (
+                                            <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
+                                                <PlayCircle size={18} className={module.status === 'Current' ? 'text-primary' : 'text-zinc-400'} />
+                                            </Button>
+                                        )}
+                                    </div>
+                                ))}
+                            </div>
+                        </AccordionContent>
+                    </AccordionItem>
+                </Accordion>
+
+                <div className="flex gap-6 justify-between mt-3 items-end flex-wrap">
+                    <div className="mt-4">
+                        <div className="flex justify-between text-xs mb-2 gap-2">
+                            <span className="font-medium">Overall Progress</span>
+                            <span className="font-bold text-primary">{progress}%</span>
+                        </div>
+                        <Progress value={progress} className="h-2 rounded-full" />
+                    </div>
+
+                    <div className="flex gap-3 mt-4">
+                        <Button asChild className="flex-1" variant="outline">
+                            <Link href={`/courses/${purchase.course.slug}/learn`}>
+                                {isCompleted ? "Review Course" : "Continue Learning"}
+                            </Link>
+                        </Button>
+                        <Button variant="outline" onClick={onDeactivate}>
+                            <EyeOff size={14} className="mr-1" /> Hide
+                        </Button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    );
+}
+
+// Update the SubscriptionCourseCard component to include modules accordion
+function SubscriptionCourseCard({ course, progress }: { course: EnrolledCourse; progress: number }) {
+    const isCompleted = progress === 100;
+
+    // Dummy modules data for subscription courses (using the existing modules from course object or generating)
+    const modules = course.modules && course.modules.length > 0 ? course.modules : [
+        { name: "Introduction to " + course.title, status: progress > 0 ? "Done" : "Locked", duration: "30 mins", locked: progress === 0 },
+        { name: "Core Concepts & Fundamentals", status: progress > 25 ? "Done" : progress > 0 ? "Current" : "Locked", duration: "45 mins", locked: progress < 25 },
+        { name: "Advanced Topics & Applications", status: progress > 50 ? "Done" : progress > 25 ? "Current" : "Locked", duration: "60 mins", locked: progress < 50 },
+        { name: "Mastery & Final Assessment", status: progress > 75 ? (progress === 100 ? "Done" : "Current") : "Locked", duration: "45 mins", locked: progress < 75 },
+    ];
+
+    return (
+        <div className="border border-zinc-200 dark:border-zinc-800 rounded-2xl overflow-hidden bg-white dark:bg-zinc-900/80">
+            <div className="p-5">
+                <div className="flex items-start  justify-between gap-2 mb-2">
+                    <h4 className="font-bold text-lg tracking-tight">{course.title}</h4>
+                    <div className="flex gap-2">
+                        <Badge className="bg-blue-500/10 text-blue-600 border-none text-[10px]">
+                            Subscription
+                        </Badge>
+                        {isCompleted && (
+                            <Badge className="bg-emerald-500/10 text-emerald-600 border-none text-[10px]">
+                                Completed
+                            </Badge>
+                        )}
+                        {!isCompleted && progress > 0 && (
+                            <Badge className="bg-orange-500/10 text-orange-600 border-none text-[10px]">
+                                In Progress
+                            </Badge>
+                        )}
+                    </div>
+                </div>
+
+                <p className="text-[10px] font-semibold uppercase text-zinc-400 tracking-widest">
+                    {course.tutor} • {course.modulesCount} Modules
+                </p>
+
+
+
+                {/* Modules Accordion */}
+                <Accordion type="single" collapsible className="mt-4">
+                    <AccordionItem value="modules" className="border border-zinc-200 dark:border-zinc-800 rounded-xl overflow-hidden">
+                        <AccordionTrigger className="px-4 py-3 text-sm font-bold hover:no-underline">
+                            Course Modules ({modules.filter((m: any) => m.status === 'Done').length}/{modules.length} completed)
+                        </AccordionTrigger>
+                        <AccordionContent className="px-0 pb-2 pt-0">
+                            <div className="flex flex-col">
+                                {modules.map((module: any, idx: number) => (
+                                    <div
+                                        key={idx}
+                                        className={`p-3 flex items-center justify-between hover:bg-zinc-50 dark:hover:bg-zinc-900/40 transition-colors border-b border-zinc-100 dark:border-zinc-800/20 last:border-0 ${module.status === 'Current' ? 'bg-primary/5 dark:bg-primary/10' : ''}`}
+                                    >
+                                        <div className="flex items-center gap-3">
+                                            <div className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-black transition-all ${module.status === 'Done'
+                                                ? 'bg-emerald-500/10 text-emerald-500'
+                                                : module.status === 'Current'
+                                                    ? 'bg-primary text-white shadow-lg shadow-primary/20'
+                                                    : 'bg-zinc-100 dark:bg-zinc-800 text-zinc-500'
+                                                }`}>
+                                                {module.status === 'Done' ? <CheckCircle2 size={14} /> : idx + 1}
+                                            </div>
+                                            <div>
+                                                <p className={`text-sm font-medium ${module.status === 'Current' ? 'text-zinc-900 dark:text-white' : 'text-zinc-600 dark:text-zinc-400'}`}>
+                                                    {module.name}
+                                                </p>
+                                                <p className="text-[10px] text-zinc-400">{module.duration}</p>
+                                            </div>
+                                        </div>
+                                        {module.status === 'Locked' ? (
+                                            <Lock size={14} className="text-zinc-300" />
+                                        ) : (
+                                            <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
+                                                <PlayCircle size={18} className={module.status === 'Current' ? 'text-primary' : 'text-zinc-400'} />
+                                            </Button>
+                                        )}
+                                    </div>
+                                ))}
+                            </div>
+                        </AccordionContent>
+                    </AccordionItem>
+                </Accordion>
+
+                <div className="flex gap-6 justify-between mt-2 items-end  flex-wrap">
+                    <div className="mt-4">
+                        <div className="flex justify-between text-xs mb-2 gap-2">
+                            <span className="font-medium">Overall Progress</span>
+                            <span className="font-bold text-primary">{progress}%</span>
+                        </div>
+                        <Progress value={progress} className="h-2 rounded-full" />
+                    </div>
+
+                    <div className="flex gap-3 mt-4">
+                        <Button asChild className="flex-1" variant="outline">
+                            <Link href={`/courses/${course.slug}/learn`}>
+                                {isCompleted ? "Review Course" : "Continue Learning"}
+                            </Link>
+                        </Button>
+                    </div>
+                </div>
+
+                <p className="text-[10px] text-zinc-400 mt-3 flex items-center gap-1">
+                    <Clock size={10} />
+                    Access while subscription is active
+                </p>
+            </div>
+        </div>
+    );
+}
+
 
 export default function DashboardContent({ lang }: { lang: string }) {
     const { user } = useAuth();
+    const queryClient = useQueryClient();
     const [isCollapsed, setIsCollapsed] = useState(false);
     const [activeTab, setActiveTab] = useState('overview');
+    const [courseFilter, setCourseFilter] = useState<'all' | 'purchased' | 'subscribed'>('all');
 
-    // Fetch user's registered courses
+
+    // Fetch user's registered courses (subscription)
     const { data: registrationsResponse, isLoading: registrationsLoading } = useQuery({
-        queryKey: ['user-registrations'],
+        queryKey: [ENDPOINTS.COURSES.MY_REGISTRATIONS],
         queryFn: async () => {
-            const { data } = await api.get('/api/v1/courses/my-registrations/');
+            const { data } = await api.get(ENDPOINTS.COURSES.MY_REGISTRATIONS);
+            return data;
+        },
+        enabled: !!user,
+    });
+
+    // Fetch purchased courses
+    const { data: purchasesResponse, isLoading: purchasesLoading, refetch: refetchPurchases } = useQuery({
+        queryKey: [ENDPOINTS.COURSES.MY_PURCHASES],
+        queryFn: async () => {
+            const { data } = await api.get(ENDPOINTS.COURSES.MY_PURCHASES);
             return data;
         },
         enabled: !!user,
@@ -96,40 +346,77 @@ export default function DashboardContent({ lang }: { lang: string }) {
         },
     });
 
-    const registrations = registrationsResponse?.data?.results || [];
-    const allCourses = coursesResponse?.data?.results || [];
+    const registrations: Registration[] = registrationsResponse?.data?.results || [];
+    const purchases: PurchasedCourse[] = purchasesResponse?.data?.results || [];
+
 
     // Transform registrations into course data format
-    const enrolledCourses = registrations.map((reg: Registration) => ({
-        id: reg.course.id,
-        title: reg.course.name,
-        slug: reg.course.slug,
-        tutor: reg.course.subject.name,
-        modulesCount: 8, // Static for now until modules are ready
-        progress: reg.progress || 0,
-        status: reg.status === 'completed' ? 'Completed' : reg.status === 'active' ? 'In Progress' : 'Starting',
-        icon: reg.course.name.charAt(0),
-        color: reg.status === 'completed' ? 'emerald' : reg.progress > 50 ? 'orange' : 'zinc',
-        modules: [
-            { name: "Introduction", status: reg.progress > 0 ? "Done" : "Locked", duration: "30 mins", locked: reg.progress === 0 },
-            { name: "Core Concepts", status: reg.progress > 25 ? "Done" : reg.progress > 0 ? "Current" : "Locked", duration: "45 mins", locked: reg.progress < 25 },
-            { name: "Advanced Topics", status: reg.progress > 50 ? "Done" : reg.progress > 25 ? "Current" : "Locked", duration: "60 mins", locked: reg.progress < 50 },
-            { name: "Mastery & Review", status: reg.progress > 75 ? (reg.progress === 100 ? "Done" : "Current") : "Locked", duration: "45 mins", locked: reg.progress < 75 },
-        ].slice(0, 4)
-    }));
+    const enrolledCourses: EnrolledCourse[] = registrations.map((reg: Registration) => {
+        return {
+            id: reg.course.id,
+            title: reg.course.name,
+            slug: reg.course.slug,
+            tutor: reg.course.subject.name,
+            modulesCount: 8,
+            progress: reg.progress,
+            status: reg.progress === 100 ? 'Completed' : reg.progress > 0 ? 'In Progress' : 'Starting',
+            icon: reg.course.name.charAt(0),
+            color: reg.progress === 100 ? 'emerald' : reg.progress > 50 ? 'orange' : 'zinc',
+            modules: [
+                { name: "Introduction", status: reg.progress > 0 ? "Done" : "Locked", duration: "30 mins", locked: reg.progress === 0 },
+                { name: "Core Concepts", status: reg.progress > 25 ? "Done" : reg.progress > 0 ? "Current" : "Locked", duration: "45 mins", locked: reg.progress < 25 },
+                { name: "Advanced Topics", status: reg.progress > 50 ? "Done" : reg.progress > 25 ? "Current" : "Locked", duration: "60 mins", locked: reg.progress < 50 },
+                { name: "Mastery & Review", status: reg.progress > 75 ? (reg.progress === 100 ? "Done" : "Current") : "Locked", duration: "45 mins", locked: reg.progress < 75 },
+            ].slice(0, 4)
+        };
+    });
 
-    // Find current course (in progress with highest progress)
-    const currentCourse = enrolledCourses.find((c: any) => c.status === 'In Progress' && c.progress < 100) || enrolledCourses[0];
+    // Active purchases (not deactivated)
+    const activePurchases = purchases.filter((p: PurchasedCourse) => p.status === 'active');
+    const deactivatedPurchases = purchases.filter((p: PurchasedCourse) => p.status === 'deactivated');
 
     // Stats calculations
-    const totalCourses = enrolledCourses.length;
-    const completedCourses = enrolledCourses.filter((c: any) => c.status === 'Completed').length;
-    const totalHoursLearnt = enrolledCourses.reduce((acc: number, c: any) => acc + (c.progress / 100) * (c.modulesCount * 0.75), 0).toFixed(1);
-    const averageProgress = enrolledCourses.length > 0
-        ? Math.round(enrolledCourses.reduce((acc: number, c: any) => acc + c.progress, 0) / enrolledCourses.length)
+    const totalCourses = activePurchases.length + enrolledCourses.length;
+    const completedCourses = [
+        ...enrolledCourses.filter((c: EnrolledCourse) => c.progress === 100),
+        ...activePurchases.filter((p: PurchasedCourse) => p.course.progress === 100)
+    ].length;
+
+    const totalHoursLearnt = [...enrolledCourses, ...activePurchases.map((p: PurchasedCourse) => ({
+        progress: p.course.progress,
+        modulesCount: 8
+    }))].reduce((acc: number, c: any) => acc + (c.progress / 100) * (c.modulesCount * 0.75), 0).toFixed(1);
+
+    const averageProgress = totalCourses > 0
+        ? Math.round([...enrolledCourses, ...activePurchases.map((p: PurchasedCourse) => ({
+            progress: p.course.progress
+        }))].reduce((acc: number, c: any) => acc + c.progress, 0) / totalCourses)
         : 0;
 
-    const isLoading = registrationsLoading || coursesLoading;
+    // Handlers
+    const handleDeactivatePurchase = async (purchaseId: string, courseName: string) => {
+        try {
+            await api.patch(`/api/v1/courses/purchases/${purchaseId}/deactivate/`);
+            toast.success(`${courseName} removed from dashboard`);
+            queryClient.invalidateQueries({ queryKey: ['user-purchases'] });
+            refetchPurchases();
+        } catch (error: any) {
+            toast.error(error.response?.data?.message || "Failed to deactivate");
+        }
+    };
+
+    const handleReactivatePurchase = async (purchaseId: string, courseName: string) => {
+        try {
+            await api.patch(`/api/v1/courses/purchases/${purchaseId}/reactivate/`);
+            toast.success(`${courseName} restored to dashboard`);
+            queryClient.invalidateQueries({ queryKey: ['user-purchases'] });
+            refetchPurchases();
+        } catch (error: any) {
+            toast.error(error.response?.data?.message || "Failed to reactivate");
+        }
+    };
+
+    const isLoading = registrationsLoading || purchasesLoading || coursesLoading;
 
     if (isLoading) {
         return (
@@ -146,6 +433,20 @@ export default function DashboardContent({ lang }: { lang: string }) {
             <div className="absolute inset-[-100%] bg-[conic-gradient(from_0deg,transparent_0deg,transparent_150deg,#ea580c_230deg,transparent_210deg)] opacity-0 group-hover:opacity-100 group-hover:animate-spin transition-opacity duration-500 pointer-events-none z-0" style={{ animationDuration: '3s' }} />
         </>
     );
+
+    // Get all courses for current section (overview carousel)
+    const allActiveCourses = [
+        ...enrolledCourses.map(c => ({ ...c, type: 'subscription' })),
+        ...activePurchases.map(p => ({
+            id: p.course.id,
+            title: p.course.name,
+            tutor: p.course.subject.name,
+            modulesCount: 8,
+            progress: p.course.progress,
+            status: p.course.progress === 100 ? 'Completed' : 'In Progress',
+            type: 'purchased'
+        }))
+    ].filter(c => c.status !== 'Completed');
 
     return (
         <div className="w-full mx-auto">
@@ -174,7 +475,6 @@ export default function DashboardContent({ lang }: { lang: string }) {
                         "flex flex-col h-auto w-full bg-transparent space-y-1 p-0 justify-start items-start transition-all duration-500",
                         isCollapsed ? "items-center" : "items-start"
                     )}>
-
                         <div className={cn("px-4 py-2 mb-1 transition-opacity duration-300", isCollapsed ? "opacity-0 h-8" : "opacity-100")}>
                             {!isCollapsed && <p className="text-[10px] font-bold uppercase text-zinc-400 tracking-[0.2em] whitespace-nowrap">Learning</p>}
                         </div>
@@ -226,7 +526,6 @@ export default function DashboardContent({ lang }: { lang: string }) {
                             <Trophy size={16} className="shrink-0" />
                             {!isCollapsed && <span className="truncate">Achievements</span>}
                         </TabsTrigger>
-
                     </TabsList>
                 </div>
 
@@ -249,7 +548,6 @@ export default function DashboardContent({ lang }: { lang: string }) {
                                 </CardHeader>
 
                                 <CardContent className="pt-8 bg-zinc-100 dark:bg-zinc-900/20 space-y-4 overflow-hidden py-6 rounded-lg">
-
                                     <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                                         {[
                                             { label: "Total Courses", value: totalCourses, icon: BookOpen, color: "primary" },
@@ -271,19 +569,13 @@ export default function DashboardContent({ lang }: { lang: string }) {
                                         <div className="lg:col-span-2 p-6 bg-white dark:bg-zinc-900/80 border border-zinc-200 dark:border-zinc-800 rounded-2xl">
                                             <div className="flex items-center justify-between mb-8">
                                                 <h3 className="text-xl font-black tracking-tight">Current Courses</h3>
-                                                <Button
-                                                    variant="ghost"
-                                                    size="sm"
-                                                    className="text-xs font-medium"
-                                                    onClick={() => setActiveTab('courses')}
-                                                >
+                                                <Button variant="ghost" size="sm" className="text-xs font-medium" onClick={() => setActiveTab('courses')}>
                                                     View all courses →
                                                 </Button>
                                             </div>
-
                                             <div className="relative overflow-hidden">
                                                 <div className="flex gap-6 overflow-x-auto snap-x snap-mandatory scrollbar-hide pb-4 -mx-1 px-1">
-                                                    {enrolledCourses.filter((c: any) => c.status !== 'Completed').slice(0, 2).map((course: any) => (
+                                                    {allActiveCourses.slice(0, 2).map((course: any) => (
                                                         <div key={course.id} className="min-w-full snap-center bg-zinc-50 dark:bg-zinc-900 border border-zinc-100 dark:border-zinc-800 rounded-3xl p-8">
                                                             <div className="flex items-center gap-4 mb-6">
                                                                 <div>
@@ -300,7 +592,7 @@ export default function DashboardContent({ lang }: { lang: string }) {
                                                             </div>
                                                         </div>
                                                     ))}
-                                                    {enrolledCourses.filter((c: any) => c.status !== 'Completed').length === 0 && (
+                                                    {allActiveCourses.length === 0 && (
                                                         <div className="min-w-full snap-center bg-zinc-50 dark:bg-zinc-900 border border-zinc-100 dark:border-zinc-800 rounded-3xl p-8 text-center">
                                                             <p className="text-zinc-500">No active courses. Browse and enroll in new courses!</p>
                                                             <Button asChild className="mt-4">
@@ -314,7 +606,6 @@ export default function DashboardContent({ lang }: { lang: string }) {
 
                                         <div className="lg:col-span-3 p-8 bg-white dark:bg-zinc-900/80 border border-zinc-200 dark:border-zinc-800 rounded-2xl flex flex-col gap-6">
                                             <p className="text-[10px] font-black uppercase text-zinc-400 tracking-[0.2em]">Performance Summary</p>
-
                                             <div className="space-y-4">
                                                 <div className="flex justify-between items-center border-b border-zinc-100 dark:border-zinc-800 pb-3">
                                                     <span className="text-xs font-bold text-zinc-500">Average Progress</span>
@@ -329,7 +620,6 @@ export default function DashboardContent({ lang }: { lang: string }) {
                                                     <span className="text-sm font-black text-orange-500">{Math.floor(Math.random() * 20) + 1} days</span>
                                                 </div>
                                             </div>
-
                                             <div className="mt-auto p-4 bg-zinc-50 dark:bg-zinc-900/50 rounded-xl border border-dashed border-zinc-200 dark:border-zinc-800">
                                                 <p className="text-[10px] leading-relaxed font-medium text-zinc-500 italic">
                                                     {averageProgress > 70
@@ -341,134 +631,245 @@ export default function DashboardContent({ lang }: { lang: string }) {
                                             </div>
                                         </div>
                                     </div>
-
                                 </CardContent>
                             </div>
                         </Card>
                     </TabsContent>
 
-                    {/* MY COURSES TAB */}
+                    {/* MY COURSES TAB - Purchased Courses Section */}
                     <TabsContent value="courses" className="mt-0 outline-none">
                         <Card className={cardAnimationClasses}>
                             {cardInnerOverlay}
                             <div className="relative z-20">
                                 <CardHeader className="border-b border-zinc-100 dark:border-zinc-800/50 pb-12">
-                                    <CardTitle className="text-xl font-black tracking-tight">My Courses</CardTitle>
-                                    <CardDescription className="text-zinc-500 font-medium">
-                                        {enrolledCourses.length} courses enrolled • Track your progress and continue learning
-                                    </CardDescription>
+                                    <div className="flex justify-between items-start flex-wrap gap-4">
+                                        <div>
+                                            <CardTitle className="text-xl font-black tracking-tight">My Courses</CardTitle>
+                                            <CardDescription className="text-zinc-500 font-medium">
+                                                {activePurchases.length + enrolledCourses.length} total courses •
+                                                {activePurchases.length} purchased •
+                                                {enrolledCourses.length} from subscription
+                                            </CardDescription>
+                                        </div>
+
+                                        {/* Sub-tabs for filtering */}
+                                        <div className="flex gap-2 p-1 bg-zinc-100 dark:bg-zinc-900/50 rounded-xl">
+                                            <button
+                                                onClick={() => setCourseFilter('all')}
+                                                className={`px-4 py-2 text-xs font-bold rounded-lg transition-all ${courseFilter === 'all'
+                                                    ? 'bg-primary text-white shadow-sm'
+                                                    : 'text-zinc-500 hover:text-primary'
+                                                    }`}
+                                            >
+                                                All ({activePurchases.length + enrolledCourses.length})
+                                            </button>
+                                            <button
+                                                onClick={() => setCourseFilter('purchased')}
+                                                className={`px-4 py-2 text-xs font-bold rounded-lg transition-all ${courseFilter === 'purchased'
+                                                    ? 'bg-primary text-white shadow-sm'
+                                                    : 'text-zinc-500 hover:text-primary'
+                                                    }`}
+                                            >
+                                                Purchased ({activePurchases.length})
+                                            </button>
+                                            <button
+                                                onClick={() => setCourseFilter('subscribed')}
+                                                className={`px-4 py-2 text-xs font-bold rounded-lg transition-all ${courseFilter === 'subscribed'
+                                                    ? 'bg-primary text-white shadow-sm'
+                                                    : 'text-zinc-500 hover:text-primary'
+                                                    }`}
+                                            >
+                                                Subscribed ({enrolledCourses.length})
+                                            </button>
+                                        </div>
+                                    </div>
                                 </CardHeader>
 
                                 <CardContent className="pt-8 bg-zinc-100 dark:bg-zinc-900/20 overflow-hidden py-6 rounded-lg">
-                                    {enrolledCourses.length > 0 ? (
-                                        <Accordion type="single" collapsible className="space-y-4">
-                                            {enrolledCourses.map((course: any) => (
-                                                <AccordionItem
-                                                    key={course.id}
-                                                    value={course.id}
-                                                    className="border border-zinc-200 dark:border-zinc-800 rounded-2xl overflow-hidden"
-                                                >
-                                                    <AccordionTrigger className="px-4 py-5 cursor-pointer hover:no-underline group bg-white dark:bg-zinc-900/80 hover:bg-zinc-50 dark:hover:bg-zinc-900/40">
-                                                        <div className="flex items-center gap-5 w-full">
-                                                            <div className="flex-1 text-left">
-                                                                <div className="flex items-center justify-between flex-wrap gap-2">
-                                                                    <h4 className="font-bold text-lg tracking-tight">{course.title}</h4>
-                                                                    <Badge className={`
-                                                                        border-none font-black text-[10px] tracking-widest px-3
-                                                                        ${course.status === 'Completed' ? 'bg-emerald-500/10 text-emerald-600' :
-                                                                            course.status === 'In Progress' ? 'bg-orange-500/10 text-primary' :
-                                                                                'bg-zinc-100 dark:bg-zinc-800 text-zinc-500'}
-                                                                    `}>
-                                                                        {course.status.toUpperCase()}
-                                                                    </Badge>
-                                                                </div>
-                                                                <p className="text-[10px] font-semibold uppercase text-zinc-400 tracking-widest mt-1">
-                                                                    {course.tutor} • {course.modulesCount} Modules
-                                                                </p>
-                                                                <div className="flex justify-start mt-4">
-                                                                    <div className="flex w-full items-center max-w-[300px] gap-6">
-                                                                        <div className="flex w-1/2 justify-between text-[9px] font-black uppercase tracking-tighter">
-                                                                            <span className="text-zinc-400">Mastery Level</span>
-                                                                            <span className={course.status === 'Completed' ? 'text-emerald-500' : 'text-primary'}>
-                                                                                {course.progress}%
-                                                                            </span>
-                                                                        </div>
-                                                                        <Progress value={course.progress} className="h-[6px] bg-zinc-100 dark:bg-zinc-800 rounded-full" />
-                                                                    </div>
-                                                                </div>
-                                                            </div>
-                                                        </div>
-                                                    </AccordionTrigger>
+                                    {/* 
+                                    {courseFilter === 'all' && <h3 className="text-lg font-black mb-4 flex items-center gap-2">
+                                        <ShoppingBag size={18} className="text-primary" />
+                                        All Courses (Purchased/Subscribed)
+                                    </h3>}
 
-                                                    <AccordionContent className="px-0 pb-2 pt-0 border-t border-zinc-100 dark:border-zinc-800/50">
-                                                        <div className="flex flex-col">
-                                                            {course.modules.map((module: any, idx: number) => (
-                                                                <div
-                                                                    key={idx}
-                                                                    className={`p-4 md:p-5 flex items-center justify-between hover:bg-zinc-50 dark:hover:bg-zinc-900/40 transition-colors group border-b border-zinc-50 dark:border-zinc-800/20 last:border-0 ${module.status === 'Current' ? 'bg-primary/5 dark:bg-primary/10' : ''
-                                                                        }`}
+                                    {courseFilter === 'purchased' && <h3 className="text-lg font-black mb-4 flex items-center gap-2">
+                                        <ShoppingBag size={18} className="text-primary" />
+                                        Purchased Courses
+                                    </h3>}
+                                    {courseFilter === 'subscribed' && <h3 className="text-lg font-black mb-4 flex items-center gap-2">
+                                        <ShoppingBag size={18} className="text-primary" />
+                                        Subscribed Courses
+                                    </h3>} */}
+
+                                    {/* ALL COURSES */}
+                                    {courseFilter === 'all' && (
+                                        <>
+                                            {/* Purchased Courses Section */}
+                                            {activePurchases.length > 0 && (
+                                                <div className="mb-4">
+
+                                                    <div className="space-y-4">
+                                                        {activePurchases.map((purchase: PurchasedCourse) => {
+                                                            const courseProgress = purchase.course.progress;
+                                                            return (
+                                                                <PurchasedCourseCard
+                                                                    key={purchase.id}
+                                                                    purchase={purchase}
+                                                                    progress={courseProgress || 0}
+                                                                    onDeactivate={() => handleDeactivatePurchase(purchase.id, purchase.course.name)}
+                                                                />
+                                                            );
+                                                        })}
+                                                    </div>
+                                                </div>
+                                            )}
+
+                                            {/* Subscription Courses Section */}
+                                            {enrolledCourses.length > 0 && (
+
+                                                <div className="space-y-4">
+                                                    {enrolledCourses.map((course: EnrolledCourse) => (
+                                                        <SubscriptionCourseCard
+                                                            key={course.id}
+                                                            course={course}
+                                                            progress={course.progress}
+                                                        />
+                                                    ))}
+                                                </div>
+                                            )}
+
+                                            {/* Deactivated Purchases Section */}
+                                            {deactivatedPurchases.length > 0 && (
+                                                <div className="mt-8">
+                                                    <h3 className="text-sm font-bold text-zinc-500 mb-3 flex items-center gap-2">
+                                                        <EyeOff size={14} />
+                                                        Hidden Courses
+                                                    </h3>
+                                                    <div className="space-y-2">
+                                                        {deactivatedPurchases.map((purchase: PurchasedCourse) => (
+                                                            <div key={purchase.id} className="flex justify-between items-center p-3 bg-white dark:bg-zinc-900/80 rounded-xl border border-zinc-200 dark:border-zinc-800">
+                                                                <div>
+                                                                    <p className="text-sm font-bold">{purchase.course.name}</p>
+                                                                    <p className="text-[10px] text-zinc-400">Purchased {new Date(purchase.purchased_at).toLocaleDateString()}</p>
+                                                                </div>
+                                                                <Button
+                                                                    size="sm"
+                                                                    variant="outline"
+                                                                    onClick={() => handleReactivatePurchase(purchase.id, purchase.course.name)}
                                                                 >
-                                                                    <div className="flex items-center gap-4">
-                                                                        <div className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-black transition-all ${module.status === 'Done'
-                                                                            ? 'bg-emerald-500/10 text-emerald-500'
-                                                                            : module.status === 'Current'
-                                                                                ? 'bg-primary text-white shadow-lg shadow-primary/20'
-                                                                                : 'bg-zinc-100 dark:bg-zinc-800 text-zinc-500 group-hover:bg-zinc-200 dark:group-hover:bg-zinc-700'
-                                                                            }`}>
-                                                                            {module.status === 'Done' ? <CheckCircle2 size={16} /> : idx + 1}
-                                                                        </div>
-                                                                        <div>
-                                                                            <h4 className={`font-bold text-sm md:text-base tracking-tight ${module.status === 'Current' ? 'text-zinc-900 dark:text-white' : 'text-zinc-600 dark:text-zinc-400'
-                                                                                }`}>
-                                                                                {module.name}
-                                                                            </h4>
-                                                                            <div className="flex items-center gap-2">
-                                                                                <p className={`text-[10px] font-black uppercase tracking-widest ${module.status === 'Current' ? 'text-primary' : 'text-zinc-400'
-                                                                                    }`}>
-                                                                                    {module.status}
-                                                                                </p>
-                                                                                {module.duration && (
-                                                                                    <>
-                                                                                        <span className="text-zinc-300 dark:text-zinc-700">•</span>
-                                                                                        <p className="text-[10px] text-zinc-400 font-bold uppercase">{module.duration}</p>
-                                                                                    </>
-                                                                                )}
-                                                                            </div>
-                                                                        </div>
-                                                                    </div>
+                                                                    Restore to Dashboard
+                                                                </Button>
+                                                            </div>
+                                                        ))}
+                                                    </div>
+                                                </div>
+                                            )}
 
-                                                                    <div className="flex items-center">
-                                                                        {module.status === 'Locked' ? (
-                                                                            <Lock size={18} className="text-zinc-300 dark:text-zinc-600" />
-                                                                        ) : (
-                                                                            <button className="focus:outline-none transition-all">
-                                                                                <PlayCircle size={22} className={`${module.status === 'Current' ? 'text-primary' : 'text-zinc-400 opacity-40 group-hover:opacity-100'}`} />
-                                                                            </button>
-                                                                        )}
-                                                                    </div>
-                                                                </div>
-                                                            ))}
-                                                        </div>
-                                                    </AccordionContent>
-                                                </AccordionItem>
-                                            ))}
-                                        </Accordion>
-                                    ) : (
-                                        <div className="text-center py-12 bg-white dark:bg-zinc-900/80 rounded-2xl border border-zinc-200 dark:border-zinc-800">
-                                            <BookOpen className="mx-auto h-12 w-12 text-zinc-400 mb-4" />
-                                            <h3 className="text-lg font-bold text-zinc-600 dark:text-zinc-400">No courses enrolled yet</h3>
-                                            <p className="text-sm text-zinc-500 mt-1">Browse our course catalog and start your learning journey!</p>
-                                            <Button asChild className="mt-6">
-                                                <Link href={`/${lang}/courses`}>Browse Courses</Link>
-                                            </Button>
-                                        </div>
+                                            {/* Empty State */}
+                                            {activePurchases.length === 0 && enrolledCourses.length === 0 && (
+                                                <div className="text-center py-12 bg-white dark:bg-zinc-900/80 rounded-2xl border border-zinc-200 dark:border-zinc-800">
+                                                    <BookOpen className="mx-auto h-12 w-12 text-zinc-400 mb-4" />
+                                                    <h3 className="text-lg font-bold text-zinc-600 dark:text-zinc-400">No courses yet</h3>
+                                                    <p className="text-sm text-zinc-500 mt-1">Browse our course catalog and start your learning journey!</p>
+                                                    <Button asChild className="mt-6">
+                                                        <Link href={`/${lang}/courses`}>Browse Courses</Link>
+                                                    </Button>
+                                                </div>
+                                            )}
+                                        </>
                                     )}
 
-                                    <Button asChild variant="default" className="w-full h-14 mt-8 transition-all rounded-2xl hover:scale-[1]">
-                                        <Link href={`/${lang}/courses`}>
-                                            + Browse more mathematics courses
-                                        </Link>
-                                    </Button>
+                                    {/* PURCHASED COURSES ONLY */}
+                                    {courseFilter === 'purchased' && (
+                                        <>
+                                            {activePurchases.length > 0 ? (
+                                                <div className="space-y-4">
+                                                    {activePurchases.map((purchase: PurchasedCourse) => {
+                                                        const courseProgress = purchase.course.progress
+                                                        return (
+                                                            <PurchasedCourseCard
+                                                                key={purchase.id}
+                                                                purchase={purchase}
+                                                                progress={courseProgress || 0}
+                                                                onDeactivate={() => handleDeactivatePurchase(purchase.id, purchase.course.name)}
+                                                            />
+                                                        );
+                                                    })}
+                                                </div>
+                                            ) : (
+                                                <div className="text-center py-12 bg-white dark:bg-zinc-900/80 rounded-2xl border border-zinc-200 dark:border-zinc-800">
+                                                    <ShoppingBag className="mx-auto h-12 w-12 text-zinc-400 mb-4" />
+                                                    <h3 className="text-lg font-bold text-zinc-600 dark:text-zinc-400">No purchased courses</h3>
+                                                    <p className="text-sm text-zinc-500 mt-1">You haven't purchased any courses yet.</p>
+                                                    <Button asChild className="mt-6">
+                                                        <Link href={`/${lang}/courses`}>Browse Courses</Link>
+                                                    </Button>
+                                                </div>
+                                            )}
+
+                                            {/* Deactivated Purchases Section for purchased tab */}
+                                            {deactivatedPurchases.length > 0 && (
+                                                <div className="mt-8">
+                                                    <h3 className="text-sm font-bold text-zinc-500 mb-3 flex items-center gap-2">
+                                                        <EyeOff size={14} />
+                                                        Hidden Courses
+                                                    </h3>
+                                                    <div className="space-y-2">
+                                                        {deactivatedPurchases.map((purchase: PurchasedCourse) => (
+                                                            <div key={purchase.id} className="flex justify-between items-center p-3 bg-white dark:bg-zinc-900/80 rounded-xl border border-zinc-200 dark:border-zinc-800">
+                                                                <div>
+                                                                    <p className="text-sm font-bold">{purchase.course.name}</p>
+                                                                    <p className="text-[10px] text-zinc-400">Purchased {new Date(purchase.purchased_at).toLocaleDateString()}</p>
+                                                                </div>
+                                                                <Button
+                                                                    size="sm"
+                                                                    variant="outline"
+                                                                    onClick={() => handleReactivatePurchase(purchase.id, purchase.course.name)}
+                                                                >
+                                                                    Restore to Dashboard
+                                                                </Button>
+                                                            </div>
+                                                        ))}
+                                                    </div>
+                                                </div>
+                                            )}
+                                        </>
+                                    )}
+
+                                    {/* SUBSCRIBED COURSES ONLY */}
+                                    {courseFilter === 'subscribed' && (
+                                        <>
+                                            {enrolledCourses.length > 0 ? (
+                                                <div className="space-y-4">
+                                                    {enrolledCourses.map((course: EnrolledCourse) => (
+                                                        <SubscriptionCourseCard
+                                                            key={course.id}
+                                                            course={course}
+                                                            progress={course.progress}
+                                                        />
+                                                    ))}
+                                                </div>
+                                            ) : (
+                                                <div className="text-center py-12 bg-white dark:bg-zinc-900/80 rounded-2xl border border-zinc-200 dark:border-zinc-800">
+                                                    <BookOpen className="mx-auto h-12 w-12 text-zinc-400 mb-4" />
+                                                    <h3 className="text-lg font-bold text-zinc-600 dark:text-zinc-400">No subscription courses</h3>
+                                                    <p className="text-sm text-zinc-500 mt-1">Subscribe to a plan to access courses.</p>
+                                                    <Button asChild className="mt-6">
+                                                        <Link href={`/${lang}/packages`}>View Plans</Link>
+                                                    </Button>
+                                                </div>
+                                            )}
+                                        </>
+                                    )}
+
+                                    {/* Browse More Button - Only show if courses exist */}
+                                    {(activePurchases.length > 0 || enrolledCourses.length > 0) && (
+                                        <Button asChild variant="outline" className="w-full h-14 mt-8 transition-all rounded-2xl hover:scale-[1]">
+                                            <Link href={`/${lang}/courses`}>
+                                                + Browse more mathematics courses
+                                            </Link>
+                                        </Button>
+                                    )}
                                 </CardContent>
                             </div>
                         </Card>
@@ -490,7 +891,6 @@ export default function DashboardContent({ lang }: { lang: string }) {
                                 </CardHeader>
 
                                 <CardContent className="pt-8 bg-zinc-100 dark:bg-zinc-900/20 space-y-4 py-6 rounded-lg">
-
                                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                                         {[
                                             { label: "Average Grade", value: averageProgress > 90 ? "A+" : averageProgress > 80 ? "A" : averageProgress > 70 ? "B+" : "In Progress", icon: Target, color: "primary" },
@@ -511,7 +911,11 @@ export default function DashboardContent({ lang }: { lang: string }) {
                                         <div className="lg:col-span-3 p-8 bg-white dark:bg-zinc-900/80 border border-zinc-200 dark:border-zinc-800 rounded-xl flex flex-col gap-6">
                                             <p className="text-[10px] font-black uppercase text-zinc-400 tracking-[0.2em]">Course Progress Summary</p>
                                             <div className="space-y-4">
-                                                {enrolledCourses.map((course: any) => (
+                                                {[...enrolledCourses, ...activePurchases.map((p: PurchasedCourse) => ({
+                                                    id: p.course.id,
+                                                    title: p.course.name,
+                                                    progress: p.course.progress
+                                                }))].map((course: any) => (
                                                     <div key={course.id} className="space-y-2">
                                                         <div className="flex justify-between items-center">
                                                             <span className="text-xs font-bold text-zinc-800 dark:text-zinc-200">{course.title}</span>
@@ -520,13 +924,12 @@ export default function DashboardContent({ lang }: { lang: string }) {
                                                         <Progress value={course.progress} className="h-1.5 rounded-full" />
                                                     </div>
                                                 ))}
-                                                {enrolledCourses.length === 0 && (
+                                                {[...enrolledCourses, ...activePurchases].length === 0 && (
                                                     <p className="text-center text-zinc-500 py-4">No course data available. Enroll in a course to see progress.</p>
                                                 )}
                                             </div>
                                         </div>
                                     </div>
-
                                 </CardContent>
                             </div>
                         </Card>
@@ -545,9 +948,9 @@ export default function DashboardContent({ lang }: { lang: string }) {
                                 <CardContent className="pt-8 bg-zinc-100 dark:bg-zinc-900/20 py-8 rounded-xl">
                                     <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
                                         {[
-                                            { name: "First Course", icon: Zap, color: "text-yellow-500", unlocked: completedCourses >= 1, date: completedCourses >= 1 ? "Earned" : "Locked" },
+                                            { name: "First Course", icon: Zap, color: "text-yellow-500", unlocked: totalCourses >= 1, date: totalCourses >= 1 ? "Earned" : "Locked" },
                                             { name: "Perfect Score", icon: Trophy, color: "text-primary", unlocked: averageProgress === 100, date: averageProgress === 100 ? "Earned" : "Locked" },
-                                            { name: "Dedicated Learner", icon: GraduationCap, color: "text-blue-500", unlocked: totalHoursLearnt >= 10, date: totalHoursLearnt >= 10 ? "Earned" : "Locked" },
+                                            { name: "Dedicated Learner", icon: GraduationCap, color: "text-blue-500", unlocked: parseFloat(totalHoursLearnt) >= 10, date: parseFloat(totalHoursLearnt) >= 10 ? "Earned" : "Locked" },
                                             { name: "Quick Starter", icon: Award, color: "text-emerald-500", unlocked: true, date: "Unlocked" }
                                         ].map((badge, i) => (
                                             <div
