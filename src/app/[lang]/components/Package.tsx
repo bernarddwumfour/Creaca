@@ -183,7 +183,7 @@ export function Package({ package: pkg, isSubscribing, onSubscribe }: PackageCar
                             className="flex-1 bg-primary hover:bg-orange-600"
                             onClick={() => setShowLoginDialog(false)}
                         >
-                            <Link href={`/en/login/?redirect=/packages`}>
+                            <Link href={`/en/login?redirect=/en/packages`}>
                                 Log In
                             </Link>
                         </Button>
@@ -193,7 +193,7 @@ export function Package({ package: pkg, isSubscribing, onSubscribe }: PackageCar
                             className="flex-1"
                             onClick={() => setShowLoginDialog(false)}
                         >
-                            <Link href={`/en/register?redirect=/packages`}>
+                            <Link href={`/en/signup?redirect=/en/packages`}>
                                 Create Account
                             </Link>
                         </Button>

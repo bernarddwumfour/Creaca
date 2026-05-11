@@ -191,7 +191,7 @@ function LoginForm({ lang, t }: { lang: Lang, t: any }) {
         }
 
         // Redirect to the stored redirect URL or home
-        router.push(`/en${redirectTo}`);
+        router.push(redirectTo);
       } else {
         form.setError('root', { message: data.message || t.error });
       }
@@ -241,7 +241,7 @@ function LoginForm({ lang, t }: { lang: Lang, t: any }) {
                   setIsGoogleLoading(false);
                   return;
                 }
-                router.push(`/en${redirectTo}`);
+                router.push(redirectTo);
               } else {
                 form.setError('root', { message: data.message || t.error });
               }
@@ -312,7 +312,7 @@ function LoginForm({ lang, t }: { lang: Lang, t: any }) {
           tokens: data.data.tokens
         });
         // Redirect to the stored redirect URL or home after MFA
-        router.push(`/en${redirectTo}`);
+        router.push(redirectTo);
       } else {
         setMfaError(data.message || t.mfaError);
         mfaForm.setError('code', { message: data.message || t.mfaError });
@@ -402,7 +402,7 @@ function LoginForm({ lang, t }: { lang: Lang, t: any }) {
             </Button>
 
             <Button asChild variant="ghost" className="w-full font-bold">
-              <Link href={`/en${redirectTo}`}>
+              <Link href={redirectTo}>
                 {t.verifyLater}
               </Link>
             </Button>
