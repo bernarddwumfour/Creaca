@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { Check, Clock, Loader2 } from 'lucide-react';
+import { Check, Clock, Loader2, ShieldAlert } from 'lucide-react';
 import { Button } from "@/components/ui/button";
 import { useAuth } from '@/context/AuthContext';
 import Link from 'next/link';
@@ -172,18 +172,22 @@ export function Package({ package: pkg, isSubscribing, onSubscribe }: PackageCar
                 open={showLoginDialog}
                 onOpenChange={setShowLoginDialog}
             >
-                <div className="space-y-4 py-4">
-                    <p className="text-sm text-zinc-600 dark:text-zinc-400">
+                <div className="flex flex-col items-center text-center space-y-4 py-4">
+
+                    <div className='rounded-full p-8 bg-gradient-to-br from-primary/20 to-orange-500/20'>
+                        <ShieldAlert className='w-[60px] h-[60px] text-primary' />
+                    </div>
+                    <p className='text-sm py-4'>
                         You need to be logged in to subscribe to a subscription plan.
                         Please choose an option below to continue.
                     </p>
-                    <div className="flex gap-3">
+                    <div className="flex gap-3 w-full">
                         <Button
                             asChild
                             className="flex-1 bg-primary hover:bg-orange-600"
                             onClick={() => setShowLoginDialog(false)}
                         >
-                            <Link href={`/en/login?redirect=/en/packages`}>
+                            <Link href={`/${"en"}/login?redirect=/${"en"}/courses`}>
                                 Log In
                             </Link>
                         </Button>
@@ -193,12 +197,13 @@ export function Package({ package: pkg, isSubscribing, onSubscribe }: PackageCar
                             className="flex-1"
                             onClick={() => setShowLoginDialog(false)}
                         >
-                            <Link href={`/en/signup?redirect=/en/packages`}>
+                            <Link href={`/${"en"}/signup?redirect=/${"en"}/courses`}>
                                 Create Account
                             </Link>
                         </Button>
                     </div>
                 </div>
+
             </CustomDialog>
         </>
     );

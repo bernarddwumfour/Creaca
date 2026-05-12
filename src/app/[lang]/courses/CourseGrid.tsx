@@ -1,8 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import Image from 'next/image';
-import { Clock, Star, ArrowRightCircle, Zap, Loader2 } from 'lucide-react';
+import { Loader2, ShieldAlert } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Lang } from '@/lib/dictionary/dictionary';
 import Link from 'next/link';
@@ -12,6 +11,7 @@ import api from '@/lib/axios';
 import { ENDPOINTS } from '@/lib/endpoints';
 import { useAuth } from '@/context/AuthContext';
 import { CustomDialog } from '../../../../widgets/CustomDialog/CustomDialog';
+import { CourseCard } from './CourseCard';
 
 interface Course {
     id: string;
@@ -51,27 +51,14 @@ interface CoursesResponse {
     };
 }
 
-// Map difficulty to display text and level
-const getDifficultyInfo = (difficulty: string) => {
-    const map: Record<string, { display: string; level: number }> = {
-        beginner: { display: 'Beginner', level: 1 },
-        intermediate: { display: 'Intermediate', level: 2 },
-        advanced: { display: 'Advanced', level: 3 },
-        expert: { display: 'Expert', level: 4 },
+interface Purchase {
+    id: string;
+    course: {
+        id: string;
+        name: string;
     };
-    return map[difficulty] || { display: difficulty, level: 2 };
-};
-
-// Map difficulty to color
-const getDifficultyColor = (difficulty: string) => {
-    const map: Record<string, string> = {
-        beginner: 'bg-emerald-500/10 text-emerald-600',
-        intermediate: 'bg-blue-500/10 text-blue-600',
-        advanced: 'bg-amber-500/10 text-amber-600',
-        expert: 'bg-rose-500/10 text-rose-600',
-    };
-    return map[difficulty] || 'bg-zinc-100 text-zinc-600';
-};
+    status: string;
+}
 
 const COURSE_DATA = {
     en: {
@@ -115,10 +102,11 @@ export default function CourseGrid({ lang }: { lang: Lang }) {
     const queryClient = useQueryClient();
     const [activeTab, setActiveTab] = useState(t.categories[0]);
     const [isRegistering, setIsRegistering] = useState<string | null>(null);
+    const [isPurchasing, setIsPurchasing] = useState<string | null>(null);
     const [showLoginDialog, setShowLoginDialog] = useState(false);
     const [selectedCourse, setSelectedCourse] = useState<Course | null>(null);
     const [registeredCourses, setRegisteredCourses] = useState<Set<string>>(new Set());
-    const [isPurchasing, setIsPurchasing] = useState<string | null>(null)
+    const [purchasedCourses, setPurchasedCourses] = useState<Set<string>>(new Set());
 
     // Fetch courses from API
     const { data: coursesResponse, isLoading, error } = useQuery<CoursesResponse>({
@@ -135,7 +123,7 @@ export default function CourseGrid({ lang }: { lang: Lang }) {
 
     // Fetch user's registered courses if logged in
     const { data: registrationsResponse } = useQuery({
-        queryKey: ['user-registrations'],
+        queryKey: [ENDPOINTS.COURSES.MY_REGISTRATIONS],
         queryFn: async () => {
             const { data } = await api.get(ENDPOINTS.COURSES.MY_REGISTRATIONS);
             return data;
@@ -143,27 +131,15 @@ export default function CourseGrid({ lang }: { lang: Lang }) {
         enabled: !!user,
     });
 
-    const handlePurchase = async (course: Course) => {
-        if (!user) {
-            setSelectedCourse(course);
-            setShowLoginDialog(true);
-            return;
-        }
-
-        setIsPurchasing(course.id);
-        try {
-            const response = await api.post(ENDPOINTS.COURSES.PURCHASE_COURSE, {
-                course_id: course.id,
-                payment_reference: `manual_${Date.now()}` // Integrate with actual payment
-            });
-            toast.success(response.data?.message || `Successfully purchased ${course.name}`);
-            // Redirect to course or refresh
-        } catch (error: any) {
-            toast.error(error.response?.data?.message || "Purchase failed");
-        } finally {
-            setIsPurchasing(null);
-        }
-    };
+    // Fetch user's purchased courses if logged in
+    const { data: purchasesResponse } = useQuery({
+        queryKey: [ENDPOINTS.COURSES.MY_PURCHASES],
+        queryFn: async () => {
+            const { data } = await api.get(ENDPOINTS.COURSES.MY_PURCHASES);
+            return data;
+        },
+        enabled: !!user,
+    });
 
     // Update registered courses set when data loads
     useEffect(() => {
@@ -175,15 +151,17 @@ export default function CourseGrid({ lang }: { lang: Lang }) {
         }
     }, [registrationsResponse]);
 
-    // Filter courses by category (using subject name for filtering)
-    const filteredCourses = activeTab === t.categories[0]
-        ? courses
-        : courses.filter((course: Course) =>
-            course.subject.name === activeTab ||
-            (activeTab === 'Analysis' && course.subject.name === 'Analysis') ||
-            (activeTab === 'Algebra' && course.subject.name === 'Algebra') ||
-            (activeTab === 'Applied' && course.subject.name === 'Applied')
-        );
+    // Update purchased courses set when data loads
+    useEffect(() => {
+        if (purchasesResponse?.data?.results) {
+            const purchasedIds = new Set(
+                purchasesResponse.data.results
+                    .filter((p: Purchase) => p.status === 'active')
+                    .map((p: Purchase) => p.course.id)
+            ) as Set<string>;
+            setPurchasedCourses(purchasedIds);
+        }
+    }, [purchasesResponse]);
 
     const handleRegister = async (course: Course) => {
         if (!user) {
@@ -199,11 +177,7 @@ export default function CourseGrid({ lang }: { lang: Lang }) {
             });
 
             toast.success(response.data?.message || `Successfully registered for ${course.name}`);
-
-            // Invalidate registrations cache
             queryClient.invalidateQueries({ queryKey: ['user-registrations'] });
-
-            // Add to registered set
             setRegisteredCourses(prev => new Set([...prev, course.id]));
         } catch (error: any) {
             const errorMessage = error.response?.data?.message || "Failed to register for course.";
@@ -212,6 +186,39 @@ export default function CourseGrid({ lang }: { lang: Lang }) {
             setIsRegistering(null);
         }
     };
+
+    const handlePurchase = async (course: Course) => {
+        if (!user) {
+            setSelectedCourse(course);
+            setShowLoginDialog(true);
+            return;
+        }
+
+        setIsPurchasing(course.id);
+        try {
+            const response = await api.post(ENDPOINTS.COURSES.PURCHASE_COURSE, {
+                course_id: course.id,
+                payment_reference: `manual_${Date.now()}`
+            });
+            toast.success(response.data?.message || `Successfully purchased ${course.name}`);
+            queryClient.invalidateQueries({ queryKey: ['user-purchases'] });
+            setPurchasedCourses(prev => new Set([...prev, course.id]));
+        } catch (error: any) {
+            toast.error(error.response?.data?.message || "Purchase failed");
+        } finally {
+            setIsPurchasing(null);
+        }
+    };
+
+    // Filter courses by category
+    const filteredCourses = activeTab === t.categories[0]
+        ? courses
+        : courses.filter((course: Course) =>
+            course.subject.name === activeTab ||
+            (activeTab === 'Analysis' && course.subject.name === 'Analysis') ||
+            (activeTab === 'Algebra' && course.subject.name === 'Algebra') ||
+            (activeTab === 'Applied' && course.subject.name === 'Applied')
+        );
 
     if (isLoading) {
         return (
@@ -234,7 +241,6 @@ export default function CourseGrid({ lang }: { lang: Lang }) {
         );
     }
 
-    // Get unique subjects for filter tabs
     const uniqueSubjects = ['All Topics', ...new Set(courses.map((c: Course) => c.subject.name))];
 
     return (
@@ -255,7 +261,7 @@ export default function CourseGrid({ lang }: { lang: Lang }) {
                         </button>
                     ))}
                 </div>
-                <div className="text-sm font-bold text-zinc-900">
+                <div className="text-sm font-bold text-zinc-900 dark:text-zinc-300">
                     {t.showing} <span className="text-primary">{filteredCourses.length}</span> {t.coursesLabel}
                 </div>
             </div>
@@ -263,106 +269,24 @@ export default function CourseGrid({ lang }: { lang: Lang }) {
             {/* Courses Grid */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10">
                 {filteredCourses.map((course: Course) => {
-                    const difficultyInfo = getDifficultyInfo(course.difficulty);
                     const isRegistered = registeredCourses.has(course.id);
+                    const isPurchased = purchasedCourses.has(course.id);
                     const isRegisteringThis = isRegistering === course.id;
+                    const isPurchasingThis = isPurchasing === course.id;
 
                     return (
-                        <div key={course.id} className="group p-[3px] rounded-2xl overflow-hidden hover:shadow-xl transition-all duration-500 hover:-translate-y-2 bg-slate-100/50 dark:bg-zinc-900/50 relative z-10">
-                            <div className="absolute w-[98%] h-[98%] top-[1%] left-[1%] overflow-hidden bg-slate-100 dark:bg-zinc-900 shadow-xs hover:shadow-sm rounded-sm" />
-                            <div className="absolute inset-[-100%] bg-[conic-gradient(from_0deg,transparent_0deg,transparent_150deg,#ea580c_230deg,transparent_210deg)] opacity-0 group-hover:opacity-100 group-hover:animate-spin transition-opacity duration-500 pointer-events-none -z-1" style={{ animationDuration: '3s' }} />
-
-                            <div className="relative h-full bg-white/50 dark:bg-[#111114]/80 backdrop-blur-2xl z-10 border border-slate-100 dark:border-white/5 overflow-hidden rounded-lg">
-                                {/* Placeholder Image - Using subject name for placeholder */}
-                                <div className="relative h-[240px] w-full overflow-hidden bg-gradient-to-br from-primary/20 to-orange-500/20 flex items-center justify-center">
-                                    <div className="text-6xl font-black text-primary/30">
-                                        {course.subject.name[0]}
-                                    </div>
-                                    <div className="absolute top-4 left-4 bg-white/90 backdrop-blur-md px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest text-primary shadow-sm">
-                                        {course.subject.name}
-                                    </div>
-                                    <div className={`absolute top-4 right-4 px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest shadow-sm ${getDifficultyColor(course.difficulty)}`}>
-                                        {difficultyInfo.display}
-                                    </div>
-                                </div>
-
-                                <div className="p-6 space-y-4 flex flex-col flex-grow">
-                                    <div className="absolute top-0 -inset-full h-full w-1/2 z-5 block transform -skew-x-20 bg-gradient-to-r from-transparent via-white/2 to-transparent animate-[shimmer_3s_infinite]" />
-
-                                    <div className="flex items-center gap-1">
-                                        <span className="text-xs font-bold text-zinc-500 uppercase tracking-wider">
-                                            {course.duration ? `${course.duration} min` : 'Self-paced'}
-                                        </span>
-                                    </div>
-
-                                    <h3 className="text-2xl font-black text-zinc-900 dark:text-gray-200 leading-tight ">
-                                        {course.name}
-                                    </h3>
-
-                                    <p className="text-zinc-500 text-sm leading-relaxed line-clamp-3">
-                                        {course.description}
-                                    </p>
-
-                                    <div className="pt-4 mt-auto grid grid-cols-2 gap-4 border-t border-zinc-50 dark:border-zinc-800">
-                                        <div className="flex items-center gap-2 text-zinc-600 dark:text-gray-400">
-                                            <Clock size={16} className="text-primary" />
-                                            <span className="text-xs font-medium">
-                                                {course.duration ? `${course.duration} min` : 'Self-paced'}
-                                            </span>
-                                        </div>
-                                        <div className="flex items-center gap-2 text-zinc-600 dark:text-gray-400">
-                                            <Zap size={16} className="text-primary" />
-                                            <span className="text-xs font-medium">{difficultyInfo.display}</span>
-                                        </div>
-                                    </div>
-
-
-                                    <div>
-                                        {course.is_purchasable && (
-                                            <Button
-                                                onClick={() => handlePurchase(course)}
-                                                disabled={isPurchasing === course.id}
-                                                variant="outline"
-                                                className="flex-1 w-full"
-                                            >
-                                                {isPurchasing === course.id ? (
-                                                    <Loader2 className="animate-spin h-4 w-4" />
-                                                ) : (
-                                                    `Buy Now $${course.price}`
-                                                )}
-                                            </Button>
-                                        )}
-                                    </div>
-
-                                    <div className="flex gap-3">
-                                        {isRegistered && <Button asChild variant="outline" className="flex-1  font-bold py-6">
-                                            <Link href={`/${lang}/courses/${course.slug}`}>
-                                                {t.learnMore} <ArrowRightCircle className="ml-2 w-4 h-4" />
-                                            </Link>
-                                        </Button>}
-
-                                        <Button
-                                            onClick={() => handleRegister(course)}
-                                            disabled={isRegisteringThis || isRegistered}
-                                            className={`flex-1  font-bold py-6 ${isRegistered
-                                                ? 'bg-emerald-600 hover:bg-emerald-700'
-                                                : 'bg-primary hover:bg-orange-600'
-                                                }`}
-                                        >
-                                            {isRegisteringThis ? (
-                                                <Loader2 className="animate-spin h-4 w-4" />
-                                            ) : isRegistered ? (
-                                                'Registered ✓'
-                                            ) : (
-                                                t.register
-                                            )}
-                                        </Button>
-
-
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
+                        <CourseCard
+                            key={course.id}
+                            course={course}
+                            lang={lang}
+                            isRegistered={isRegistered}
+                            isPurchased={isPurchased}
+                            isRegistering={isRegisteringThis}
+                            isPurchasing={isPurchasingThis}
+                            onRegister={handleRegister}
+                            onPurchase={handlePurchase}
+                            t={t}
+                        />
                     );
                 })}
             </div>
@@ -382,7 +306,10 @@ export default function CourseGrid({ lang }: { lang: Lang }) {
                 contentWidth="max-w-md"
             >
                 <div className="flex flex-col items-center text-center space-y-4 py-4">
-                    <p className="text-sm text-zinc-600 dark:text-zinc-400">
+                    <div className='rounded-full p-8 bg-gradient-to-br from-primary/20 to-orange-500/20'>
+                        <ShieldAlert className='w-[60px] h-[60px] text-primary' />
+                    </div>
+                    <p className='text-sm py-4'>
                         You need to be logged in to register for courses. Please choose an option below.
                     </p>
                     <div className="flex gap-3 w-full">

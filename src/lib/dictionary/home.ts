@@ -1,193 +1,193 @@
 export const homeDict = {
   en: {
     hero: {
-      title: "Master Mathematics in",
-      subtitle: "any language with AI.",
-      desc: "Stop struggling with language barriers in STEM. Our AI explains complex math in your native tongue and translates your logic into global standards instantly.",
+      title: "Learn digital skills",
+      subtitle: "in any language with AI.",
+      desc: "Finally, a platform that teaches you real tech skills without language barriers. Learn at your pace, get AI guidance, and build confidence for your next role.",
       stats: {
-        active: "Thinkers",
+        active: "Learners",
         languages: "Languages",
-        tutors: "AI Models",
-        boost: "IQ Growth",
+        tutors: "AI Mentors",
+        boost: "Career Growth",
       },
     },
     aboutSection: {
-      title: "Math without",
-      titleAccent: "Boundaries.",
-      desc: "We use neural translation and generative AI to ensure that complex logic is accessible to everyone, regardless of what language they speak.",
+      title: "Learning that actually",
+      titleAccent: "works for you.",
+      desc: "No fluff. No confusing jargon. Just clear, hands-on learning with an AI mentor that adapts to your level and language.",
       reasons: [
-        { 
-          title: "Native Logic", 
-          desc: "Learn Calculus, Algebra, or Geometry in your own language for 10x faster comprehension." 
+        {
+          title: "Build as you learn",
+          desc: "Every skill comes with real projects so you can apply what you learn immediately."
         },
-        { 
-          title: "AI Step-by-Step", 
-          desc: "Our AI doesn't just give answers—it talks you through the 'why' in a way you actually understand." 
+        {
+          title: "Clear AI guidance",
+          desc: "Your AI mentor explains concepts step by step and helps when you get stuck."
         },
-        { 
-          title: "Real Context", 
-          desc: "We bridge the gap between pure math and real-world data science with interactive AI modules." 
+        {
+          title: "Learn your way",
+          desc: "Take lessons in your native language — tech skills shouldn't depend on your English level."
         },
-        { 
-          title: "Global Standards", 
-          desc: "Master math in your language, then learn to solve and communicate it at an international level." 
+        {
+          title: "Career-focused",
+          desc: "Learn exactly what employers are looking for, from basics to advanced skills."
         }
       ],
     },
     tutorials: {
       title: "How it works",
-      subtitle: "The fastest path to math",
-      subtitleAccent: "fluency.",
-      phaseLabel: "Phase",
+      subtitle: "A simple path to",
+      subtitleAccent: "real progress.",
+      phaseLabel: "Step",
       steps: [
-        { title: "Skill Scan", desc: "Our AI scans your math level and language preference to build a custom roadmap." },
-        { title: "Native Learning", desc: "Watch complex theorems unfold in your native language with AI-generated visual aids." },
-        { title: "Smart Practice", desc: "Solve problems with an AI coach that adapts its teaching style to your specific mistakes." },
-        { title: "Total Success", desc: "Unlock the ability to solve advanced STEM problems and explain them in any global language." },
+        { title: "Set your goal", desc: "Tell us what you want to learn — AI builds your personalized roadmap." },
+        { title: "Learn by doing", desc: "Watch bite-sized lessons, then immediately apply them to real projects." },
+        { title: "Get AI support", desc: "Stuck? Your AI mentor gives clear explanations and helps you move forward." },
+        { title: "Show your skills", desc: "Complete projects, earn certificates, and grow your career." },
       ],
     },
     pricing: {
-      title: "Unlock your",
-      titleAccent: "potential.",
-      subtitle: "Our Plans",
-      desc: "World-class AI math tutoring designed to fit your learning pace and budget.",
-      stats: ["AI Tutoring", "Problem Sets"],
-      button: "Start Solving",
+      title: "Invest in",
+      titleAccent: "yourself.",
+      subtitle: "Simple, fair pricing",
+      desc: "No hidden fees. No surprises. Just honest plans to help you grow.",
+      stats: ["AI Mentors", "Real Projects"],
+      button: "Choose your plan",
       plans: [
-        { title: 'Free Trial', price: 0, features: ['Unlimited Sandbox', '5 AI Solves / Day', 'Global Community', 'Skill Assessment', 'Basic Progress Map'], buttonText: 'Try for Free' },
-        { title: 'Scholar', price: 15, features: ['For dedicated students', 'Unlimited AI Tutoring', 'All Math Subjects', 'Exam Prep Mode', 'Multilingual Support', 'All Materials'], buttonText: 'Get Started' },
-        { title: 'Polymath', price: 45, mostPopular: true, features: ['Total STEM immersion', 'Advanced Data Science', 'Priority AI Processing', '1-on-1 Human Check-ins', 'API Access', 'Direct Support'], buttonText: 'Go Polymath' },
+        { title: 'Free', price: 0, features: ['Basic projects', '5 AI questions / day', 'Community access', 'Skill assessment', 'Learning roadmap'], buttonText: 'Start free' },
+        { title: 'Pro', price: 15, features: ['Unlimited projects', 'Unlimited AI mentor', 'All skill tracks', 'Certificates', 'Multilingual support', 'Full library access'], buttonText: 'Go Pro' },
+        { title: 'Plus', price: 45, mostPopular: true, features: ['Portfolio projects', 'Priority AI support', '1-on-1 coaching', 'Resume review', 'Interview prep', 'Career guidance'], buttonText: 'Go Plus' },
       ]
     },
     testimonials: {
-      title: "Success Stories",
-      subtitle: "Results from",
-      subtitleAccent: "our thinkers.",
+      title: "Real results",
+      subtitle: "What",
+      subtitleAccent: "learners say.",
       items: [
-        { id: "pl-1", name: "Aleksandra K.", role: "Student", flag: "🇵🇱", content: "I finally understood Calculus! Switching between Polish and English for the explanations was the key." },
-        { id: "ro-1", name: "Andrei M.", role: "Engineer", flag: "🇷🇴", content: "The AI tutor feels like a real person. It helped me master Linear Algebra for my new tech role in weeks." },
-        { id: "es-1", name: "Elena G.", role: "Researcher", flag: "🇪🇸", content: "They don't just give answers; they teach the 'why.' Expressing math in multiple languages is a superpower." },
-        { id: "kr-1", name: "Ji-hoon L.", role: "Data Scientist", flag: "🇰🇷", content: "The best STEM platform. I went from struggling with notation to leading data projects with confidence." }
+        { id: "pl-1", name: "Aleksandra K.", role: "Career changer", flag: "🇵🇱", content: "I finally learned enough to switch careers. The AI mentor made it possible." },
+        { id: "ro-1", name: "Andrei M.", role: "Marketing professional", flag: "🇷🇴", content: "Learned data skills for my role without feeling lost. Perfect for busy professionals." },
+        { id: "es-1", name: "Elena G.", role: "Team lead", flag: "🇪🇸", content: "My whole team upskilled here. Works great in multiple languages." },
+        { id: "kr-1", name: "Ji-hoon L.", role: "Junior developer", flag: "🇰🇷", content: "Clear, practical, and actually useful. Best learning platform I've tried." }
       ],
     },
   },
   fr: {
     hero: {
-      title: "Maîtrisez les maths dans",
-      subtitle: "toutes les langues avec l'IA.",
-      desc: "Dépassez la barrière de la langue dans les STEM. Notre IA explique les maths complexes dans votre langue maternelle et traduit votre logique selon les standards mondiaux.",
+      title: "Apprenez les compétences digitales",
+      subtitle: "dans votre langue avec l'IA.",
+      desc: "Une plateforme qui vous enseigne les vraies compétences tech sans barrière linguistique. Apprenez à votre rythme avec un guide IA.",
       stats: {
-        active: "Penseurs",
+        active: "Apprenants",
         languages: "Langues",
-        tutors: "Modèles IA",
-        boost: "Croissance QI",
+        tutors: "Mentors IA",
+        boost: "Évolution pro",
       },
     },
     aboutSection: {
-      title: "Les maths sans",
-      titleAccent: "Frontières.",
-      desc: "Nous utilisons l'IA pour rendre la logique complexe accessible à tous, peu importe la langue parlée.",
+      title: "Un apprentissage qui",
+      titleAccent: "vous ressemble.",
+      desc: "Sans blabla. Sans jargon. Un apprentissage clair et pratique avec un mentor IA qui s'adapte à vous.",
       reasons: [
-        { title: "Logique Native", desc: "Apprenez le calcul ou l'algèbre dans votre langue pour comprendre 10x plus vite." },
-        { title: "IA Étape-par-Étape", desc: "Notre IA explique le 'pourquoi' avec des mots simples et adaptés à votre pensée." },
-        { title: "Contexte Réel", desc: "Reliez les maths pures à la data science avec des modules interactifs." },
-        { title: "Standard Mondial", desc: "Apprenez dans votre langue, mais soyez prêt pour les meilleures universités au monde." }
+        { title: "Apprenez en agissant", desc: "Chaque compétence vient avec des projets concrets à appliquer immédiatement." },
+        { title: "Guidé par l'IA", desc: "Votre mentor IA explique pas à pas et vous débloque quand vous êtes bloqué." },
+        { title: "Dans votre langue", desc: "Apprenez naturellement — les compétences tech ne devraient pas dépendre de votre anglais." },
+        { title: "Orienté carrière", desc: "Apprenez ce que les recruteurs recherchent vraiment." }
       ],
     },
     tutorials: {
       title: "Comment ça marche",
-      subtitle: "Le chemin le plus rapide vers la",
-      subtitleAccent: "maîtrise.",
+      subtitle: "Un chemin simple vers",
+      subtitleAccent: "des résultats.",
       phaseLabel: "Étape",
       steps: [
-        { title: "Diagnostic", desc: "Notre IA analyse votre niveau et identifie les lacunes logiques qui vous freinent." },
-        { title: "Sync Langue", desc: "Choisissez votre langue et voyez les théorèmes complexes expliqués simplement." },
-        { title: "Pratique IA", desc: "Pratiquez avec un tuteur IA qui donne des indices pour renforcer votre intuition." },
-        { title: "Vrai Succès", desc: "Résolvez des problèmes avancés et expliquez votre logique dans n'importe quelle langue." },
+        { title: "Fixez votre objectif", desc: "Dites-nous ce que vous voulez apprendre — l'IA crée votre parcours." },
+        { title: "Apprenez en faisant", desc: "Leçons courtes, puis projets concrets pour appliquer." },
+        { title: "Aide IA", desc: "Bloqué ? Votre mentor IA vous guide avec des explications claires." },
+        { title: "Validez vos acquis", desc: "Projets, certificats, et votre carrière avance." },
       ],
     },
     pricing: {
-      title: "Investissez dans votre",
-      titleAccent: "intellect.",
-      subtitle: "Nos Forfaits",
-      desc: "Une éducation STEM de haute qualité propulsée par l'IA, adaptée à votre rythme.",
-      stats: ["Tutorat IA", "Exercices"],
-      button: "Voir les plans",
+      title: "Investissez en",
+      titleAccent: "vous.",
+      subtitle: "Des prix simples et justes",
+      desc: "Sans frais cachés. Des plans honnêtes pour votre progression.",
+      stats: ["Mentors IA", "Projets réels"],
+      button: "Choisissez votre formule",
       plans: [
-        { title: 'Essai Gratuit', price: 0, buttonText: 'Essayer Gratuitement', features: ['Sandbox illimité', '5 Résolutions IA / Jour', 'Communauté Mondiale', 'Évaluation', 'Carte de Route'] },
-        { title: 'Scholar', price: 15, buttonText: 'Commencer', features: ['Pour les étudiants dédiés', 'Tutorat IA Illimité', 'Toutes les Matières', 'Mode Prépa Examens', 'Support Multilingue', 'Matériel Inclus'] },
-        { title: 'Polymath', price: 45, mostPopular: true, buttonText: 'Devenir Polymath', features: ['Immersion STEM totale', 'Data Science Avancée', 'IA Prioritaire', 'Suivi Humain 1-sur-1', 'Accès API', 'Support Direct'] },
+        { title: 'Gratuit', price: 0, features: ['Projets basiques', '5 questions IA / jour', 'Accès communauté', 'Évaluation', 'Parcours personnalisé'], buttonText: 'Démarrer' },
+        { title: 'Pro', price: 15, features: ['Projets illimités', 'Mentor IA illimité', 'Tous les parcours', 'Certificats', 'Support multilingue', 'Accès complet'], buttonText: 'Passer Pro' },
+        { title: 'Plus', price: 45, mostPopular: true, features: ['Projets portfolio', 'Support IA prioritaire', 'Coaching 1-1', 'CV & entretiens', 'Orientation carrière'], buttonText: 'Passer Plus' },
       ]
     },
     testimonials: {
-      title: "Témoignages",
-      subtitle: "Le succès de",
-      subtitleAccent: "nos penseurs.",
+      title: "Résultats concrets",
+      subtitle: "Ce que disent",
+      subtitleAccent: "nos apprenants.",
       items: [
-        { id: "pl-1", name: "Aleksandra K.", role: "Étudiante", flag: "🇵🇱", content: "J'ai enfin compris l'analyse ! Passer de l'anglais au polonais pour les explications a tout changé." },
-        { id: "ro-1", name: "Andrei M.", role: "Ingénieur", flag: "🇷🇴", content: "L'IA semble réelle. Elle m'a aidé à maîtriser l'algèbre linéaire pour mon nouveau poste en quelques semaines." },
-        { id: "es-1", name: "Elena G.", role: "Chercheuse", flag: "🇪🇸", content: "Ils ne donnent pas juste la réponse, ils enseignent le 'pourquoi'. C'est un super-pouvoir." },
-        { id: "kr-1", name: "Ji-hoon L.", role: "Data Scientist", flag: "🇰🇷", content: "La meilleure plateforme STEM. Je suis passé de la confusion à la direction de projets avec assurance." }
+        { id: "pl-1", name: "Aleksandra K.", role: "Reconversion", flag: "🇵🇱", content: "J'ai enfin assez appris pour changer de carrière. Le mentor IA a tout changé." },
+        { id: "ro-1", name: "Andrei M.", role: "Marketing", flag: "🇷🇴", content: "J'ai appris les données pour mon poste sans être perdu. Parfait pour les pros." },
+        { id: "es-1", name: "Elena G.", role: "Chef d'équipe", flag: "🇪🇸", content: "Toute mon équipe s'est formée ici. Ça fonctionne très bien en plusieurs langues." },
+        { id: "kr-1", name: "Ji-hoon L.", role: "Développeur junior", flag: "🇰🇷", content: "Clair, pratique, vraiment utile. La meilleure plateforme que j'ai testée." }
       ],
     },
   },
   es: {
     hero: {
-      title: "Domina las Matemáticas en",
-      subtitle: "cualquier idioma con IA.",
-      desc: "Supera la barrera del idioma en STEM. Nuestra IA explica matemáticas complejas en tu lengua materna y traduce tu lógica a estándares globales.",
+      title: "Aprende habilidades digitales",
+      subtitle: "en tu idioma con IA.",
+      desc: "Una plataforma que te enseña habilidades tech reales sin barreras de idioma. Aprende a tu ritmo con guía de IA.",
       stats: {
-        active: "Pensadores",
+        active: "Estudiantes",
         languages: "Idiomas",
-        tutors: "Modelos IA",
-        boost: "Crecimiento IQ",
+        tutors: "Mentores IA",
+        boost: "Crecimiento profesional",
       },
     },
     aboutSection: {
-      title: "Mates sin",
-      titleAccent: "Fronteras.",
-      desc: "Usamos IA para que la lógica compleja sea accesible para todos, sin importar el idioma que hablen.",
+      title: "Aprendizaje que",
+      titleAccent: "sí funciona.",
+      desc: "Sin rodeos. Sin jerga. Aprendizaje claro y práctico con un mentor IA que se adapta a ti.",
       reasons: [
-        { title: "Lógica Nativa", desc: "Aprende cálculo o álgebra en tu idioma para comprender 10 veces más rápido." },
-        { title: "IA Paso a Paso", desc: "Nuestra IA explica el 'porqué' con palabras sencillas adaptadas a tu pensamiento." },
-        { title: "Contexto Real", desc: "Une las mates puras con la ciencia de datos mediante módulos interactivos." },
-        { title: "Estándar Global", desc: "Aprende en tu idioma, pero prepárate para las mejores universidades del mundo." }
+        { title: "Aprende haciendo", desc: "Cada habilidad viene con proyectos reales para aplicar de inmediato." },
+        { title: "Guía con IA", desc: "Tu mentor IA explica paso a paso y te ayuda cuando te quedas atascado." },
+        { title: "En tu idioma", desc: "Aprende naturalmente — las habilidades tech no deberían depender de tu inglés." },
+        { title: "Enfocado a tu carrera", desc: "Aprende lo que los empleadores realmente buscan." }
       ],
     },
     tutorials: {
       title: "Cómo funciona",
-      subtitle: "El camino más rápido a la",
-      subtitleAccent: "maestría.",
+      subtitle: "Un camino simple hacia",
+      subtitleAccent: "resultados reales.",
       phaseLabel: "Paso",
       steps: [
-        { title: "Escaneo", desc: "Nuestra IA analiza tu nivel e identifica las brechas de lógica que te detienen." },
-        { title: "Sincro de Idioma", desc: "Elige tu idioma y mira cómo los teoremas se explican en tu lengua materna." },
-        { title: "Práctica IA", desc: "Practica con un tutor IA que da pistas para crear una intuición real." },
-        { title: "Éxito Real", desc: "Resuelve problemas avanzados y explica tu lógica en cualquier idioma global." },
+        { title: "Define tu objetivo", desc: "Dinos qué quieres aprender — la IA crea tu plan personalizado." },
+        { title: "Aprende haciendo", desc: "Lecciones cortas y luego proyectos para aplicar." },
+        { title: "Ayuda de IA", desc: "¿Atascado? Tu mentor IA te guía con explicaciones claras." },
+        { title: "Demuestra tus habilidades", desc: "Proyectos, certificados y tu carrera avanza." },
       ],
     },
     pricing: {
-      title: "Libera tu",
-      titleAccent: "potencial.",
-      subtitle: "Nuestros Planes",
-      desc: "Educación STEM de alta calidad impulsada por IA, diseñada para tu propio ritmo.",
-      stats: ["Tutoría IA", "Ejercicios"],
-      button: "Ver planes",
+      title: "Invierte en",
+      titleAccent: "ti mismo.",
+      subtitle: "Precios simples y justos",
+      desc: "Sin costos ocultos. Planes honestos para tu progreso.",
+      stats: ["Mentores IA", "Proyectos reales"],
+      button: "Elige tu plan",
       plans: [
-        { title: 'Prueba Gratis', price: 0, buttonText: 'Probar Gratis', features: ['Sandbox ilimitado', '5 Resoluciones IA / Día', 'Comunidad Global', 'Evaluación', 'Mapa de Aprendizaje'] },
-        { title: 'Scholar', price: 15, buttonText: 'Empezar', features: ['Para estudiantes dedicados', 'Tutoría IA Ilimitada', 'Todas las Materias', 'Modo Prep Exámenes', 'Soporte Multilingue', 'Material Incluido'] },
-        { title: 'Polymath', price: 45, mostPopular: true, buttonText: 'Ir a Polymath', features: ['Inmersión STEM total', 'Data Science Avanzada', 'IA Prioritaria', 'Check-ins Humanos 1-a-1', 'Acceso API', 'Soporte Directo'] },
+        { title: 'Gratis', price: 0, features: ['Proyectos básicos', '5 preguntas IA / día', 'Acceso comunidad', 'Evaluación', 'Ruta personalizada'], buttonText: 'Comenzar' },
+        { title: 'Pro', price: 15, features: ['Proyectos ilimitados', 'Mentor IA ilimitado', 'Todos los temas', 'Certificados', 'Soporte multilingüe', 'Acceso completo'], buttonText: 'Ir Pro' },
+        { title: 'Plus', price: 45, mostPopular: true, features: ['Proyectos portafolio', 'Soporte IA prioritario', 'Coaching 1-1', 'CV y entrevistas', 'Orientación profesional'], buttonText: 'Ir Plus' },
       ]
     },
     testimonials: {
-      title: "Testimonios",
-      subtitle: "Resultados de",
-      subtitleAccent: "nuestros pensadores.",
+      title: "Resultados reales",
+      subtitle: "Lo que dicen",
+      subtitleAccent: "nuestros estudiantes.",
       items: [
-        { id: "pl-1", name: "Aleksandra K.", role: "Estudiante", flag: "🇵🇱", content: "¡Finalmente entendí cálculo! Cambiar entre polaco e inglés para las explicaciones fue la clave." },
-        { id: "ro-1", name: "Andrei M.", role: "Ingeniero", flag: "🇷🇴", content: "La IA parece real. Me ayudó a dominar álgebra lineal para mi nuevo puesto en semanas." },
-        { id: "es-1", name: "Elena G.", role: "Investigadora", flag: "🇪🇸", content: "No solo dan la respuesta; enseñan el 'porqué'. Es un superpoder para mi carrera." },
-        { id: "kr-1", name: "Ji-hoon L.", role: "Data Scientist", flag: "🇰🇷", content: "La mejor plataforma STEM. Pasé de la confusión a liderar proyectos de datos con confianza." }
+        { id: "pl-1", name: "Aleksandra K.", role: "Cambio de carrera", flag: "🇵🇱", content: "Por fin aprendí lo suficiente para cambiar de carrera. El mentor IA hizo la diferencia." },
+        { id: "ro-1", name: "Andrei M.", role: "Marketing", flag: "🇷🇴", content: "Aprendí habilidades de datos sin sentirme perdido. Perfecto para profesionales ocupados." },
+        { id: "es-1", name: "Elena G.", role: "Líder de equipo", flag: "🇪🇸", content: "Todo mi equipo se formó aquí. Funciona muy bien en varios idiomas." },
+        { id: "kr-1", name: "Ji-hoon L.", role: "Desarrollador junior", flag: "🇰🇷", content: "Claro, práctico y realmente útil. La mejor plataforma que he probado." }
       ],
     },
   }

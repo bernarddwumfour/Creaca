@@ -10,6 +10,7 @@ import CountUp from "./components/CountUp";
 import HowItWorks from "./HowItWorks";
 import Testimonials from "./Testimonials";
 import PricingSection from "./components/PricingSection";
+import HomeButtons from "./HomeButtons";
 
 type PageProps = {
   params: {
@@ -25,7 +26,7 @@ export default async function Home({ params }: PageProps) {
   return (
     <div className="overflow-x-hidden">
       <Header lang={lang} t={t.nav} />
-      <Hero t={home.hero} nav={t.nav} />
+      <Hero t={home.hero} nav={t.nav} lang={lang} />
       {/* We pass both aboutSection and tutorials to keep WhyChooseUs dynamic */}
       <AboutCresca t={home.aboutSection} aboutSection={home.aboutSection} />
       <HowItWorks t={home.tutorials} />
@@ -37,7 +38,7 @@ export default async function Home({ params }: PageProps) {
   );
 }
 
-function Hero({ t, nav }: { t: any, nav: any }) {
+function Hero({ t, nav, lang }: { t: any, nav: any, lang?: string }) {
   return (
     <div className="relative overflow-hidden bg-white dark:bg-[#18181b]">
       <div className="absolute top-[-15%] left-[-10%] w-[70%] h-[60%] bg-primary/20 dark:bg-primary/10 rounded-full blur-[120px] pointer-events-none z-0 animate-[pulse_8s_ease-in-out_infinite]" />
@@ -52,12 +53,7 @@ function Hero({ t, nav }: { t: any, nav: any }) {
             <p className="py-4 md:py-6 max-w-[700px] text-gray-500 text-sm md:text-base">
               {t.desc}
             </p>
-            <div className="flex flex-col sm:flex-row gap-4 md:gap-6">
-              <Button className="">{nav.trial}</Button>
-              <Button variant="outline" className="w-full sm:w-auto font-bold">
-                {nav.curriculum}
-              </Button>
-            </div>
+            <HomeButtons lang={lang} nav={nav} />
           </div>
         </div>
 

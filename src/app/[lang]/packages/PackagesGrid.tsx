@@ -51,7 +51,7 @@ export default function PackagesGrid() {
     const [isSubscribing, setIsSubscribing] = React.useState<string | null>(null);
 
     const { data: packagesResponse, isLoading, error } = useQuery({
-        queryKey: ['packages'],
+        queryKey: [ENDPOINTS.PACKAGES.LIST_PACKAGES],
         queryFn: async () => {
             const { data } = await api.get(ENDPOINTS.PACKAGES.LIST_PACKAGES, {
                 params: { is_active: true }
