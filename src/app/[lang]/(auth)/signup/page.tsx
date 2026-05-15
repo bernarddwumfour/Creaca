@@ -198,7 +198,7 @@ function SignupForm({ lang, t, redirectTo }: { lang: Lang, t: any, redirectTo: s
                   tokens: data.data.tokens
                 });
                 // Redirect to the stored redirect URL or home
-                router.push(`/${lang}${redirectTo}` || '/');
+                router.push(redirectTo || '/');
               } else {
                 form.setError('root', { message: data.message || 'Google signup failed' });
               }

@@ -28,7 +28,7 @@ interface Package {
     badge_text: string | null;
     display_order: number;
     is_unlimited: boolean;
-    max_courses: number | null;
+    max_courses_at_level: number | null;
     max_students: number | null;
     max_difficulty: string;
     includes_certificate: boolean;
@@ -42,6 +42,7 @@ interface Package {
     ai_question_generation: boolean;
     ai_explanations: boolean;
     has_ai_access: boolean;
+    access_summary?: string[]
 }
 
 

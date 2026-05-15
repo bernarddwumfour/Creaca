@@ -21,7 +21,9 @@ import {
     Clock,
     Target,
     BookMarked,
-    List
+    List,
+    Link as LinkIcon,
+    GitBranch
 } from 'lucide-react';
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -44,6 +46,7 @@ import { CourseForm } from '../(components)/CourseForm';
 import api from '@/lib/axios';
 import { ENDPOINTS } from '@/lib/endpoints';
 import { ToggleGroup, ToggleGroupItem } from '../../../../../widgets/ToggleGroup/ToggleGroup';
+import { CustomSelect } from '../../../../../widgets/CustomSelect/CustomSelect';
 
 interface Course {
     id: string;
@@ -59,6 +62,18 @@ interface Course {
     };
     duration: number | null;
     modules_count: number;
+    price: string | null;
+    is_purchasable: boolean;
+    requirements: string[];
+    prerequisites_count: number;
+    prerequisites: Array<{
+        id: string;
+        name: string;
+        slug: string;
+        difficulty: string;
+        is_purchasable: boolean;
+        price: string | null;
+    }>;
     created_at: string;
     updated_at: string;
 }
@@ -96,6 +111,12 @@ export default function CourseManagement() {
     const [searchQuery, setSearchQuery] = useState('');
     const [page, setPage] = useState(1);
     const [pageSize] = useState(10);
+    const [overviewModalOpen, setOverviewModalOpen] = useState(false);
+    const [selectedCourseForOverview, setSelectedCourseForOverview] = useState<Course | null>(null);
+    const [prerequisitesModalOpen, setPrerequisitesModalOpen] = useState(false);
+    const [prerequisitesCourse, setPrerequisitesCourse] = useState<Course | null>(null);
+    const [selectedPrerequisites, setSelectedPrerequisites] = useState<string[]>([]);
+    const [isUpdatingPrerequisites, setIsUpdatingPrerequisites] = useState(false);
 
     // Fetch courses from API
     const { data: response, isLoading, refetch } = useQuery<CoursesResponse>({
@@ -110,6 +131,25 @@ export default function CourseManagement() {
 
     const courses = response?.data?.results || [];
     const pagination = response?.data?.pagination;
+
+    // Fetch all courses for prerequisites dropdown
+    const { data: allCoursesResponse } = useQuery({
+        queryKey: [ENDPOINTS.COURSES.LIST_COURSES, 'all'],
+        queryFn: async () => {
+            const { data } = await api.get(ENDPOINTS.COURSES.LIST_COURSES, {
+                params: { page_size: 100 }
+            });
+            return data;
+        },
+    });
+
+    const allCourses = allCoursesResponse?.data?.results || [];
+    const courseOptions = allCourses
+        .filter((c: Course) => c.id !== prerequisitesCourse?.id)
+        .map((course: Course) => ({
+            value: course.id,
+            label: course.name,
+        }));
 
     // Filter courses based on search
     const filteredCourses = React.useMemo(() => {
@@ -153,6 +193,12 @@ export default function CourseManagement() {
             const errorMessage = error.response?.data?.message || error.message || `Failed to update course status.`;
             toast.error(errorMessage);
         }
+    };
+
+    const handleManagePrerequisites = (course: Course) => {
+        setPrerequisitesCourse(course);
+        setSelectedPrerequisites(course.prerequisites.map(p => p.id));
+        setPrerequisitesModalOpen(true);
     };
 
     const handleBulkAction = async (items: Course[], action: 'activate' | 'deactivate' | 'delete') => {
@@ -201,6 +247,9 @@ export default function CourseManagement() {
                 Subject: course.subject.name,
                 Duration_Minutes: course.duration,
                 Modules_Count: course.modules_count,
+                Price: course.price,
+                Requirements: course.requirements,
+                Prerequisites: course.prerequisites.map(p => p.name),
                 Created_At: course.created_at,
                 Updated_At: course.updated_at
             }));
@@ -226,12 +275,6 @@ export default function CourseManagement() {
         setSelectedCourse(null);
     };
 
-    // Shared action handlers
-    const handleViewDetails = (course: Course) => {
-        toast.info(`Viewing details for "${course.name}"`);
-        // Navigate to course details page if needed
-    };
-
     const handleUpdateClick = (course: Course) => {
         setSelectedCourse(course);
         setActiveModal('UPDATE');
@@ -240,6 +283,11 @@ export default function CourseManagement() {
     const handleDeleteClick = (course: Course) => {
         setSelectedCourse(course);
         setActiveModal('DELETE');
+    };
+
+    const handleViewDetails = (course: Course) => {
+        setSelectedCourseForOverview(course);
+        setOverviewModalOpen(true);
     };
 
     // Difficulty badge colors
@@ -277,10 +325,11 @@ export default function CourseManagement() {
             getData: (item: Course) => ({
                 Difficulty: getDifficultyLabel(item.difficulty),
                 Duration: item.duration ? `${item.duration} min` : 'Not specified',
-                Modules: item.modules_count
+                Modules: item.modules_count,
+                Prerequisites: item.prerequisites_count || 0
             })
-        }
-        , {
+        },
+        {
             id: 'subjects',
             label: 'Course Subjects',
             icon: <List size={14} />,
@@ -301,6 +350,11 @@ export default function CourseManagement() {
             label: 'Update Course',
             icon: <Pencil size={14} />,
             onClick: handleUpdateClick
+        },
+        {
+            label: 'View Prerequisites',
+            icon: <GitBranch size={14} />,
+            onClick: handleManagePrerequisites
         },
         {
             label: (course: Course) => course.status === 'active' ? 'Deactivate' : 'Activate',
@@ -367,7 +421,6 @@ export default function CourseManagement() {
                 </div>
 
                 <div className="flex gap-3">
-                    {/* View Toggle */}
                     <ToggleGroup
                         type="single"
                         value={viewMode}
@@ -432,7 +485,6 @@ export default function CourseManagement() {
 
             {/* View Renderer */}
             {viewMode === 'list' ? (
-                /* LIST VIEW - Cards */
                 <div className="grid grid-cols-1 gap-4">
                     {filteredCourses.map((course: Course) => (
                         <Card
@@ -454,6 +506,12 @@ export default function CourseManagement() {
                                                 <div className={`px-2 py-1 rounded-full text-[9px] font-black uppercase tracking-widest ${getDifficultyColor(course.difficulty)}`}>
                                                     {getDifficultyLabel(course.difficulty)}
                                                 </div>
+                                                {course.prerequisites_count > 0 && (
+                                                    <Badge variant="outline" className="gap-1">
+                                                        <GitBranch size={10} />
+                                                        {course.prerequisites_count} Prereq
+                                                    </Badge>
+                                                )}
                                             </div>
                                             <p className="text-sm text-zinc-500 mt-1 line-clamp-2 max-w-md">
                                                 {course.description}
@@ -526,6 +584,13 @@ export default function CourseManagement() {
                                                     </DropdownMenuItem>
 
                                                     <DropdownMenuItem
+                                                        onSelect={() => handleManagePrerequisites(course)}
+                                                        className="flex items-center gap-3 p-3 rounded-xl cursor-pointer hover:bg-primary/10 hover:text-primary font-bold text-xs"
+                                                    >
+                                                        <GitBranch size={16} /> View Prerequisites
+                                                    </DropdownMenuItem>
+
+                                                    <DropdownMenuItem
                                                         onSelect={() => handleUpdateStatus(course, course.status === 'active' ? 'inactive' : 'active')}
                                                         className="flex items-center gap-3 p-3 rounded-xl cursor-pointer hover:bg-primary/10 hover:text-primary font-bold text-xs"
                                                     >
@@ -557,7 +622,6 @@ export default function CourseManagement() {
                         </div>
                     )}
 
-                    {/* Pagination Info */}
                     {pagination && (
                         <div className="flex justify-between items-center pt-4">
                             <div className="text-sm text-zinc-500">
@@ -585,13 +649,12 @@ export default function CourseManagement() {
                     )}
                 </div>
             ) : (
-                /* TABLE VIEW - Using DataTable */
                 <DataTable
                     data={filteredCourses}
                     displayConfigs={displayConfigs}
                     actions={actions}
                     bulkActions={bulkActions}
-                    excludeColumns={['id', 'slug', 'description', 'created_at', 'updated_at', 'duration', 'modules_count', 'subject']}
+                    excludeColumns={['id', 'slug', 'description', 'created_at', 'updated_at', 'duration', 'modules_count', 'subject', 'price', 'requirements', 'prerequisites', 'prerequisites_count']}
                     dots={{
                         status: {
                             "active": 'emerald',
@@ -613,7 +676,6 @@ export default function CourseManagement() {
                             3: 'amber',
                             4: 'orange',
                             5: 'rose',
-
                         }
                     }}
                     links={{
@@ -643,7 +705,10 @@ export default function CourseManagement() {
                         difficulty: selectedCourse.difficulty,
                         subject_id: selectedCourse.subject?.id,
                         duration: selectedCourse.duration,
-                        status: selectedCourse.status
+                        status: selectedCourse.status,
+                        price: selectedCourse.price ? parseFloat(selectedCourse.price) : null,
+                        requirements: selectedCourse.requirements,
+                        prerequisites: selectedCourse.prerequisites?.map((p: any) => p.id) || [],
                     } : undefined}
                     onSuccess={() => {
                         invalidateCourses();
@@ -662,6 +727,129 @@ export default function CourseManagement() {
                 onConfirm={handleDeleteCourse}
                 variant="destructive"
             />
+
+            <CustomDialog
+                title="View Prerequisites"
+                description={`Select courses that students should complete before taking "${prerequisitesCourse?.name}"`}
+                open={prerequisitesModalOpen}
+                onOpenChange={setPrerequisitesModalOpen}
+                contentWidth="max-w-2xl"
+            >
+                <div className="space-y-6 py-4">
+
+
+                    {/* Current Prerequisites Preview */}
+                    {prerequisitesCourse?.prerequisites && prerequisitesCourse.prerequisites.length > 0 && (
+                        <div className="p-4 rounded-xl bg-zinc-50 dark:bg-zinc-900/30">
+                            <h4 className="text-[10px] font-bold uppercase text-zinc-500 tracking-widest mb-2">
+                                Current Prerequisites
+                            </h4>
+                            <div className="flex flex-wrap gap-2">
+                                {prerequisitesCourse.prerequisites.map((prereq) => (
+                                    <Badge key={prereq.id} variant="secondary" className="gap-1">
+                                        {prereq.name}
+                                    </Badge>
+                                ))}
+                            </div>
+                        </div>
+                    )}
+
+                </div>
+            </CustomDialog>
+
+            {/* Course Overview Modal */}
+            <CustomDialog
+                title="Course Overview"
+                description="Detailed information about this course"
+                open={overviewModalOpen}
+                onOpenChange={setOverviewModalOpen}
+                contentWidth="max-w-2xl"
+            >
+                {selectedCourseForOverview && (
+                    <div className="space-y-6 py-4 max-h-[70vh] overflow-y-auto px-2">
+                        {/* Basic Info */}
+                        <div className="p-4 rounded-xl bg-zinc-50 dark:bg-zinc-900/30">
+                            <h3 className="font-bold text-lg mb-3">{selectedCourseForOverview.name}</h3>
+                            <p className="text-sm text-zinc-600 dark:text-zinc-400">{selectedCourseForOverview.description}</p>
+                        </div>
+
+                        {/* Metadata Grid */}
+                        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                            <div className="p-3 rounded-lg bg-zinc-50 dark:bg-zinc-900/30">
+                                <p className="text-[10px] text-zinc-400">Subject</p>
+                                <p className="font-bold text-sm">{selectedCourseForOverview.subject?.name}</p>
+                            </div>
+                            <div className="p-3 rounded-lg bg-zinc-50 dark:bg-zinc-900/30">
+                                <p className="text-[10px] text-zinc-400">Difficulty</p>
+                                <p className="font-bold text-sm capitalize">{selectedCourseForOverview.difficulty}</p>
+                            </div>
+                            <div className="p-3 rounded-lg bg-zinc-50 dark:bg-zinc-900/30">
+                                <p className="text-[10px] text-zinc-400">Duration</p>
+                                <p className="font-bold text-sm">{selectedCourseForOverview.duration ? `${selectedCourseForOverview.duration} min` : 'Self-paced'}</p>
+                            </div>
+                            <div className="p-3 rounded-lg bg-zinc-50 dark:bg-zinc-900/30">
+                                <p className="text-[10px] text-zinc-400">Status</p>
+                                <p className={`font-bold text-sm capitalize ${selectedCourseForOverview.status === 'active' ? 'text-emerald-600' : selectedCourseForOverview.status === 'inactive' ? 'text-rose-600' : 'text-amber-600'}`}>
+                                    {selectedCourseForOverview.status}
+                                </p>
+                            </div>
+                        </div>
+
+                        {/* Requirements */}
+                        {selectedCourseForOverview.requirements && selectedCourseForOverview.requirements.length > 0 && (
+                            <div className="p-4 rounded-xl bg-zinc-50 dark:bg-zinc-900/30">
+                                <h4 className="font-bold text-sm mb-2 flex items-center gap-2">
+                                    <FileText size={14} className="text-primary" />
+                                    Requirements
+                                </h4>
+                                <ul className="list-disc list-inside space-y-1">
+                                    {selectedCourseForOverview.requirements.map((req: string, idx: number) => (
+                                        <li key={idx} className="text-sm text-zinc-600 dark:text-zinc-400">{req}</li>
+                                    ))}
+                                </ul>
+                            </div>
+                        )}
+
+                        {/* Prerequisites */}
+                        {selectedCourseForOverview.prerequisites && selectedCourseForOverview.prerequisites.length > 0 && (
+                            <div className="p-4 rounded-xl bg-zinc-50 dark:bg-zinc-900/30">
+                                <h4 className="font-bold text-sm mb-2 flex items-center gap-2">
+                                    <LinkIcon size={14} className="text-primary" />
+                                    Prerequisite Courses
+                                </h4>
+                                <div className="space-y-2">
+                                    {selectedCourseForOverview.prerequisites.map((prereq: any) => (
+                                        <div key={prereq.id} className="flex items-center justify-between p-2 rounded-lg bg-white dark:bg-zinc-800/50">
+                                            <div>
+                                                <p className="font-medium text-sm">{prereq.name}</p>
+                                                <p className="text-[10px] text-zinc-500 capitalize">{prereq.difficulty}</p>
+                                            </div>
+                                            {prereq.is_purchasable && prereq.price && (
+                                                <Badge variant="outline" className="text-[10px]">
+                                                    ${prereq.price}
+                                                </Badge>
+                                            )}
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
+
+                        {/* Price Info */}
+                        {selectedCourseForOverview.is_purchasable && selectedCourseForOverview.price && (
+                            <div className="p-4 rounded-xl bg-primary/5 border border-primary/20">
+                                <p className="text-sm text-center">
+                                    <span className="font-bold text-primary">${selectedCourseForOverview.price}</span>
+                                    <span className="text-zinc-500 text-xs ml-1">one-time purchase</span>
+                                </p>
+                                <p className="text-[10px] text-center text-zinc-500 mt-2">
+                                    Or access with subscription
+                                </p>
+                            </div>
+                        )}
+                    </div>
+                )}
+            </CustomDialog>
         </div>
     );
 }

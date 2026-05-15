@@ -1,10 +1,10 @@
 'use client';
 
 import React, { useState } from 'react';
-import { useForm } from 'react-hook-form';
+import { useForm, useFieldArray } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { Loader2, Plus, Save, BookOpen } from 'lucide-react';
+import { Loader2, Plus, Save, BookOpen, X, PlusCircle } from 'lucide-react';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -33,6 +33,8 @@ const courseSchema = z.object({
         .min(0, "Price cannot be negative")
         .nullable()
         .optional(),
+    requirements: z.array(z.string()).optional().default([]),
+    prerequisites: z.array(z.string()).optional().default([]),
 });
 
 type CourseFormData = z.infer<typeof courseSchema>;
@@ -50,6 +52,8 @@ interface CourseFormProps {
         duration?: number | null;
         status?: 'active' | 'inactive' | 'draft';
         price?: number | null;
+        requirements?: string[];
+        prerequisites?: string[];
     } | null;
     onSuccess: () => void;
 }
@@ -82,14 +86,33 @@ export function CourseForm({ type = 'CREATE', initialData, onSuccess, courseId, 
         },
     });
 
+    // Fetch courses for prerequisites dropdown
+    const { data: coursesResponse, isLoading: coursesLoading } = useQuery({
+        queryKey: [ENDPOINTS.COURSES.LIST_COURSES, 'all'],
+        queryFn: async () => {
+            const { data } = await api.get(ENDPOINTS.COURSES.LIST_COURSES, {
+                params: { page_size: 100 }
+            });
+            return data;
+        },
+    });
+
     const subjects = subjectsResponse?.data?.results || [];
     const subjectOptions = subjects.map((subject: any) => ({
         value: subject.id,
         label: subject.name,
     }));
 
+    const allCourses = coursesResponse?.data?.results || [];
+    const courseOptions = allCourses
+        .filter((c: any) => c.id !== courseId)
+        .map((course: any) => ({
+            value: course.id,
+            label: course.name,
+        }));
+
     const form = useForm<CourseFormData>({
-        resolver: zodResolver(courseSchema),
+        resolver: zodResolver(courseSchema) as any,
         defaultValues: {
             name: initialData?.name ?? "",
             description: initialData?.description ?? "",
@@ -98,7 +121,14 @@ export function CourseForm({ type = 'CREATE', initialData, onSuccess, courseId, 
             duration: initialData?.duration ?? null,
             status: initialData?.status ?? "active",
             price: initialData?.price ?? null,
-        },
+            requirements: initialData?.requirements ?? [],
+            prerequisites: initialData?.prerequisites ?? [],
+        } as any,
+    });
+
+    const { fields: requirementFields, append: appendRequirement, remove: removeRequirement } = useFieldArray({
+        control: form.control,
+        name: ("requirements" as never),
     });
 
     const invalidateCourses = () => {
@@ -116,6 +146,8 @@ export function CourseForm({ type = 'CREATE', initialData, onSuccess, courseId, 
                 duration: values.duration,
                 status: values.status,
                 price: values.price,
+                requirements: values.requirements.filter(r => r.trim() !== ""),
+                prerequisites: values.prerequisites,
             };
 
             if (type === 'CREATE') {
@@ -144,14 +176,14 @@ export function CourseForm({ type = 'CREATE', initialData, onSuccess, courseId, 
 
     return (
         <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4 relative z-10">
+            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4 relative z-10 max-h-[70vh] overflow-y-auto px-2">
                 {form.formState.errors.root && (
                     <div className="p-3 rounded-lg bg-destructive/10 text-destructive text-xs font-bold border border-destructive/20 text-center">
                         {form.formState.errors.root.message}
                     </div>
                 )}
 
-                {/* Context Badge - Shows which subject this course belongs to */}
+                {/* Context Badge */}
                 {(subjectTitle || selectedSubjectName) && (
                     <div className="p-3 rounded-xl bg-zinc-50 dark:bg-zinc-900/50 border border-zinc-100 dark:border-zinc-800/50">
                         <p className="text-[9px] font-black uppercase text-zinc-400 tracking-[0.2em] mb-0.5">
@@ -188,7 +220,7 @@ export function CourseForm({ type = 'CREATE', initialData, onSuccess, courseId, 
                     )}
                 />
 
-                {/* Subject Selection - Only show if not coming from a specific subject */}
+                {/* Subject Selection */}
                 {!subjectId && (
                     <FormField
                         control={form.control}
@@ -235,6 +267,87 @@ export function CourseForm({ type = 'CREATE', initialData, onSuccess, courseId, 
                     )}
                 />
 
+                {/* Requirements - Dynamic List */}
+                <div className="space-y-2">
+                    <FormLabel className="text-[10px] font-bold uppercase text-zinc-500 tracking-widest">
+                        Requirements
+                    </FormLabel>
+                    <div className="space-y-2">
+                        {requirementFields.map((field, index) => (
+                            <div key={field.id} className="flex gap-2 items-center">
+                                <FormField
+                                    control={form.control}
+                                    name={`requirements.${index}`}
+                                    render={({ field }) => (
+                                        <FormItem className="flex-1">
+                                            <FormControl>
+                                                <Input
+                                                    {...field}
+                                                    placeholder={`Requirement ${index + 1}`}
+                                                    className="h-10 border-zinc-200 dark:border-zinc-800 focus-visible:ring-primary rounded-xl font-medium"
+                                                    disabled={isLoading}
+                                                />
+                                            </FormControl>
+                                            <FormMessage className="text-[10px]" />
+                                        </FormItem>
+                                    )}
+                                />
+                                <Button
+                                    type="button"
+                                    variant="ghost"
+                                    size="icon"
+                                    onClick={() => removeRequirement(index)}
+                                    className="h-10 w-10 rounded-xl hover:bg-red-100 hover:text-red-600"
+                                    disabled={isLoading}
+                                >
+                                    <X size={16} />
+                                </Button>
+                            </div>
+                        ))}
+                        <Button
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            onClick={() => appendRequirement("")}
+                            className="w-full h-10 rounded-xl gap-2 border-dashed"
+                            disabled={isLoading}
+                        >
+                            <PlusCircle size={14} />
+                            Add Requirement
+                        </Button>
+                    </div>
+                    <p className="text-[10px] text-zinc-400 mt-1">
+                        List the requirements students need before taking this course
+                    </p>
+                </div>
+
+                {/* Prerequisites - Dropdown from fetched courses */}
+                <FormField
+                    control={form.control}
+                    name="prerequisites"
+                    render={({ field }) => (
+                        <FormItem className="space-y-1">
+                            <FormLabel className="text-[10px] font-bold uppercase text-zinc-500 tracking-widest">
+                                Prerequisite Courses
+                            </FormLabel>
+                            <FormControl>
+                                <CustomSelect
+                                    options={courseOptions}
+                                    value={field.value || []}
+                                    onChange={field.onChange}
+                                    placeholder="Select prerequisite courses"
+                                    multiple={true}
+                                    className="h-auto min-h-12"
+                                />
+                            </FormControl>
+                            <FormMessage className="text-[10px]" />
+                            <p className="text-[10px] text-zinc-400 mt-1">
+                                Select courses that students should complete before taking this course
+                            </p>
+                        </FormItem>
+                    )}
+                />
+
                 {/* Difficulty Selection */}
                 <FormField
                     control={form.control}
@@ -258,7 +371,7 @@ export function CourseForm({ type = 'CREATE', initialData, onSuccess, courseId, 
                     )}
                 />
 
-                {/* Duration (Optional) */}
+                {/* Duration */}
                 <FormField
                     control={form.control}
                     name="duration"
@@ -289,43 +402,45 @@ export function CourseForm({ type = 'CREATE', initialData, onSuccess, courseId, 
                     )}
                 />
 
-                {/* Price (Optional - One-time purchase) */}
-                <FormField
-                    control={form.control}
-                    name="price"
-                    render={({ field }) => (
-                        <FormItem className="space-y-1">
-                            <FormLabel className="text-[10px] font-bold uppercase text-zinc-500 tracking-widest">
-                                Price (USD)
-                            </FormLabel>
-                            <FormControl>
-                                <div className="relative">
-                                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-400 font-bold">$</span>
-                                    <Input
-                                        type="number"
-                                        step="0.01"
-                                        min="0"
-                                        value={field.value ?? ''}
-                                        onChange={(e) => {
-                                            const val = e.target.value;
-                                            field.onChange(val === '' ? null : parseFloat(val));
-                                        }}
-                                        onBlur={field.onBlur}
-                                        placeholder="49.99"
-                                        className="h-12 pl-8 border-zinc-200 dark:border-zinc-800 focus-visible:ring-primary rounded-xl font-medium"
-                                        disabled={isLoading}
-                                    />
-                                </div>
-                            </FormControl>
-                            <FormMessage className="text-[10px]" />
-                            <p className="text-[10px] text-zinc-400 mt-1">
-                                Optional: Set a price for one-time purchase. Leave empty for subscription only.
-                            </p>
-                        </FormItem>
-                    )}
-                />
+                {/* Price */}
+                <div className="space-y-3 p-4 rounded-xl bg-zinc-50 dark:bg-zinc-900/30 border border-zinc-100 dark:border-zinc-800/50">
+                    <FormField
+                        control={form.control}
+                        name="price"
+                        render={({ field }) => (
+                            <FormItem className="space-y-1">
+                                <FormLabel className="text-[10px] font-bold uppercase text-zinc-500 tracking-widest">
+                                    Price (USD) - One-time purchase
+                                </FormLabel>
+                                <FormControl>
+                                    <div className="relative">
+                                        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-400 font-bold">$</span>
+                                        <Input
+                                            type="number"
+                                            step="0.01"
+                                            min="0"
+                                            value={field.value ?? ''}
+                                            onChange={(e) => {
+                                                const val = e.target.value;
+                                                field.onChange(val === '' ? null : parseFloat(val));
+                                            }}
+                                            onBlur={field.onBlur}
+                                            placeholder="49.99"
+                                            className="h-12 pl-8 border-zinc-200 dark:border-zinc-800 focus-visible:ring-primary rounded-xl font-medium"
+                                            disabled={isLoading}
+                                        />
+                                    </div>
+                                </FormControl>
+                                <FormMessage className="text-[10px]" />
+                                <p className="text-[10px] text-zinc-400 mt-1">
+                                    Leave empty for subscription only. Set a price for one-time purchase.
+                                </p>
+                            </FormItem>
+                        )}
+                    />
+                </div>
 
-                {/* Status Selection */}
+                {/* Status */}
                 <FormField
                     control={form.control}
                     name="status"
@@ -352,7 +467,7 @@ export function CourseForm({ type = 'CREATE', initialData, onSuccess, courseId, 
                 />
 
                 <Button
-                    disabled={isLoading || subjectsLoading}
+                    disabled={isLoading || subjectsLoading || coursesLoading}
                     type="submit"
                     className="w-full h-12 bg-primary hover:bg-orange-600 font-bold transition-all rounded-xl text-white gap-2"
                 >

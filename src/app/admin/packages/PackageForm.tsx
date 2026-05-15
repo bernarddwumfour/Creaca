@@ -4,7 +4,7 @@ import React, { useState } from 'react';
 import { useForm, useWatch } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { Loader2, Plus, Save, Package as PackageIcon, Zap, Award, Download, Video, Mic, Brain, Star } from 'lucide-react';
+import { Loader2, Plus, Save, Package as PackageIcon, Zap, Award, Download, Video, Mic, Brain, Star, TrendingUp } from 'lucide-react';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -26,11 +26,9 @@ const packageSchema = z.object({
     description: z.string()
         .max(2000, "Description must be less than 2000 characters"),
     price: z.number()
-        // .positive("Price must be positive")
         .min(0, "Price cannot be negative"),
     original_price: z.number()
-        // .positive("Original price must be positive")
-        .nullable(),                            // ✅ .optional() removed
+        .nullable(),
     currency: z.string()
         .length(3, "Currency must be 3 characters"),
     billing_cycle: z.enum(['monthly', 'yearly', 'quarterly', 'lifetime']),
@@ -40,14 +38,14 @@ const packageSchema = z.object({
         .int()
         .min(0, "Trial days cannot be negative"),
     is_unlimited: z.boolean(),
-    max_courses: z.number()
+    max_courses_at_level: z.number()
         .int()
-        .positive()
-        .nullable(),                            // ✅ .optional() removed
+        .positive("Must be positive")
+        .nullable(),
     max_students: z.number()
         .int()
-        .positive()
-        .nullable(),                            // ✅ .optional() removed
+        .positive("Must be positive")
+        .nullable(),
     includes_certificate: z.boolean(),
     can_download_materials: z.boolean(),
     includes_video_lessons: z.boolean(),
@@ -121,7 +119,7 @@ export function PackageForm({ type, initialData, onSuccess, packageId }: Package
         resolver: zodResolver(packageSchema),
         defaultValues: {
             name: initialData?.name ?? "",
-            description: initialData?.description ?? "",        // ✅ always string
+            description: initialData?.description ?? "",
             price: initialData?.price ?? 0,
             original_price: initialData?.original_price ?? null,
             currency: initialData?.currency ?? "USD",
@@ -129,7 +127,7 @@ export function PackageForm({ type, initialData, onSuccess, packageId }: Package
             status: initialData?.status ?? "active",
             trial_days: initialData?.trial_days ?? 0,
             is_unlimited: initialData?.is_unlimited ?? false,
-            max_courses: initialData?.max_courses ?? null,
+            max_courses_at_level: initialData?.max_courses_at_level ?? null,
             max_students: initialData?.max_students ?? null,
             max_difficulty: initialData?.max_difficulty ?? "beginner",
             includes_certificate: initialData?.includes_certificate ?? false,
@@ -143,12 +141,13 @@ export function PackageForm({ type, initialData, onSuccess, packageId }: Package
             ai_question_generation: initialData?.ai_question_generation ?? false,
             ai_explanations: initialData?.ai_explanations ?? false,
             is_featured: initialData?.is_featured ?? false,
-            badge_text: initialData?.badge_text ?? "",          // ✅ always string
+            badge_text: initialData?.badge_text ?? "",
             display_order: initialData?.display_order ?? 0,
         },
     });
 
     const isUnlimited = useWatch({ control: form.control, name: 'is_unlimited' });
+    const selectedDifficulty = useWatch({ control: form.control, name: 'max_difficulty' });
 
     const invalidatePackages = () => {
         queryClient.invalidateQueries({ queryKey: [ENDPOINTS.PACKAGES.LIST_PACKAGES] });
@@ -179,6 +178,17 @@ export function PackageForm({ type, initialData, onSuccess, packageId }: Package
         }
     };
 
+    // Get difficulty display text
+    const getDifficultyLabel = (difficulty: string) => {
+        const map: Record<string, string> = {
+            beginner: 'Beginner',
+            intermediate: 'Intermediate',
+            advanced: 'Advanced',
+            expert: 'Expert',
+        };
+        return map[difficulty] || difficulty;
+    };
+
     return (
         <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6 relative z-10">
@@ -188,18 +198,18 @@ export function PackageForm({ type, initialData, onSuccess, packageId }: Package
                     </div>
                 )}
 
-                <Tabs defaultValue="basic" className="w-full">
-                    <TabsList className="grid grid-cols-4 mb-6 bg-zinc-100 dark:bg-zinc-900 rounded-xl p-1">
-                        <TabsTrigger value="basic" className="rounded-lg text-[10px] font-black uppercase tracking-widest data-[state=active]:bg-white dark:data-[state=active]:bg-zinc-800">
+                <Tabs defaultValue="basic" >
+                    <TabsList className="w-full grid grid-cols-4 mb-6 bg-zinc-100 dark:bg-zinc-900 rounded-xl p-1">
+                        <TabsTrigger value="basic" className="rounded-lg text-[10px] font-black uppercase tracking-widest data-[state=active]:bg-white dark:data-[state=active]:bg-primary">
                             Basic
                         </TabsTrigger>
-                        <TabsTrigger value="pricing" className="rounded-lg text-[10px] font-black uppercase tracking-widest data-[state=active]:bg-white dark:data-[state=active]:bg-zinc-800">
+                        <TabsTrigger value="pricing" className="rounded-lg text-[10px] font-black uppercase tracking-widest data-[state=active]:bg-white dark:data-[state=active]:bg-primary">
                             Pricing
                         </TabsTrigger>
-                        <TabsTrigger value="features" className="rounded-lg text-[10px] font-black uppercase tracking-widest data-[state=active]:bg-white dark:data-[state=active]:bg-zinc-800">
+                        <TabsTrigger value="features" className="rounded-lg text-[10px] font-black uppercase tracking-widest data-[state=active]:bg-white dark:data-[state=active]:bg-primary">
                             Features
                         </TabsTrigger>
-                        <TabsTrigger value="ai" className="rounded-lg text-[10px] font-black uppercase tracking-widest data-[state=active]:bg-white dark:data-[state=active]:bg-zinc-800">
+                        <TabsTrigger value="ai" className="rounded-lg text-[10px] font-black uppercase tracking-widest data-[state=active]:bg-white dark:data-[state=active]:bg-primary">
                             AI & Display
                         </TabsTrigger>
                     </TabsList>
@@ -278,11 +288,14 @@ export function PackageForm({ type, initialData, onSuccess, packageId }: Package
                                             options={MAX_DIFFICULTY_OPTIONS}
                                             value={field.value}
                                             onChange={field.onChange}
-                                            placeholder="Select Courses Maximun difficulty"
+                                            placeholder="Select maximum difficulty"
                                             className="h-12"
                                         />
                                     </FormControl>
                                     <FormMessage className="text-[10px]" />
+                                    <p className="text-[10px] text-zinc-400 mt-1">
+                                        Courses below this level are unlimited. At {getDifficultyLabel(field.value)} level, the course limit below applies.
+                                    </p>
                                 </FormItem>
                             )}
                         />
@@ -429,13 +442,15 @@ export function PackageForm({ type, initialData, onSuccess, packageId }: Package
                         />
 
                         {!isUnlimited && (
-                            <div className="grid grid-cols-2 gap-4">
+                            <div className="grid grid-cols-2 gap-4 items-start">
                                 <FormField
                                     control={form.control}
-                                    name="max_courses"
+                                    name="max_courses_at_level"
                                     render={({ field }) => (
                                         <FormItem className="space-y-1">
-                                            <FormLabel className="text-[10px] font-bold uppercase text-zinc-500 tracking-widest">Max Courses</FormLabel>
+                                            <FormLabel className="text-[10px] font-bold uppercase text-zinc-500 tracking-widest">
+                                                Max Courses at {getDifficultyLabel(selectedDifficulty)} Level
+                                            </FormLabel>
                                             <FormControl>
                                                 <Input
                                                     type="number"
@@ -450,6 +465,9 @@ export function PackageForm({ type, initialData, onSuccess, packageId }: Package
                                                 />
                                             </FormControl>
                                             <FormMessage className="text-[10px]" />
+                                            <p className="text-[10px] text-zinc-400 mt-1">
+                                                Courses below {getDifficultyLabel(selectedDifficulty)} are unlimited. Leave empty for unlimited at this level too.
+                                            </p>
                                         </FormItem>
                                     )}
                                 />

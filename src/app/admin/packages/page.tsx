@@ -21,7 +21,13 @@ import {
     Zap,
     Award,
     CheckCircle2,
-    XCircle
+    XCircle,
+    Brain,
+    Mic,
+    Video,
+    Download,
+    Star,
+    TrendingUp
 } from 'lucide-react';
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -44,6 +50,7 @@ import { PackageForm } from './PackageForm';
 import api from '@/lib/axios';
 import { ENDPOINTS } from '@/lib/endpoints';
 import { ToggleGroup, ToggleGroupItem } from '../../../../widgets/ToggleGroup/ToggleGroup';
+import { Separator } from "@/components/ui/separator";
 
 interface Package {
     id: string;
@@ -56,8 +63,9 @@ interface Package {
     currency: string;
     billing_cycle: 'monthly' | 'yearly' | 'lifetime' | 'quarterly';
     trial_days: number;
+    max_difficulty: 'beginner' | 'intermediate' | 'advanced' | 'expert';
     is_unlimited: boolean;
-    max_courses: number | null;
+    max_courses_at_level: number | null;
     max_students: number | null;
     includes_certificate: boolean;
     can_download_materials: boolean;
@@ -109,6 +117,8 @@ export default function PackagesManagement() {
     const [searchQuery, setSearchQuery] = useState('');
     const [page, setPage] = useState(1);
     const [pageSize] = useState(10);
+    const [detailsModalOpen, setDetailsModalOpen] = useState(false);
+    const [selectedPackageForDetails, setSelectedPackageForDetails] = useState<Package | null>(null);
 
     const { data: response, isLoading, refetch } = useQuery<PackagesResponse>({
         queryKey: [ENDPOINTS.PACKAGES.LIST_PACKAGES, page, pageSize],
@@ -212,8 +222,9 @@ export default function PackagesManagement() {
                 Currency: pkg.currency,
                 Billing_Cycle: pkg.billing_cycle,
                 Trial_Days: pkg.trial_days,
+                Max_Difficulty: pkg.max_difficulty,
                 Is_Unlimited: pkg.is_unlimited,
-                Max_Courses: pkg.max_courses,
+                Max_Courses_At_Level: pkg.max_courses_at_level,
                 Max_Students: pkg.max_students,
                 Includes_Certificate: pkg.includes_certificate,
                 Can_Download_Materials: pkg.can_download_materials,
@@ -254,7 +265,8 @@ export default function PackagesManagement() {
     };
 
     const handleViewDetails = (pkg: Package) => {
-        toast.info(`Viewing details for "${pkg.name}"`);
+        setSelectedPackageForDetails(pkg);
+        setDetailsModalOpen(true);
     };
 
     const handleUpdateClick = (pkg: Package) => {
@@ -275,6 +287,16 @@ export default function PackagesManagement() {
             case 'lifetime': return 'Lifetime';
             default: return cycle;
         }
+    };
+
+    const getDifficultyLabel = (difficulty: string) => {
+        const map: Record<string, string> = {
+            beginner: 'Beginner',
+            intermediate: 'Intermediate',
+            advanced: 'Advanced',
+            expert: 'Expert',
+        };
+        return map[difficulty] || difficulty;
     };
 
     const formatPrice = (price: number, currency: string) => {
@@ -456,21 +478,18 @@ export default function PackagesManagement() {
                                         <h3 className="font-black text-xl tracking-tight mb-1">{pkg.name}</h3>
                                         {pkg.badge_text && (
                                             <Badge variant="outline" className="mb-2 text-[9px] font-black uppercase tracking-widest">
-                                                {pkg.badge_text}
                                             </Badge>
                                         )}
                                         <p className="text-sm text-zinc-500 line-clamp-2 mb-4">{pkg.description}</p>
                                     </div>
 
-                                    <Badge className={`px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest
+                                    {/* <Badge className={`px-3 py-1 rounded-full text-[8px] font-black uppercase tracking-widest
                                         ${pkg.status === 'active' ? 'bg-emerald-500/10 text-emerald-600' :
                                             pkg.status === 'inactive' ? 'bg-rose-500/10 text-rose-600' :
                                                 'bg-amber-500/10 text-amber-600'}`}>
-                                        {pkg.status}
-                                    </Badge>
+                                        {pkg.status === 'active' ? "Active" : "Inactive"}
+                                    </Badge> */}
                                 </div>
-
-
 
                                 <div className="space-y-2 mb-4">
                                     <div className="flex items-center justify-between text-xs">
@@ -575,7 +594,7 @@ export default function PackagesManagement() {
                     displayConfigs={displayConfigs}
                     actions={actions}
                     bulkActions={bulkActions}
-                    excludeColumns={['id', 'slug', 'description', 'created_at', 'updated_at', 'original_price', 'max_courses', 'max_students', 'video_quality', 'audio_minutes_per_month', 'ai_credits_per_month', 'display_order', 'badge_text']}
+                    excludeColumns={['id', 'slug', 'description', 'created_at', 'updated_at', 'original_price', 'max_courses_at_level', 'max_students', 'video_quality', 'audio_minutes_per_month', 'ai_credits_per_month', 'display_order', 'badge_text']}
                     dots={{
                         status: { "active": 'emerald', "inactive": 'rose', "draft": 'amber' },
                         billing_cycle: { "monthly": 'blue', "yearly": 'violet', "quarterly": 'orange', "lifetime": 'rose' }
@@ -591,6 +610,165 @@ export default function PackagesManagement() {
                     emptyDescription="No subscription packages match your current filters."
                 />
             )}
+
+            {/* Package Details Modal */}
+            <CustomDialog
+                title="Package Details"
+                description={`Complete information about ${selectedPackageForDetails?.name}`}
+                open={detailsModalOpen}
+                onOpenChange={setDetailsModalOpen}
+                contentWidth="max-w-5xl"
+            >
+                {selectedPackageForDetails && (
+                    <div className="space-y-6 py-4 max-h-[70vh] overflow-y-auto px-2">
+                        {/* Header */}
+                        <div className="p-4 rounded-xl bg-gradient-to-r from-primary/5 to-orange-500/5 border border-primary/20">
+                            <div className="flex items-start justify-between">
+                                <div>
+                                    <h2 className="text-2xl font-black tracking-tight">{selectedPackageForDetails.name}</h2>
+                                    <p className="text-sm text-zinc-500 mt-1">{selectedPackageForDetails.description}</p>
+                                </div>
+                                <div className="text-right">
+                                    {/* <Badge className={`px-3 py-1.5 text-xs font-black uppercase tracking-widest
+                                        ${selectedPackageForDetails.status === 'active' ? 'bg-emerald-500/10 text-emerald-600' :
+                                            selectedPackageForDetails.status === 'inactive' ? 'bg-rose-500/10 text-rose-600' :
+                                                'bg-amber-500/10 text-amber-600'}`}>
+                                        {selectedPackageForDetails.status === 'active' ? "Active" : "Inactive"}
+                                    </Badge> */}
+                                    {selectedPackageForDetails.badge_text && (
+                                        <Badge variant="outline" className="mt-2 ml-2 text-[9px] font-black uppercase tracking-widest">
+                                            {selectedPackageForDetails.badge_text}
+                                        </Badge>
+                                    )}
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Pricing & Billing Grid */}
+                        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                            <div className="p-3 rounded-lg bg-zinc-50 dark:bg-zinc-900/30">
+                                <p className="text-[10px] text-zinc-400">Monthly Price</p>
+                                <p className="font-bold text-lg">{formatPrice(selectedPackageForDetails.price, selectedPackageForDetails.currency)}</p>
+                                {selectedPackageForDetails.original_price && (
+                                    <p className="text-xs text-zinc-400 line-through">{formatPrice(selectedPackageForDetails.original_price, selectedPackageForDetails.currency)}</p>
+                                )}
+                            </div>
+                            <div className="p-3 rounded-lg bg-zinc-50 dark:bg-zinc-900/30">
+                                <p className="text-[10px] text-zinc-400">Billing Cycle</p>
+                                <p className="font-bold">{getBillingCycleLabel(selectedPackageForDetails.billing_cycle)}</p>
+                            </div>
+                            <div className="p-3 rounded-lg bg-zinc-50 dark:bg-zinc-900/30">
+                                <p className="text-[10px] text-zinc-400">Trial Period</p>
+                                <p className="font-bold">{selectedPackageForDetails.trial_days} days free trial</p>
+                            </div>
+                            <div className="p-3 rounded-lg bg-zinc-50 dark:bg-zinc-900/30">
+                                <p className="text-[10px] text-zinc-400">Display Order</p>
+                                <p className="font-bold">{selectedPackageForDetails.display_order}</p>
+                            </div>
+                        </div>
+
+                        {/* Course Access Limits */}
+                        <div className="p-4 rounded-xl bg-zinc-50 dark:bg-zinc-900/30">
+                            <h4 className="font-bold text-sm mb-3 flex items-center gap-2">
+                                <TrendingUp size={14} className="text-primary" />
+                                Course Access Limits
+                            </h4>
+                            <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                                <div>
+                                    <p className="text-[10px] text-zinc-400">Max Difficulty</p>
+                                    <p className="font-bold capitalize">{getDifficultyLabel(selectedPackageForDetails.max_difficulty)}</p>
+                                </div>
+                                <div>
+                                    <p className="text-[10px] text-zinc-400">Courses at Max Level</p>
+                                    <p className="font-bold">{selectedPackageForDetails.max_courses_at_level ? `${selectedPackageForDetails.max_courses_at_level} courses` : 'Unlimited'}</p>
+                                    <p className="text-[9px] text-zinc-400 mt-1">Courses below level: Unlimited</p>
+                                </div>
+                                <div>
+                                    <p className="text-[10px] text-zinc-400">Max Students</p>
+                                    <p className="font-bold">{selectedPackageForDetails.max_students ? `${selectedPackageForDetails.max_students} students` : 'Unlimited'}</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Features Section */}
+                        <div className="p-4 rounded-xl bg-zinc-50 dark:bg-zinc-900/30">
+                            <h4 className="font-bold text-sm mb-3 flex items-center gap-2">
+                                <Zap size={14} className="text-primary" />
+                                Included Features
+                            </h4>
+                            <div className="grid grid-cols-2 gap-3">
+                                <div className="flex items-center gap-2">
+                                    {selectedPackageForDetails.includes_certificate ? <CheckCircle2 size={14} className="text-emerald-500" /> : <XCircle size={14} className="text-zinc-400" />}
+                                    <span className="text-sm">Certificate of Completion</span>
+                                </div>
+                                <div className="flex items-center gap-2">
+                                    {selectedPackageForDetails.can_download_materials ? <CheckCircle2 size={14} className="text-emerald-500" /> : <XCircle size={14} className="text-zinc-400" />}
+                                    <span className="text-sm">Download Materials</span>
+                                </div>
+                                <div className="flex items-center gap-2">
+                                    {selectedPackageForDetails.includes_video_lessons ? <CheckCircle2 size={14} className="text-emerald-500" /> : <XCircle size={14} className="text-zinc-400" />}
+                                    <span className="text-sm">Video Lessons {selectedPackageForDetails.includes_video_lessons && `(${selectedPackageForDetails.video_quality.toUpperCase()})`}</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* AI & Audio Features */}
+                        <div className="p-4 rounded-xl bg-zinc-50 dark:bg-zinc-900/30">
+                            <h4 className="font-bold text-sm mb-3 flex items-center gap-2">
+                                <Brain size={14} className="text-primary" />
+                                AI & Audio Features
+                            </h4>
+                            <div className="space-y-3">
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div>
+                                        <p className="text-[10px] text-zinc-400">AI Credits / Month</p>
+                                        <p className="font-bold">{selectedPackageForDetails.ai_credits_per_month} credits</p>
+                                    </div>
+                                    <div>
+                                        <p className="text-[10px] text-zinc-400">Audio Minutes / Month</p>
+                                        <p className="font-bold">{selectedPackageForDetails.audio_minutes_per_month} minutes</p>
+                                    </div>
+                                </div>
+                                <Separator className="my-2" />
+                                <div className="grid grid-cols-2 gap-3">
+                                    <div className="flex items-center gap-2">
+                                        {selectedPackageForDetails.ai_question_generation ? <CheckCircle2 size={14} className="text-emerald-500" /> : <XCircle size={14} className="text-zinc-400" />}
+                                        <span className="text-sm">AI Question Generation</span>
+                                    </div>
+                                    <div className="flex items-center gap-2">
+                                        {selectedPackageForDetails.ai_explanations ? <CheckCircle2 size={14} className="text-emerald-500" /> : <XCircle size={14} className="text-zinc-400" />}
+                                        <span className="text-sm">AI Explanations</span>
+                                    </div>
+                                    <div className="flex items-center gap-2">
+                                        {selectedPackageForDetails.text_to_audio ? <CheckCircle2 size={14} className="text-emerald-500" /> : <XCircle size={14} className="text-zinc-400" />}
+                                        <span className="text-sm">Text to Audio</span>
+                                    </div>
+                                    <div className="flex items-center gap-2">
+                                        {selectedPackageForDetails.audio_to_text ? <CheckCircle2 size={14} className="text-emerald-500" /> : <XCircle size={14} className="text-zinc-400" />}
+                                        <span className="text-sm">Audio to Text</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Meta Information */}
+                        <div className="p-4 rounded-xl bg-zinc-50 dark:bg-zinc-900/30">
+                            <h4 className="font-bold text-sm mb-2 flex items-center gap-2">
+                                <Clock size={14} className="text-primary" />
+                                Meta Information
+                            </h4>
+                            <div className="grid grid-cols-2 gap-2 text-sm">
+                                <div>
+                                    <span className="text-zinc-500">Created:</span> {new Date(selectedPackageForDetails.created_at).toLocaleDateString()}
+                                </div>
+                                <div>
+                                    <span className="text-zinc-500">Last Updated:</span> {new Date(selectedPackageForDetails.updated_at).toLocaleDateString()}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                )}
+            </CustomDialog>
 
             {/* Modals */}
             <CustomDialog
@@ -613,8 +791,9 @@ export default function PackagesManagement() {
                         billing_cycle: selectedPackage.billing_cycle,
                         status: selectedPackage.status,
                         trial_days: selectedPackage.trial_days,
+                        max_difficulty: selectedPackage.max_difficulty,
                         is_unlimited: selectedPackage.is_unlimited,
-                        max_courses: selectedPackage.max_courses,
+                        max_courses_at_level: selectedPackage.max_courses_at_level,
                         max_students: selectedPackage.max_students,
                         includes_certificate: selectedPackage.includes_certificate,
                         can_download_materials: selectedPackage.can_download_materials,

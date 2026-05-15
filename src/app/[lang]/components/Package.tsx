@@ -24,7 +24,7 @@ interface Package {
     badge_text: string | null;
     display_order: number;
     is_unlimited: boolean;
-    max_courses: number | null;
+    max_courses_at_level: number | null;
     max_difficulty: string;
     max_students: number | null;
     includes_certificate: boolean;
@@ -38,6 +38,7 @@ interface Package {
     ai_question_generation: boolean;
     ai_explanations: boolean;
     has_ai_access: boolean;
+    access_summary?: string[]
 }
 
 interface PackageCardProps {
@@ -89,25 +90,35 @@ export function Package({ package: pkg, isSubscribing, onSubscribe }: PackageCar
                     </div>
 
                     <div className="space-y-4 mb-10 flex-grow">
-                        {pkg.max_courses && (
+                        {/* {pkg.max_courses_at_level && (
                             <div className="flex items-start gap-3 text-[13px] font-bold text-slate-700 dark:text-zinc-300">
                                 <Check className="w-3 h-3 text-primary" strokeWidth={4} />
-                                <span className="leading-tight">{pkg.max_courses} Courses Included</span>
+                                <span className="leading-tight">{pkg.max_courses_at_level} {pkg.max_difficulty} Courses Included</span>
                             </div>
-                        )}
+                        )} */}
+
+                        {pkg.access_summary && pkg.access_summary.map((summary) => {
+                            return <div className="flex items-start gap-3 text-[13px] font-bold text-slate-700 dark:text-zinc-300">
+                                <Check className="w-3 h-3 text-primary" strokeWidth={4} />
+                                {summary}
+                            </div>
+                        })
+
+                        }
+                        {/* 
                         {pkg.max_difficulty && (
                             <div className="flex items-start gap-3 text-[13px] font-bold text-slate-700 dark:text-zinc-300">
                                 <Check className="w-3 h-3 text-primary" strokeWidth={4} />
                                 <span className="leading-tight">Enroll in courses up to {pkg.max_difficulty}</span>
                             </div>
-                        )}
+                        )} */}
                         {/* {pkg.max_students && (
                             <div className="flex items-start gap-3 text-[13px] font-bold text-slate-700 dark:text-zinc-300">
                                 <Check className="w-3 h-3 text-primary" strokeWidth={4} />
                                 <span className="leading-tight">Up to {pkg.max_students} Students</span>
                             </div>
                         )} */}
-                        {pkg.includes_certificate && (
+                        {/* {pkg.includes_certificate && (
                             <div className="flex items-start gap-3 text-[13px] font-bold text-slate-700 dark:text-zinc-300">
                                 <Check className="w-3 h-3 text-primary" strokeWidth={4} />
                                 <span className="leading-tight">Certificate of Completion</span>
@@ -136,7 +147,7 @@ export function Package({ package: pkg, isSubscribing, onSubscribe }: PackageCar
                                 <Check className="w-3 h-3 text-primary" strokeWidth={4} />
                                 <span className="leading-tight">AI-Powered Learning</span>
                             </div>
-                        )}
+                        )} */}
                     </div>
 
                     <div className="pt-6 border-t border-slate-100 dark:border-white/10 mb-6">

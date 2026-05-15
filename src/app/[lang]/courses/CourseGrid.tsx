@@ -12,6 +12,8 @@ import { ENDPOINTS } from '@/lib/endpoints';
 import { useAuth } from '@/context/AuthContext';
 import { CustomDialog } from '../../../../widgets/CustomDialog/CustomDialog';
 import { CourseCard } from './CourseCard';
+import { InfoDialog, InfoDialogProps } from '../../../../widgets/CustomDialog/InfoDialog';
+import { useRouter } from 'next/navigation';
 
 interface Course {
     id: string;
@@ -107,6 +109,8 @@ export default function CourseGrid({ lang }: { lang: Lang }) {
     const [selectedCourse, setSelectedCourse] = useState<Course | null>(null);
     const [registeredCourses, setRegisteredCourses] = useState<Set<string>>(new Set());
     const [purchasedCourses, setPurchasedCourses] = useState<Set<string>>(new Set());
+    const [infoDialogOptions, setInfoDialogOptions] = useState<InfoDialogProps>({})
+    const router = useRouter()
 
     // Fetch courses from API
     const { data: coursesResponse, isLoading, error } = useQuery<CoursesResponse>({
@@ -166,7 +170,7 @@ export default function CourseGrid({ lang }: { lang: Lang }) {
     const handleRegister = async (course: Course) => {
         if (!user) {
             setSelectedCourse(course);
-            setShowLoginDialog(true);
+            setInfoDialogOptions({ open: true, title: "Registration failed", description: "Failed to register for course.", infoMessage: "You need to be logged in to register for a course ", primaryAction: () => { router.push("/en/login?redirectTo=/en/courses") }, secondaryAction: () => { setInfoDialogOptions(prev => { return { ...prev, open: false } }) }, primaryButtonText: "Login", secondaryButtonText: "Close", variant: "error", handleClose: () => { setInfoDialogOptions({ open: false }) } })
             return;
         }
 
@@ -177,11 +181,21 @@ export default function CourseGrid({ lang }: { lang: Lang }) {
             });
 
             toast.success(response.data?.message || `Successfully registered for ${course.name}`);
+
+            setInfoDialogOptions({ open: true, title: "Registration Sucessful", description: "Course has been registered succesfully.", infoMessage: `Hurray, you have registered for ${course.name}, you now have access to start learning this course.`, primaryAction: () => { router.push(`/en/courses/${course.id}`) }, secondaryAction: () => { setInfoDialogOptions(prev => { return { ...prev, open: false } }) }, primaryButtonText: "Start Learning", secondaryButtonText: "Close", variant: "success", handleClose: () => { setInfoDialogOptions({ open: false }) } })
+
             queryClient.invalidateQueries({ queryKey: ['user-registrations'] });
             setRegisteredCourses(prev => new Set([...prev, course.id]));
         } catch (error: any) {
-            const errorMessage = error.response?.data?.message || "Failed to register for course.";
-            toast.error(errorMessage);
+            const errorMessage = error.response?.data?.message || "Failed to register for course.Please try again";
+
+            if (errorMessage == "You need an active subscription to register for courses.") {
+                setInfoDialogOptions({ open: true, title: "Registration failed", description: "Failed to register for course.", infoMessage: errorMessage, primaryAction: () => { router.push("/en/packages") }, secondaryAction: () => { setInfoDialogOptions(prev => { return { ...prev, open: false } }) }, primaryButtonText: "Subscribe", secondaryButtonText: "Close", variant: "error", handleClose: () => { setInfoDialogOptions({ open: false }) } })
+            } else {
+                setInfoDialogOptions({ open: true, title: "Registration failed", description: "Failed to register for course.", infoMessage: errorMessage, primaryAction: () => { handleRegister(course) }, secondaryAction: () => { setInfoDialogOptions(prev => { return { ...prev, open: false } }) }, primaryButtonText: "Retry", secondaryButtonText: "Close", variant: "error", handleClose: () => { setInfoDialogOptions({ open: false }) } })
+            }
+
+            // toast.error(errorMessage);
         } finally {
             setIsRegistering(null);
         }
@@ -190,7 +204,7 @@ export default function CourseGrid({ lang }: { lang: Lang }) {
     const handlePurchase = async (course: Course) => {
         if (!user) {
             setSelectedCourse(course);
-            setShowLoginDialog(true);
+            setInfoDialogOptions({ open: true, title: "Purchase failed", description: "Failed to purchase this course.", infoMessage: "You need to be logged in to purchase a course ", primaryAction: () => { router.push("/en/login?redirectTo=/en/courses") }, secondaryAction: () => { setInfoDialogOptions(prev => { return { ...prev, open: false } }) }, primaryButtonText: "Login", secondaryButtonText: "Close", variant: "error", handleClose: () => { setInfoDialogOptions({ open: false }) } })
             return;
         }
 
@@ -202,7 +216,9 @@ export default function CourseGrid({ lang }: { lang: Lang }) {
             });
             toast.success(response.data?.message || `Successfully purchased ${course.name}`);
             queryClient.invalidateQueries({ queryKey: ['user-purchases'] });
+
             setPurchasedCourses(prev => new Set([...prev, course.id]));
+            setInfoDialogOptions({ open: true, title: "Purchase Sucessful", description: "Course has been purchased succesfully.", infoMessage: `Hurray, you have purchased  ${course.name}, you now have access full access to start learning this course.`, primaryAction: () => { router.push(`/en/courses/${course.id}`) }, secondaryAction: () => { setInfoDialogOptions(prev => { return { ...prev, open: false } }) }, primaryButtonText: "Start Learning", secondaryButtonText: "Close", variant: "success", handleClose: () => { setInfoDialogOptions({ open: false }) } })
         } catch (error: any) {
             toast.error(error.response?.data?.message || "Purchase failed");
         } finally {
@@ -297,8 +313,10 @@ export default function CourseGrid({ lang }: { lang: Lang }) {
                 </div>
             )}
 
+            <InfoDialog {...infoDialogOptions} />
+
             {/* Login Dialog */}
-            <CustomDialog
+            {/* <CustomDialog
                 title={t.loginRequired}
                 description={t.loginToRegister}
                 open={showLoginDialog}
@@ -307,7 +325,7 @@ export default function CourseGrid({ lang }: { lang: Lang }) {
             >
                 <div className="flex flex-col items-center text-center space-y-4 py-4">
                     <div className='rounded-full p-8 bg-gradient-to-br from-primary/20 to-orange-500/20'>
-                        <ShieldAlert className='w-[60px] h-[60px] text-primary' />
+                        
                     </div>
                     <p className='text-sm py-4'>
                         You need to be logged in to register for courses. Please choose an option below.
@@ -334,7 +352,9 @@ export default function CourseGrid({ lang }: { lang: Lang }) {
                         </Button>
                     </div>
                 </div>
-            </CustomDialog>
+            </CustomDialog> */}
+
+            {/* Course Purhase Error  Dialog  */}
 
             <style dangerouslySetInnerHTML={{
                 __html: `
