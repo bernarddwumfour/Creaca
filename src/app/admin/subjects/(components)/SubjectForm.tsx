@@ -116,7 +116,7 @@ export function SubjectForm({ type, initialData, onSuccess, subjectId }: Subject
                             <FormControl>
                                 <Input
                                     {...field}
-                                    placeholder="e.g., Advanced Mathematics"
+                                    placeholder="e.g., Web Development"
                                     className="h-12 border-zinc-200 dark:border-zinc-800 focus-visible:ring-primary rounded-xl font-medium"
                                     disabled={isLoading}
                                 />

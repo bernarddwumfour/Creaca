@@ -2,7 +2,7 @@ export const authDict = {
     en: {
       login: {
         title: "Welcome Back, Genius",
-        subtitle: "Log in to continue your AI-guided math journey.",
+        subtitle: "Log in to continue building digital skills with AI guidance.",
         email: "Email Address",
         password: "Password",
         button: "Sign In",
@@ -12,7 +12,7 @@ export const authDict = {
       },
       signup: {
         title: "Start Your AI Journey",
-        subtitle: "Join thousands of students mastering logic and STEM.",
+        subtitle: "Join learners building practical, career-ready digital skills.",
         name: "Full Name",
         email: "Email Address",
         password: "Create Password",
@@ -24,7 +24,7 @@ export const authDict = {
     fr: {
       login: {
         title: "Bon retour, Génie",
-        subtitle: "Connectez-vous pour continuer votre parcours mathématique.",
+        subtitle: "Connectez-vous pour continuer à développer vos compétences numériques avec l’IA.",
         email: "Adresse Email",
         password: "Mot de passe",
         button: "Se connecter",
@@ -34,7 +34,7 @@ export const authDict = {
       },
       signup: {
         title: "Commencez l'aventure",
-        subtitle: "Rejoignez des milliers d'étudiants maîtrisant la logique.",
+        subtitle: "Rejoignez des apprenants qui développent des compétences numériques utiles à leur carrière.",
         name: "Nom complet",
         email: "Adresse Email",
         password: "Créer un mot de passe",
@@ -46,7 +46,7 @@ export const authDict = {
     es: {
       login: {
         title: "Bienvenido, Genio",
-        subtitle: "Inicia sesión para continuar tu camino matemático con IA.",
+        subtitle: "Inicia sesión para seguir desarrollando habilidades digitales con ayuda de la IA.",
         email: "Correo Electrónico",
         password: "Contraseña",
         button: "Entrar",
@@ -56,7 +56,7 @@ export const authDict = {
       },
       signup: {
         title: "Inicia tu Viaje",
-        subtitle: "Únete a miles de estudiantes dominando la lógica y STEM.",
+        subtitle: "Únete a estudiantes que desarrollan habilidades digitales prácticas para su carrera.",
         name: "Nombre Completo",
         email: "Correo Electrónico",
         password: "Crear Contraseña",

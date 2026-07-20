@@ -19,7 +19,7 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   title: "KYRIOS",
-  description: "AI Math Learning Platform",
+  description: "AI-powered digital skills learning platform",
 };
 
 export default function RootLayout({

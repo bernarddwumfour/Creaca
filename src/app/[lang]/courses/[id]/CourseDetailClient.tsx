@@ -286,16 +286,11 @@ export default function CourseDetailClient({ course, lang, dictionary }: CourseD
 
         setIsPurchasing(true);
         try {
-            const response = await api.post(ENDPOINTS.COURSES.PURCHASE_COURSE, {
+            const response = await api.post(ENDPOINTS.COURSES.INITIATE_PURCHASE, {
                 course_id: course.id,
-                payment_reference: `manual_${Date.now()}`
+                confirm: true,
             });
-
-            toast.success(response.data?.message || `Successfully purchased ${course.name}`);
-            await refetchPurchases();
-            await refetchRegistrations();
-            queryClient.invalidateQueries({ queryKey: ['user-purchases'] });
-            queryClient.invalidateQueries({ queryKey: ['user-registrations'] });
+            window.location.href = response.data.data.authorization_url;
         } catch (error: any) {
             toast.error(error.response?.data?.message || "Purchase failed");
         } finally {
@@ -304,7 +299,7 @@ export default function CourseDetailClient({ course, lang, dictionary }: CourseD
     };
 
     const handleStartLearning = () => {
-        router.push(`/${lang}/courses/${course.slug}/learn`);
+        router.push(`/${lang}/courses/${course.slug}`);
     };
 
     const handlePlayClick = (module: any) => {

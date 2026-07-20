@@ -1,8 +1,10 @@
 'use client';
 
-import React, { createContext, useContext, useEffect, useState } from 'react';
+import React, { createContext, useCallback, useContext, useEffect, useState } from 'react';
 import Cookies from 'js-cookie';
 import { useRouter } from 'next/navigation';
+import api from '@/lib/axios';
+import { ENDPOINTS } from '@/lib/endpoints';
 
 const AUTH_COOKIE_KEY = 'kyrios_auth_session';
 
@@ -53,7 +55,7 @@ interface AuthContextType {
     user: User | null;
     tokens: Tokens | null;
     login: (session: AuthSession) => void;
-    logout: () => void;
+    logout: () => Promise<void>;
     updateUser: (userData: Partial<User>) => void;
     isLoading: boolean;
 }
@@ -64,6 +66,20 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     const [session, setSession] = useState<AuthSession | null>(null);
     const [isLoading, setIsLoading] = useState(true);
     const router = useRouter();
+
+    const logout = useCallback(async () => {
+        try {
+            await api.post(ENDPOINTS.AUTH.LOGOUT);
+        } catch {
+            // Logout is best-effort server-side; local credentials must always clear.
+        } finally {
+            setSession(null);
+            Cookies.remove(AUTH_COOKIE_KEY);
+            localStorage.removeItem('access_token');
+            localStorage.removeItem('refresh_token');
+            router.push('/');
+        }
+    }, [router]);
 
     useEffect(() => {
         // Hydrate from the single cookie
@@ -82,7 +98,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
             }
         }
         setIsLoading(false);
-    }, []);
+    }, [logout]);
 
     const login = (authData: AuthSession) => {
         setSession(authData);
@@ -96,14 +112,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         // Sync to localStorage for your existing Axios Interceptor logic
         localStorage.setItem('access_token', authData.tokens.access);
         localStorage.setItem('refresh_token', authData.tokens.refresh);
-    };
-
-    const logout = () => {
-        setSession(null);
-        Cookies.remove(AUTH_COOKIE_KEY);
-        localStorage.removeItem('access_token');
-        localStorage.removeItem('refresh_token');
-        router.push('/');
     };
 
     const updateUser = (userData: Partial<User>) => {

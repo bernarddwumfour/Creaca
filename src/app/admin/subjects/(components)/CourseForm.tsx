@@ -210,7 +210,7 @@ export function CourseForm({ type = 'CREATE', initialData, onSuccess, courseId, 
                             <FormControl>
                                 <Input
                                     {...field}
-                                    placeholder="e.g., Linear Algebra II"
+                                    placeholder="e.g., Responsive Web Design"
                                     className="h-12 border-zinc-200 dark:border-zinc-800 focus-visible:ring-primary rounded-xl font-medium"
                                     disabled={isLoading}
                                 />

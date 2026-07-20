@@ -21,6 +21,7 @@ import { ENDPOINTS } from '@/lib/endpoints';
 
 const forgotDict = {
     en: {
+        brandTagline: "Skills for the Digital Future",
         title: "Reset Password",
         subtitle: "Enter your email and we'll send you a recovery link.",
         email: "Email Address",
@@ -32,6 +33,7 @@ const forgotDict = {
         error: "Failed to reset password.",
     },
     fr: {
+        brandTagline: "Des Compétences pour l’Avenir Numérique",
         title: "Réinitialiser",
         subtitle: "Entrez votre email pour recevoir un lien de récupération.",
         email: "Adresse Email",
@@ -43,6 +45,7 @@ const forgotDict = {
         error: "Échec de la réinitialisation du mot de passe.",
     },
     es: {
+        brandTagline: "Habilidades para el Futuro Digital",
         title: "Restablecer",
         subtitle: "Ingresa tu correo para enviarte un enlace de recuperación.",
         email: "Correo Electrónico",
@@ -155,7 +158,7 @@ export default function ForgotPasswordPage({ params }: { params: Promise<{ lang:
                 </div>
                 <div className="relative z-10 text-center text-white space-y-2">
                     <h1 className="text-8xl font-black tracking-tighter">KYRIOS<span className="text-zinc-900">.</span></h1>
-                    <p className="text-white/90 font-medium text-lg tracking-widest uppercase">Intelligence in Mathematics</p>
+                    <p className="text-white/90 font-medium text-lg tracking-widest uppercase">{t.brandTagline}</p>
                 </div>
             </div>
 

@@ -8,6 +8,8 @@ import { toast } from 'sonner';
 import api from '@/lib/axios';
 import { Package } from '../components/Package';
 import { ENDPOINTS } from '@/lib/endpoints';
+import { learnerDict } from '@/lib/dictionary/learner';
+import { Lang } from '@/lib/dictionary/dictionary';
 
 
 
@@ -47,7 +49,8 @@ interface Package {
 
 
 
-export default function PackagesGrid() {
+export default function PackagesGrid({ lang }: { lang: Lang }) {
+    const t = learnerDict[lang in learnerDict ? lang : 'en'].packages;
 
     const [isSubscribing, setIsSubscribing] = React.useState<string | null>(null);
 
@@ -66,15 +69,10 @@ export default function PackagesGrid() {
     const handleSubscribe = async (packageId: string) => {
         setIsSubscribing(packageId);
         try {
-            const response = await api.post(ENDPOINTS.SUBSCRIPTIONS.SUBSCRIBE, {
+            const response = await api.post(ENDPOINTS.SUBSCRIPTIONS.INITIATE_SUBSCRIPTION, {
                 package_id: packageId,
             });
-
-            if (response.data?.payment_url) {
-                window.location.href = response.data.payment_url;
-            } else {
-                toast.success("Subscription initiated! Please complete payment.");
-            }
+            window.location.href = response.data.data.authorization_url;
         } catch (error: any) {
             const errorMessage = error.response?.data?.message || "Failed to initiate subscription.";
             toast.error(errorMessage);
@@ -96,8 +94,8 @@ export default function PackagesGrid() {
         return (
             <div className="min-h-screen bg-white dark:bg-[#18181b] flex items-center justify-center">
                 <div className="text-center">
-                    <p className="text-red-500 mb-4">Failed to load packages.</p>
-                    <Button onClick={() => window.location.reload()}>Retry</Button>
+                    <p className="text-red-500 mb-4">{t.loadError}</p>
+                    <Button onClick={() => window.location.reload()}>{t.retry}</Button>
                 </div>
             </div>
         );
@@ -123,8 +121,8 @@ export default function PackagesGrid() {
             ) : (
                 <div className="text-center py-12">
                     <PackageIcon className="mx-auto h-12 w-12 text-zinc-400 mb-4" />
-                    <h3 className="text-lg font-bold text-zinc-600 dark:text-zinc-400">No packages available</h3>
-                    <p className="text-sm text-zinc-500 mt-1">Check back later for subscription plans.</p>
+                    <h3 className="text-lg font-bold text-zinc-600 dark:text-zinc-400">{t.empty}</h3>
+                    <p className="text-sm text-zinc-500 mt-1">{t.emptyBody}</p>
                 </div>
             )}
         </div>

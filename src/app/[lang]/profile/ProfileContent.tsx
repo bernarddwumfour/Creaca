@@ -477,103 +477,126 @@ export default function ProfileContent({ lang }: { lang: string }) {
     const { user } = useAuth();
     const { theme, setTheme } = useTheme();
     const [isCollapsed, setIsCollapsed] = useState(false);
+    const [activeTab, setActiveTab] = useState('personal');
 
     return (
         <div className="w-full mx-auto">
-            <style jsx global>{`
-                .gradient-tab[data-state=active] {
-                    background: linear-gradient(135deg, #ea580c 0%, #f97316 100%) !important;
-                    color: white !important;
-                }
-            `}</style>
+            <Tabs value={activeTab} onValueChange={setActiveTab} className="flex flex-col md:!flex-row gap-8 items-start">
 
-            <Tabs defaultValue="personal" className="flex flex-col md:!flex-row gap-8 items-start">
-
-                {/* NAVIGATION SIDEBAR */}
+                {/* NAVIGATION — horizontal top tab bar below `md` (icon-only, selected tab
+                    gets its label back), vertical collapsible sidebar at `md` and up
+                    (unchanged desktop behavior, driven by isCollapsed). */}
                 <div className={cn(
-                    "shrink-0 transition-all duration-500 ease-in-out relative border-r border-zinc-100 dark:border-zinc-800/50",
-                    isCollapsed ? "w-14" : "w-full md:w-64"
+                    "shrink-0 transition-all duration-500 ease-in-out relative w-full",
+                    "border-b border-zinc-100 dark:border-zinc-800/50 md:border-b-0 md:border-r",
+                    isCollapsed ? "md:w-14" : "md:w-64"
                 )}>
                     <button
                         onClick={() => setIsCollapsed(!isCollapsed)}
-                        className="absolute -right-3 top-10 z-50 w-6 h-6 bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-full flex items-center justify-center text-zinc-400 hover:text-orange-600 transition-all shadow-sm active:scale-90"
+                        className="hidden md:flex absolute -right-3 top-10 z-50 w-6 h-6 bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-full items-center justify-center text-zinc-400 hover:text-orange-600 transition-all shadow-sm active:scale-90"
                     >
                         <ChevronRight className={cn("transition-transform duration-500", !isCollapsed && "rotate-180")} size={12} />
                     </button>
 
                     <TabsList className={cn(
-                        "flex flex-col h-auto w-full bg-transparent space-y-1 p-0 justify-start items-start transition-all duration-500",
-                        isCollapsed ? "items-center" : "items-start"
+                        "flex flex-row md:flex-col h-auto w-full bg-muted rounded-lg gap-1 md:space-y-1 md:gap-0 p-1",
+                        "justify-between md:justify-start items-center md:items-start transition-all duration-500",
+                        isCollapsed ? "md:items-center" : "md:items-start"
                     )}>
 
                         {/* Section: Account */}
-                        <div className={cn("px-4 py-2 mb-1 transition-opacity duration-300", isCollapsed ? "opacity-0 h-8" : "opacity-100")}>
+                        <div className={cn("hidden md:block px-4 py-2 mb-1 transition-opacity duration-300", isCollapsed ? "opacity-0 h-8" : "opacity-100")}>
                             {!isCollapsed && <p className="text-[10px] font-bold uppercase text-zinc-400 tracking-[0.2em] whitespace-nowrap">Account</p>}
                         </div>
 
                         <TabsTrigger
                             value="personal"
                             className={cn(
-                                "gradient-tab w-full flex items-center px-4 py-3 font-bold text-xs uppercase tracking-wider rounded-xl transition-all data-[state=inactive]:hover:bg-zinc-100 dark:data-[state=inactive]:hover:bg-zinc-900",
-                                isCollapsed ? "justify-center py-6" : "justify-start gap-3"
+                                "flex-1 md:w-full md:flex-none flex items-center justify-center px-2 md:px-4 py-2.5 md:py-3 font-bold text-xs uppercase tracking-wider rounded-md transition-all text-foreground/60 hover:text-foreground data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-sm dark:data-[state=active]:bg-zinc-700",
+                                isCollapsed ? "md:justify-center md:py-6" : "md:justify-start md:gap-3"
                             )}
                         >
                             <User size={16} className="shrink-0" />
-                            {!isCollapsed && <span className="truncate">Personal Info</span>}
+                            <span className={cn(
+                                "truncate",
+                                activeTab === 'personal' ? "ml-1.5 max-w-[8rem]" : "ml-0 max-w-0",
+                                "overflow-hidden transition-all duration-200",
+                                isCollapsed ? "md:ml-0 md:max-w-0" : "md:ml-3 md:max-w-none",
+                            )}>Personal Info</span>
                         </TabsTrigger>
 
                         <TabsTrigger
                             value="security"
                             className={cn(
-                                "gradient-tab w-full flex items-center px-4 py-3 font-bold text-xs uppercase tracking-wider rounded-xl transition-all data-[state=inactive]:hover:bg-zinc-100 dark:data-[state=inactive]:hover:bg-zinc-900",
-                                isCollapsed ? "justify-center py-6" : "justify-start gap-3"
+                                "flex-1 md:w-full md:flex-none flex items-center justify-center px-2 md:px-4 py-2.5 md:py-3 font-bold text-xs uppercase tracking-wider rounded-md transition-all text-foreground/60 hover:text-foreground data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-sm dark:data-[state=active]:bg-zinc-700",
+                                isCollapsed ? "md:justify-center md:py-6" : "md:justify-start md:gap-3"
                             )}
                         >
                             <ShieldCheck size={16} className="shrink-0" />
-                            {!isCollapsed && <span className="truncate">Security</span>}
+                            <span className={cn(
+                                "truncate",
+                                activeTab === 'security' ? "ml-1.5 max-w-[8rem]" : "ml-0 max-w-0",
+                                "overflow-hidden transition-all duration-200",
+                                isCollapsed ? "md:ml-0 md:max-w-0" : "md:ml-3 md:max-w-none",
+                            )}>Security</span>
                         </TabsTrigger>
 
                         {/* Section: Preferences */}
-                        <div className={cn("px-4 py-2 mt-6 mb-1 transition-opacity duration-300", isCollapsed ? "opacity-0 h-8" : "opacity-100")}>
+                        <div className={cn("hidden md:block px-4 py-2 mt-6 mb-1 transition-opacity duration-300", isCollapsed ? "opacity-0 h-8" : "opacity-100")}>
                             {!isCollapsed && <p className="text-[10px] font-bold uppercase text-zinc-400 tracking-[0.2em] whitespace-nowrap">Preferences</p>}
                         </div>
 
                         <TabsTrigger
                             value="display"
                             className={cn(
-                                "gradient-tab w-full flex items-center px-4 py-3 font-bold text-xs uppercase tracking-wider rounded-xl transition-all data-[state=inactive]:hover:bg-zinc-100 dark:data-[state=inactive]:hover:bg-zinc-900",
-                                isCollapsed ? "justify-center py-6" : "justify-start gap-3"
+                                "flex-1 md:w-full md:flex-none flex items-center justify-center px-2 md:px-4 py-2.5 md:py-3 font-bold text-xs uppercase tracking-wider rounded-md transition-all text-foreground/60 hover:text-foreground data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-sm dark:data-[state=active]:bg-zinc-700",
+                                isCollapsed ? "md:justify-center md:py-6" : "md:justify-start md:gap-3"
                             )}
                         >
                             <Palette size={16} className="shrink-0" />
-                            {!isCollapsed && <span className="truncate">Appearance</span>}
+                            <span className={cn(
+                                "truncate",
+                                activeTab === 'display' ? "ml-1.5 max-w-[8rem]" : "ml-0 max-w-0",
+                                "overflow-hidden transition-all duration-200",
+                                isCollapsed ? "md:ml-0 md:max-w-0" : "md:ml-3 md:max-w-none",
+                            )}>Appearance</span>
                         </TabsTrigger>
 
                         <TabsTrigger
                             value="learning"
                             className={cn(
-                                "gradient-tab w-full flex items-center px-4 py-3 font-bold text-xs uppercase tracking-wider rounded-xl transition-all data-[state=inactive]:hover:bg-zinc-100 dark:data-[state=inactive]:hover:bg-zinc-900",
-                                isCollapsed ? "justify-center py-6" : "justify-start gap-3"
+                                "flex-1 md:w-full md:flex-none flex items-center justify-center px-2 md:px-4 py-2.5 md:py-3 font-bold text-xs uppercase tracking-wider rounded-md transition-all text-foreground/60 hover:text-foreground data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-sm dark:data-[state=active]:bg-zinc-700",
+                                isCollapsed ? "md:justify-center md:py-6" : "md:justify-start md:gap-3"
                             )}
                         >
                             <Target size={16} className="shrink-0" />
-                            {!isCollapsed && <span className="truncate">Study Goals</span>}
+                            <span className={cn(
+                                "truncate",
+                                activeTab === 'learning' ? "ml-1.5 max-w-[8rem]" : "ml-0 max-w-0",
+                                "overflow-hidden transition-all duration-200",
+                                isCollapsed ? "md:ml-0 md:max-w-0" : "md:ml-3 md:max-w-none",
+                            )}>Study Goals</span>
                         </TabsTrigger>
 
                         {/* Section: Billing */}
-                        <div className={cn("px-4 py-2 mt-6 mb-1 transition-opacity duration-300", isCollapsed ? "opacity-0 h-8" : "opacity-100")}>
+                        <div className={cn("hidden md:block px-4 py-2 mt-6 mb-1 transition-opacity duration-300", isCollapsed ? "opacity-0 h-8" : "opacity-100")}>
                             {!isCollapsed && <p className="text-[10px] font-bold uppercase text-zinc-400 tracking-[0.2em] whitespace-nowrap">Billing</p>}
                         </div>
 
                         <TabsTrigger
                             value="subscription"
                             className={cn(
-                                "gradient-tab w-full flex items-center px-4 py-3 font-bold text-xs uppercase tracking-wider rounded-xl transition-all data-[state=inactive]:hover:bg-zinc-100 dark:data-[state=inactive]:hover:bg-zinc-900",
-                                isCollapsed ? "justify-center py-6" : "justify-start gap-3"
+                                "flex-1 md:w-full md:flex-none flex items-center justify-center px-2 md:px-4 py-2.5 md:py-3 font-bold text-xs uppercase tracking-wider rounded-md transition-all text-foreground/60 hover:text-foreground data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-sm dark:data-[state=active]:bg-zinc-700",
+                                isCollapsed ? "md:justify-center md:py-6" : "md:justify-start md:gap-3"
                             )}
                         >
                             <CreditCard size={16} className="shrink-0" />
-                            {!isCollapsed && <span className="truncate">Subscription</span>}
+                            <span className={cn(
+                                "truncate",
+                                activeTab === 'subscription' ? "ml-1.5 max-w-[8rem]" : "ml-0 max-w-0",
+                                "overflow-hidden transition-all duration-200",
+                                isCollapsed ? "md:ml-0 md:max-w-0" : "md:ml-3 md:max-w-none",
+                            )}>Subscription</span>
                         </TabsTrigger>
 
                     </TabsList>
@@ -896,6 +919,8 @@ export function SecuritySection() {
     const [backupCodes, setBackupCodes] = useState<string[]>([]);
     const [isDisableModalOpen, setIsDisableModalOpen] = useState(false);
     const [disablePassword, setDisablePassword] = useState('');
+    const [isRegenerateModalOpen, setIsRegenerateModalOpen] = useState(false);
+    const [regeneratePassword, setRegeneratePassword] = useState('');
 
     // Fetch MFA status using React Query
     const { data: mfaData, isLoading: isFetchingMfa } = useQuery({
@@ -1033,6 +1058,20 @@ export function SecuritySection() {
         onError: (error: any) => {
             toast.error(error.response?.data?.message || "Failed to disable MFA");
         },
+    });
+
+    const regenerateBackupCodesMutation = useMutation({
+        mutationFn: async (password: string) => {
+            const response = await api.post(ENDPOINTS.AUTH.MFA_REGENERATE_BACKUP_CODES, { password });
+            return response.data?.data || response.data;
+        },
+        onSuccess: (data) => {
+            setBackupCodes(data.backup_codes || []);
+            setRegeneratePassword('');
+            setIsRegenerateModalOpen(false);
+            toast.success("Backup codes regenerated. Save them now.");
+        },
+        onError: (error: any) => toast.error(error.response?.data?.message || "Failed to regenerate backup codes"),
     });
 
     const handleSetupMFA = () => {
@@ -1183,13 +1222,14 @@ export function SecuritySection() {
                                     )}
 
                                     {is2FAEnabled && (
-                                        <div className="pt-4 border-t border-zinc-200 dark:border-zinc-800">
+                                        <div className="pt-4 border-t border-zinc-200 dark:border-zinc-800 space-y-3">
                                             <Alert className="bg-emerald-500/10 border-emerald-500/20">
                                                 <ShieldCheck className="h-4 w-4 text-emerald-600" />
                                                 <AlertDescription className="text-[11px] text-emerald-600">
                                                     2FA is active using {currentMethod === 'app' ? 'Authenticator App' : 'Email'} method.
                                                 </AlertDescription>
                                             </Alert>
+                                            {currentMethod === 'app' && <Button type="button" variant="outline" className="w-full" onClick={() => setIsRegenerateModalOpen(true)}>Regenerate backup codes</Button>}
                                         </div>
                                     )}
                                 </div>
@@ -1297,6 +1337,15 @@ export function SecuritySection() {
                     </CardContent>
                 </div>
             </Card>
+
+            <CustomDialog title="Regenerate backup codes" description="Enter your current password. Existing backup codes will stop working." open={isRegenerateModalOpen} onOpenChange={setIsRegenerateModalOpen} contentWidth="max-w-md">
+                <div className="space-y-4 py-4">
+                    <Input type="password" value={regeneratePassword} onChange={(event) => setRegeneratePassword(event.target.value)} placeholder="Current password" />
+                    <Button className="w-full" disabled={!regeneratePassword || regenerateBackupCodesMutation.isPending} onClick={() => regenerateBackupCodesMutation.mutate(regeneratePassword)}>
+                        {regenerateBackupCodesMutation.isPending && <Loader2 className="mr-2 animate-spin" size={16} />}Regenerate codes
+                    </Button>
+                </div>
+            </CustomDialog>
 
             {/* MFA Setup Modal - Using CustomDialog */}
             <CustomDialog
@@ -1470,8 +1519,8 @@ function AppearanceSection({ lang, theme, setTheme }: {
                         </div>
                         <Tabs value={theme} onValueChange={setTheme} className="bg-zinc-100 dark:bg-zinc-900 p-1 rounded-xl">
                             <TabsList className="bg-transparent h-auto p-0 gap-1">
-                                <TabsTrigger value="light" className="gradient-tab rounded-lg text-[10px] font-black h-8 px-4 border-none shadow-none">LIGHT</TabsTrigger>
-                                <TabsTrigger value="dark" className="gradient-tab rounded-lg text-[10px] font-black h-8 px-4 border-none shadow-none">DARK</TabsTrigger>
+                                <TabsTrigger value="light" className="rounded-lg text-[10px] font-black h-8 px-4 border-none shadow-none text-foreground/60 hover:text-foreground data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-sm">LIGHT</TabsTrigger>
+                                <TabsTrigger value="dark" className="rounded-lg text-[10px] font-black h-8 px-4 border-none shadow-none text-foreground/60 hover:text-foreground data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-sm">DARK</TabsTrigger>
                             </TabsList>
                         </Tabs>
                     </div>

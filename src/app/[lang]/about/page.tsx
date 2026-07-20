@@ -139,10 +139,10 @@ async function page({ params }: PageProps) {
                 <section className="py-12 md:py-24 relative px-6 overflow-hidden">
                     <div className="space-y-3 md:space-y-4 container mx-auto pb-4">
                         <h3 className="text-2xl md:text-4xl text-start font-bold max-w-[800px] leading-tight md:leading-12 text-zinc-900 dark:text-white">
-                            Meet Our <span className="text-primary">Founders</span>
+                            {about.founders.sectionTitle}
                         </h3>
                         <p className="text-start text-xs md:text-sm text-gray-500 max-w-[700px]">
-                            The two educators behind the vision of Kyrios, dedicated to bridging the gap in global communication.
+                            {about.founders.sectionSubtitle}
                         </p>
                     </div>
 

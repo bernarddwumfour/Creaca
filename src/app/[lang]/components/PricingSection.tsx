@@ -10,6 +10,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { ENDPOINTS } from '@/lib/endpoints';
 import { useRouter } from 'next/navigation';
 import PackagesGrid from '../packages/PackagesGrid';
+import { Lang } from '@/lib/dictionary/dictionary';
 
 
 interface Package {
@@ -57,6 +58,7 @@ interface Package {
 }
 
 interface PricingSectionProps {
+    lang: Lang;
     t?: {
         subtitle?: string;
         title?: string;
@@ -73,7 +75,7 @@ const DEFAULT_CONTENT = {
     titleAccent: "Learning Path",
 };
 
-export default function PricingSection({ t = DEFAULT_CONTENT, onSubscribe }: PricingSectionProps) {
+export default function PricingSection({ lang, t = DEFAULT_CONTENT, onSubscribe }: PricingSectionProps) {
     const [isSubscribing, setIsSubscribing] = React.useState<string | null>(null);
     const router = useRouter();
 
@@ -92,12 +94,11 @@ export default function PricingSection({ t = DEFAULT_CONTENT, onSubscribe }: Pri
                         </span>
                     </h3>
                 </div>
-                <PackagesGrid />
+                <PackagesGrid lang={lang} />
             </div>
             <style dangerouslySetInnerHTML={{ __html: `@keyframes shimmer { 0% { transform: translateX(-150%) skewX(-20deg); } 100% { transform: translateX(450%) skewX(-20deg); } }` }} />
         </section>
 
     );
 }
-
 

@@ -26,10 +26,10 @@ export default async function ProfilePage({ params }: PageProps) {
                     <div className="mx-auto space-y-8">
                         <div className='pt-10'>
                             <h1 className="text-xl md:text-3xl font-black tracking-tighter">
-                                Account <span className="text-primary">Profile.</span>
+                                {dictionary.pages.learner.profile.title} <span className="text-primary">{dictionary.pages.learner.profile.titleAccent}</span>
                             </h1>
                             <p className="text-zinc-500 dark:text-zinc-400 font-medium mt-2">
-                                Manage your identity and learning preferences.
+                                {dictionary.pages.learner.profile.subtitle}
                             </p>
                         </div>
 

@@ -2,7 +2,7 @@
 
 import React, { useState, useMemo, useRef, useEffect } from 'react';
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import { useTheme } from 'next-themes';
 import { useQuery } from '@tanstack/react-query';
 import { cn } from "@/lib/utils";
@@ -98,7 +98,13 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     const searchRef = useRef<HTMLDivElement>(null);
     const { theme, setTheme } = useTheme();
     const pathname = usePathname();
-    const { user, logout } = useAuth();
+    const { user, logout, isLoading } = useAuth();
+    const router = useRouter();
+    useEffect(() => {
+        if (!isLoading && (!user || !['ADMIN', 'STAFF'].includes(user.role))) {
+            router.replace('/en/dashboard');
+        }
+    }, [isLoading, router, user]);
     const avatarUrl = useMemo(() => {
         return generateAvatarFromUser(user);
     }, [user]);
@@ -158,6 +164,8 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         document.addEventListener('mousedown', handleClick);
         return () => document.removeEventListener('mousedown', handleClick);
     }, []);
+
+    if (isLoading || !user || !['ADMIN', 'STAFF'].includes(user.role)) return null;
 
     return (
         <div className="min-h-screen bg-zinc-50 dark:bg-[#09090b] flex">

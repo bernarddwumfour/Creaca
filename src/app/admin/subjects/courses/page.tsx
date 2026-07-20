@@ -201,6 +201,23 @@ export default function CourseManagement() {
         setPrerequisitesModalOpen(true);
     };
 
+    const handleSavePrerequisites = async () => {
+        if (!prerequisitesCourse) return;
+        setIsUpdatingPrerequisites(true);
+        try {
+            await api.patch(ENDPOINTS.COURSES.UPDATE_COURSE.replace(':id', prerequisitesCourse.id), {
+                prerequisite_ids: selectedPrerequisites,
+            });
+            toast.success('Prerequisites updated successfully');
+            setPrerequisitesModalOpen(false);
+            invalidateCourses();
+        } catch (error: any) {
+            toast.error(error.response?.data?.message || 'Failed to update prerequisites');
+        } finally {
+            setIsUpdatingPrerequisites(false);
+        }
+    };
+
     const handleBulkAction = async (items: Course[], action: 'activate' | 'deactivate' | 'delete') => {
         if (items.length === 0) {
             toast.warning("No courses selected for bulk action.");
@@ -736,7 +753,7 @@ export default function CourseManagement() {
                 contentWidth="max-w-2xl"
             >
                 <div className="space-y-6 py-4">
-
+                    <CustomSelect options={courseOptions} multiple value={selectedPrerequisites} onChange={setSelectedPrerequisites} placeholder="Select prerequisite courses" />
 
                     {/* Current Prerequisites Preview */}
                     {prerequisitesCourse?.prerequisites && prerequisitesCourse.prerequisites.length > 0 && (
@@ -753,6 +770,11 @@ export default function CourseManagement() {
                             </div>
                         </div>
                     )}
+
+                    <div className="flex justify-end gap-3">
+                        <Button variant="outline" onClick={() => setPrerequisitesModalOpen(false)}>Cancel</Button>
+                        <Button disabled={isUpdatingPrerequisites} onClick={handleSavePrerequisites}>{isUpdatingPrerequisites && <Loader2 className="mr-2 animate-spin" size={16}/>}Save prerequisites</Button>
+                    </div>
 
                 </div>
             </CustomDialog>

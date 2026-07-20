@@ -3,33 +3,33 @@ export const coursesDict = {
         hero: {
             title: "Explore Our",
             titleAccent: "Courses",
-            description: "Unlock your potential with our expert-led language programs designed for every stage of your global journey."
+            description: "Build practical digital skills through guided courses, hands-on projects, and learning paths for every experience level."
         },
         cta: {
-            title: "Not sure which level is right for you?",
-            button: "Start Placement Test"
+            title: "Not sure which digital skill to learn next?",
+            button: "Explore Learning Paths"
         }
     },
     fr: {
         hero: {
             title: "Explorez nos",
             titleAccent: "Cours",
-            description: "Libérez votre potentiel grâce à nos programmes linguistiques dirigés par des experts, conçus pour chaque étape de votre voyage international."
+            description: "Développez des compétences numériques pratiques grâce à des cours guidés, des projets concrets et des parcours adaptés à chaque niveau."
         },
         cta: {
-            title: "Vous ne savez pas quel niveau vous convient ?",
-            button: "Commencer le test de niveau"
+            title: "Vous ne savez pas quelle compétence numérique apprendre ensuite ?",
+            button: "Explorer les parcours"
         }
     },
     es: {
         hero: {
             title: "Explore nuestros",
             titleAccent: "Cursos",
-            description: "Desbloquee su potencial con nuestros programas de idiomas dirigidos por expertos, diseñados para cada etapa de su viaje global."
+            description: "Desarrolla habilidades digitales prácticas con cursos guiados, proyectos reales y rutas para cada nivel de experiencia."
         },
         cta: {
-            title: "¿No está seguro de qué nivel es el adecuado para usted?",
-            button: "Iniciar prueba de nivel"
+            title: "¿No sabes qué habilidad digital aprender ahora?",
+            button: "Explorar rutas de aprendizaje"
         }
     }
 };

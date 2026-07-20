@@ -84,7 +84,7 @@ interface SubjectsResponse {
 
 export default function SubjectsManagement() {
     const queryClient = useQueryClient();
-    const [activeModal, setActiveModal] = useState<'CREATE_SUBJECT' | 'UPDATE_SUBJECT' | 'CREATE_COURSE' | 'DELETE_SUBJECT' | null>(null);
+    const [activeModal, setActiveModal] = useState<'CREATE_SUBJECT' | 'UPDATE_SUBJECT' | 'CREATE_COURSE' | 'DELETE_SUBJECT' | 'DETAILS' | null>(null);
     const [selectedSubject, setSelectedSubject] = useState<Subject | null>(null);
     const [viewMode, setViewMode] = useState<'list' | 'table'>('list');
     const [searchQuery, setSearchQuery] = useState('');
@@ -231,9 +231,8 @@ export default function SubjectsManagement() {
 
     // Shared action handlers - used by both list and table views
     const handleViewDetails = (subject: Subject) => {
-        console.log('View subject:', subject);
-        toast.info(`Viewing details for "${subject.name}"`);
-        // Navigate to details page if needed
+        setSelectedSubject(subject);
+        setActiveModal('DETAILS');
     };
 
     const handleUpdateClick = (subject: Subject) => {
@@ -650,6 +649,9 @@ export default function SubjectsManagement() {
                 onConfirm={handleDeleteSubject}
                 variant="destructive"
             />
+            <CustomDialog title="Subject details" description="Complete subject metadata" open={activeModal === 'DETAILS'} onOpenChange={closeModals}>
+                {selectedSubject && <div className="grid grid-cols-2 gap-4 py-4 text-sm"><div><p className="text-zinc-400">Name</p><p className="font-bold">{selectedSubject.name}</p></div><div><p className="text-zinc-400">Status</p><p className="font-bold capitalize">{selectedSubject.status}</p></div><div className="col-span-2"><p className="text-zinc-400">Description</p><p>{selectedSubject.description || '—'}</p></div><div><p className="text-zinc-400">Courses</p><p className="font-bold">{selectedSubject.course_count}</p></div><div><p className="text-zinc-400">Created</p><p>{new Date(selectedSubject.created_at).toLocaleString()}</p></div></div>}
+            </CustomDialog>
         </div>
     );
 }

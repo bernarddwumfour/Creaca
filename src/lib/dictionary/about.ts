@@ -1,119 +1,67 @@
 export const aboutDict = {
   en: {
-    hero: {
-      title: "About Us",
-      subtitle: "Kyrios is a global intelligence platform dedicated to democratizing mathematics through artificial intelligence. We bridge the gap between complex logic and student potential, ensuring that anyone, anywhere, can master the language of the universe in their own native tongue.",
-    },
+    hero: { title: "About Us", subtitle: "Kyrios is an AI-powered learning platform that makes practical digital skills accessible in every learner’s language. We help people build confidence, complete real projects, and prepare for new opportunities." },
     community: {
-      title: "A Global Lab Where Logic Prevails",
-      desc: "Mastering mathematics isn't just about memorizing formulas—it's about developing the neural pathways to solve the world's most pressing challenges. At Kyrios, we adapt our AI to your cultural and linguistic context, making high-level STEM accessible to all.",
-      foundedTitle: "Engineered by Visionaries",
-      foundedDesc: "Kyrios was built by a team of mathematicians and AI researchers who recognized that traditional education moves too slowly for the digital age. They saw that students didn't need more textbooks—they needed an adaptive, real-time logic engine that speaks their language.",
-      philosophyTitle: "Logic Without Borders",
-      philosophyDesc: "Whether you’re calculating trajectories in São Paulo, studying calculus in Hanoi, or modeling data in Berlin, our AI feels like a local mentor. We believe that mathematical genius is distributed globally, but opportunity is not. We are changing that.",
-      button: "Enter the AI Math Lab"
+      title: "A Global Community Where Skills Grow",
+      desc: "Digital confidence comes from practice, not jargon. Kyrios adapts guidance to your experience, language, and goals so you can learn technology by building useful things.",
+      foundedTitle: "Built by Visionaries",
+      foundedDesc: "Kyrios was built by educators, technologists, and AI researchers who saw that people need clear, adaptive, hands-on learning—not more barriers or one-size-fits-all courses.",
+      philosophyTitle: "Digital Skills Without Borders",
+      philosophyDesc: "Whether you are learning web development in Accra, data analysis in Hanoi, or digital marketing in São Paulo, our AI feels like a local mentor. Talent is everywhere; access to relevant learning should be too.",
+      button: "Explore Digital Skills",
     },
     missionVision: {
-      missionLabel: "Our Mission",
-      missionTitle: "Universalizing Mathematical Mastery",
-      missionDesc: "To provide every individual with the AI-powered tools and logical framework needed to excel in STEM, turning mathematics from a daunting hurdle into a universal superpower.",
-      visionLabel: "Our Vision",
-      visionTitle: "A World Solved by Logic",
-      visionDesc: "To build a future where scientific innovation is limited only by imagination, not by the quality of local math education. We aim to be the cognitive engine of a borderless scientific community.",
+      missionLabel: "Our Mission", missionTitle: "Making Digital Skills Universal", missionDesc: "To give every learner practical, AI-supported pathways to build digital skills, create real work, and participate confidently in the digital economy.",
+      visionLabel: "Our Vision", visionTitle: "A World Empowered by Digital Confidence", visionDesc: "To build a future where language, location, and prior experience never limit a person’s ability to learn technology and create meaningful opportunities.",
     },
     founders: {
-      sectionTitle: "Meet the Minds",
-      sectionSubtitle: "The engineers and mathematicians behind the AI that is redefining how the world calculates.",
-      storyLabel: "Our Evolution",
-      storyTitle: "From Neural Networks to Mathematical Intuition",
-      storyDesc: "Founded by two experts in computational logic, Kyrios was born from the realization that AI could provide the 1-on-1 personalized math guidance that humans simply can't scale.",
-      creatorsLabel: "Meet the Architects",
-      quote: "We built Kyrios to be the cognitive partner we wished we had. Our mission is to ensure that a student's zip code never determines their ability to understand the laws of physics or finance.",
-      foundersLabel: "The Architects",
-      foundersSublabel: "AI & Math Pioneers",
-      biography: "By merging advanced symbolic computation with large language models, our founders created a system that doesn't just give answers—it teaches the 'why' behind the logic.",
-      members: [
-        { name: "Donald Jackman", role: "Co-Founder & Chief Scientist" },
-        { name: "Michael Brown", role: "Co-Founder & Head of AI" }
-      ]
-    }
+      sectionTitle: "Meet the Minds", sectionSubtitle: "The educators, engineers, and builders creating a more accessible way to learn digital skills.",
+      storyLabel: "Our Evolution", storyTitle: "From AI Research to Practical Learning", storyDesc: "Kyrios began with a simple idea: AI can provide clear, personalized digital-skills guidance at a scale traditional one-to-one teaching cannot reach.",
+      creatorsLabel: "Meet the Architects", quote: "We built Kyrios to be the learning partner we wished we had—one that makes digital opportunity independent of language, location, or background.",
+      foundersLabel: "The Architects", foundersSublabel: "AI & Learning Pioneers", biography: "By combining learning design with modern AI, our founders created a system that does more than give answers—it helps learners understand, practise, and create.",
+      members: [{ name: "Donald Jackman", role: "Co-Founder & Chief Scientist" }, { name: "Michael Brown", role: "Co-Founder & Head of AI" }],
+    },
   },
   fr: {
-    hero: {
-      title: "À Propos",
-      subtitle: "Kyrios est une plateforme d'intelligence mondiale dédiée à la démocratisation des mathématiques via l'IA. Nous comblons le fossé entre la logique complexe et le potentiel des étudiants.",
-    },
+    hero: { title: "À Propos", subtitle: "Kyrios est une plateforme d’apprentissage alimentée par l’IA qui rend les compétences numériques pratiques accessibles dans la langue de chaque apprenant." },
     community: {
-      title: "Un Laboratoire Mondial où la Logique Prévaut",
-      desc: "Maîtriser les mathématiques ne consiste pas seulement à mémoriser des formules, mais à développer les capacités neuronales pour résoudre des défis mondiaux.",
-      foundedTitle: "Conçu par des Visionnaires",
-      foundedDesc: "Kyrios a été créé par des mathématiciens et des chercheurs en IA qui ont compris que l'éducation traditionnelle est trop lente pour l'ère numérique.",
-      philosophyTitle: "La Logique sans Frontières",
-      philosophyDesc: "Que vous calculiez des trajectoires à São Paulo ou étudiiez le calcul à Hanoi, notre IA agit comme un mentor local.",
-      button: "Entrer dans le Labo de Math IA"
+      title: "Une Communauté Mondiale où les Compétences Grandissent",
+      desc: "La confiance numérique vient de la pratique, pas du jargon. Kyrios adapte ses conseils à votre expérience, votre langue et vos objectifs.",
+      foundedTitle: "Conçu par des Visionnaires", foundedDesc: "Kyrios a été créé par des pédagogues, des technologues et des chercheurs en IA convaincus qu’il faut un apprentissage clair, adaptatif et pratique.",
+      philosophyTitle: "Des Compétences Numériques sans Frontières", philosophyDesc: "Que vous appreniez le développement web à Accra, l’analyse de données à Hanoï ou le marketing numérique à São Paulo, notre IA agit comme un mentor local.",
+      button: "Explorer les Compétences Numériques",
     },
     missionVision: {
-      missionLabel: "Notre Mission",
-      missionTitle: "Universaliser la Maîtrise des Maths",
-      missionDesc: "Fournir à chaque individu les outils propulsés par l'IA et le cadre logique nécessaires pour exceller en STEM.",
-      visionLabel: "Notre Vision",
-      visionTitle: "Un Monde Résolu par la Logique",
-      visionDesc: "Bâtir un avenir où l'innovation scientifique n'est limitée que par l'imagination, pas par la qualité de l'enseignement local.",
+      missionLabel: "Notre Mission", missionTitle: "Rendre les Compétences Numériques Universelles", missionDesc: "Offrir à chacun des parcours pratiques assistés par l’IA pour apprendre, créer et participer avec confiance à l’économie numérique.",
+      visionLabel: "Notre Vision", visionTitle: "Un Monde Fort de sa Confiance Numérique", visionDesc: "Bâtir un avenir où la langue, le lieu et l’expérience passée ne limitent jamais l’accès aux compétences technologiques.",
     },
     founders: {
-      sectionTitle: "Rencontrez les Esprits",
-      sectionSubtitle: "Les ingénieurs derrière l'IA qui redéfinit la façon dont le monde calcule.",
-      storyLabel: "Notre Évolution",
-      storyTitle: "Des Réseaux Neuronaux à l'Intuition Mathématique",
-      storyDesc: "Fondée par des experts en logique computationnelle, Kyrios est née pour offrir un guidage mathématique personnalisé à grande échelle.",
-      creatorsLabel: "Rencontrez les Architectes",
-      quote: "Nous avons construit Kyrios pour être le partenaire cognitif que nous aurions aimé avoir.",
-      foundersLabel: "Les Architectes",
-      foundersSublabel: "Pionniers IA & Maths",
-      biography: "En fusionnant le calcul symbolique avancé et les modèles de langage, nos fondateurs ont créé un système qui enseigne le 'pourquoi'.",
-      members: [
-        { name: "Donald Jackman", role: "Co-Fondateur & Scientifique en Chef" },
-        { name: "Michael Brown", role: "Co-Fondateur & Responsable IA" }
-      ]
-    }
+      sectionTitle: "Rencontrez les Esprits", sectionSubtitle: "Les pédagogues et ingénieurs qui rendent l’apprentissage numérique plus accessible.",
+      storyLabel: "Notre Évolution", storyTitle: "De la Recherche en IA à l’Apprentissage Pratique", storyDesc: "Kyrios est née d’une idée simple : l’IA peut offrir un accompagnement personnalisé aux compétences numériques à grande échelle.",
+      creatorsLabel: "Rencontrez les Architectes", quote: "Nous avons créé Kyrios pour que les opportunités numériques ne dépendent jamais de la langue, du lieu ou du parcours.",
+      foundersLabel: "Les Architectes", foundersSublabel: "Pionniers de l’IA et de l’Apprentissage", biography: "En associant conception pédagogique et IA moderne, nos fondateurs ont créé un système qui aide à comprendre, pratiquer et créer.",
+      members: [{ name: "Donald Jackman", role: "Co-Fondateur & Scientifique en Chef" }, { name: "Michael Brown", role: "Co-Fondateur & Responsable IA" }],
+    },
   },
   es: {
-    hero: {
-      title: "Sobre Nosotros",
-      subtitle: "Kyrios es una plataforma de inteligencia global dedicada a democratizar las matemáticas a través de la IA. Cerramos la brecha entre la lógica compleja y el potencial del estudiante.",
-    },
+    hero: { title: "Sobre Nosotros", subtitle: "Kyrios es una plataforma de aprendizaje con IA que hace accesibles las habilidades digitales prácticas en el idioma de cada estudiante." },
     community: {
-      title: "Un Laboratorio Global donde Prevalece la Lógica",
-      desc: "Dominar las matemáticas no es solo memorizar fórmulas, es desarrollar las vías neuronales para resolver los desafíos más apremiantes del mundo.",
-      foundedTitle: "Ingeniería de Visionarios",
-      foundedDesc: "Kyrios fue construido por matemáticos e investigadores de IA que reconocieron que la educación tradicional avanza lento para la era digital.",
-      philosophyTitle: "Lógica Sin Fronteras",
-      philosophyDesc: "Ya sea que calcules trayectorias en São Paulo o estudies cálculo en Hanoi, nuestra IA se siente como un mentor local.",
-      button: "Entrar al Laboratorio de Mates IA"
+      title: "Una Comunidad Global donde Crecen las Habilidades",
+      desc: "La confianza digital nace de la práctica, no de la jerga. Kyrios adapta la orientación a tu experiencia, idioma y objetivos.",
+      foundedTitle: "Creado por Visionarios", foundedDesc: "Kyrios fue creado por educadores, tecnólogos e investigadores de IA que creen en un aprendizaje claro, adaptable y práctico.",
+      philosophyTitle: "Habilidades Digitales sin Fronteras", philosophyDesc: "Ya sea que aprendas desarrollo web en Accra, análisis de datos en Hanói o marketing digital en São Paulo, nuestra IA se siente como un mentor local.",
+      button: "Explorar Habilidades Digitales",
     },
     missionVision: {
-      missionLabel: "Nuestra Misión",
-      missionTitle: "Universalizar la Maestría Matemática",
-      missionDesc: "Brindar a cada individuo las herramientas impulsadas por IA y el marco lógico necesarios para destacar en STEM.",
-      visionLabel: "Nuestra Vision",
-      visionTitle: "Un Mundo Resuelto por la Lógica",
-      visionDesc: "Construir un futuro donde la innovación científica solo esté limitada por la imaginación, no por la educación local.",
+      missionLabel: "Nuestra Misión", missionTitle: "Universalizar las Habilidades Digitales", missionDesc: "Ofrecer a cada persona rutas prácticas con IA para aprender, crear y participar con confianza en la economía digital.",
+      visionLabel: "Nuestra Visión", visionTitle: "Un Mundo con Confianza Digital", visionDesc: "Construir un futuro donde el idioma, la ubicación y la experiencia previa nunca limiten el acceso a la tecnología.",
     },
     founders: {
-      sectionTitle: "Conoce a las Mentes",
-      sectionSubtitle: "Los ingenieros detrás de la IA que está redefiniendo cómo el mundo calcula.",
-      storyLabel: "Nuestra Evolución",
-      storyTitle: "De Redes Neuronales a la Intuición Matemática",
-      storyDesc: "Fundada por expertos en lógica computacional, Kyrios nació de la idea de que la IA puede dar guía matemática 1-a-1 personalizada.",
-      creatorsLabel: "Conoce a los Arquitectos",
-      quote: "Construimos Kyrios para ser el compañero cognitivo que deseábamos tener.",
-      foundersLabel: "Los Arquitectos",
-      foundersSublabel: "Pioneros de IA y Mates",
-      biography: "Al fusionar cómputo simbólico avanzado con modelos de lenguaje, nuestros fundadores crearon un sistema que enseña el 'por qué'.",
-      members: [
-        { name: "Donald Jackman", role: "Co-Fundador y Científico Jefe" },
-        { name: "Michael Brown", role: "Co-Fundador y Jefe de IA" }
-      ]
-    }
-  }
+      sectionTitle: "Conoce a las Mentes", sectionSubtitle: "Los educadores e ingenieros que hacen más accesible el aprendizaje digital.",
+      storyLabel: "Nuestra Evolución", storyTitle: "De la Investigación en IA al Aprendizaje Práctico", storyDesc: "Kyrios nació de una idea sencilla: la IA puede ofrecer orientación personalizada en habilidades digitales a gran escala.",
+      creatorsLabel: "Conoce a los Arquitectos", quote: "Creamos Kyrios para que las oportunidades digitales no dependan del idioma, la ubicación ni la experiencia previa.",
+      foundersLabel: "Los Arquitectos", foundersSublabel: "Pioneros de IA y Aprendizaje", biography: "Al combinar diseño educativo e IA moderna, nuestros fundadores crearon un sistema que ayuda a comprender, practicar y crear.",
+      members: [{ name: "Donald Jackman", role: "Co-Fundador y Científico Jefe" }, { name: "Michael Brown", role: "Co-Fundador y Jefe de IA" }],
+    },
+  },
 };

@@ -11,13 +11,13 @@ export const commonDict = {
       },
       
       footer: {
-          mission: "Connecting voices across 190+ countries. Our mission is to make English accessible to everyone, everywhere, regardless of their native tongue.",
+          mission: "Helping people everywhere build practical digital skills in the language they understand best.",
           changeLang: "Change Language",
           contactBtn: "Contact Us",
           sections: [
-              { title: "Learning", links: ["All Courses", "1-on-1 Coaching", "Speaking Clubs", "Business English"] },
-              { title: "Resources", links: ["Free Dictionary", "Grammar Guide", "Study Abroad", "Success Stories"] },
-              { title: "Company", links: ["About Us", "Careers", "Tutor Login", "Press Kit"] },
+              { title: "Learning", links: ["All Courses", "Learning Paths", "Projects", "Certificates"] },
+              { title: "Resources", links: ["Skill Guides", "Career Support", "Community", "Success Stories"] },
+              { title: "Company", links: ["About Us", "Careers", "Mentor Login", "Press Kit"] },
               { title: "Blogs", links: ["Learning News", "Tips & Tricks", "Updates", "Events"] }
           ],
           rights: "All rights reserved.",
@@ -36,13 +36,13 @@ export const commonDict = {
       },
      
       footer: {
-          mission: "Connecter les voix à travers plus de 190 pays. Notre mission est de rendre l'anglais accessible à tous, partout.",
+          mission: "Aider chacun à développer des compétences numériques pratiques dans la langue qu’il comprend le mieux.",
           changeLang: "Changer de langue",
           contactBtn: "Contactez-nous",
           sections: [
-              { title: "Apprentissage", links: ["Tous les cours", "Coaching 1-sur-1", "Clubs de conversation", "Anglais des affaires"] },
-              { title: "Ressources", links: ["Dictionnaire gratuit", "Guide de grammaire", "Études à l'étranger", "Succès"] },
-              { title: "Entreprise", links: ["À propos", "Carrières", "Connexion tuteur", "Presse"] },
+              { title: "Apprentissage", links: ["Tous les cours", "Parcours", "Projets", "Certificats"] },
+              { title: "Ressources", links: ["Guides pratiques", "Aide carrière", "Communauté", "Réussites"] },
+              { title: "Entreprise", links: ["À propos", "Carrières", "Connexion mentor", "Presse"] },
               { title: "Blogs", links: ["Actualités", "Conseils", "Mises à jour", "Événements"] }
           ],
           rights: "Tous droits réservés.",
@@ -61,13 +61,13 @@ export const commonDict = {
       },
     
       footer: {
-          mission: "Conectando voces en más de 190 países. Nuestra misión es hacer que el inglés sea accesible para todos.",
+          mission: "Ayudamos a personas de todo el mundo a desarrollar habilidades digitales prácticas en el idioma que mejor comprenden.",
           changeLang: "Cambiar idioma",
           contactBtn: "Contáctanos",
           sections: [
-              { title: "Aprendizaje", links: ["Cursos", "Coaching 1-a-1", "Clubes", "Inglés de negocios"] },
-              { title: "Recursos", links: ["Diccionario", "Guía", "Estudiar fuera", "Historias"] },
-              { title: "Compañía", links: ["Sobre nosotros", "Carreras", "Acceso", "Prensa"] },
+              { title: "Aprendizaje", links: ["Cursos", "Rutas de aprendizaje", "Proyectos", "Certificados"] },
+              { title: "Recursos", links: ["Guías prácticas", "Apoyo profesional", "Comunidad", "Historias"] },
+              { title: "Compañía", links: ["Sobre nosotros", "Carreras", "Acceso de mentores", "Prensa"] },
               { title: "Blogs", links: ["Noticias", "Consejos", "Actualizaciones", "Eventos"] }
           ],
           rights: "Todos los derechos reservados.",

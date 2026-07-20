@@ -12,6 +12,7 @@ export const homeDict = {
       },
     },
     aboutSection: {
+      eyebrow: "About Kyrios",
       title: "Learning that actually",
       titleAccent: "works for you.",
       desc: "No fluff. No confusing jargon. Just clear, hands-on learning with an AI mentor that adapts to your level and language.",
@@ -84,6 +85,7 @@ export const homeDict = {
       },
     },
     aboutSection: {
+      eyebrow: "À Propos de Kyrios",
       title: "Un apprentissage qui",
       titleAccent: "vous ressemble.",
       desc: "Sans blabla. Sans jargon. Un apprentissage clair et pratique avec un mentor IA qui s'adapte à vous.",
@@ -144,6 +146,7 @@ export const homeDict = {
       },
     },
     aboutSection: {
+      eyebrow: "Sobre Kyrios",
       title: "Aprendizaje que",
       titleAccent: "sí funciona.",
       desc: "Sin rodeos. Sin jerga. Aprendizaje claro y práctico con un mentor IA que se adapta a ti.",

@@ -4,6 +4,10 @@ import { aboutDict } from './about';
 import { contactDict } from './contact';
 import { coursesDict } from './courses';
 import { faqDict } from './faqs';
+import { paymentsDict } from './payments';
+import { notificationsDict } from './notifications';
+import { authDict } from './auth';
+import { learnerDict } from './learner';
 
 export const dict = {
   en: {
@@ -14,6 +18,10 @@ export const dict = {
       contact: contactDict.en,
       courses: coursesDict.en,
       faqs: faqDict.en,
+      payments: paymentsDict.en,
+      notifications: notificationsDict.en,
+      auth: authDict.en,
+      learner: learnerDict.en,
 
 
     }
@@ -26,6 +34,10 @@ export const dict = {
       contact: contactDict.fr,
       courses: coursesDict.fr,
       faqs: faqDict.fr,
+      payments: paymentsDict.fr,
+      notifications: notificationsDict.fr,
+      auth: authDict.fr,
+      learner: learnerDict.fr,
     }
   },
   es: {
@@ -36,6 +48,10 @@ export const dict = {
       contact: contactDict.es,
       courses: coursesDict.es,
       faqs: faqDict.es,
+      payments: paymentsDict.es,
+      notifications: notificationsDict.es,
+      auth: authDict.es,
+      learner: learnerDict.es,
     }
   }
 };

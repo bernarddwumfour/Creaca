@@ -478,17 +478,18 @@ export default function PackagesManagement() {
                                         <h3 className="font-black text-xl tracking-tight mb-1">{pkg.name}</h3>
                                         {pkg.badge_text && (
                                             <Badge variant="outline" className="mb-2 text-[9px] font-black uppercase tracking-widest">
+                                                {pkg.badge_text}
                                             </Badge>
                                         )}
                                         <p className="text-sm text-zinc-500 line-clamp-2 mb-4">{pkg.description}</p>
                                     </div>
 
-                                    {/* <Badge className={`px-3 py-1 rounded-full text-[8px] font-black uppercase tracking-widest
+                                    <Badge className={`px-3 py-1 rounded-full text-[8px] font-black uppercase tracking-widest
                                         ${pkg.status === 'active' ? 'bg-emerald-500/10 text-emerald-600' :
                                             pkg.status === 'inactive' ? 'bg-rose-500/10 text-rose-600' :
                                                 'bg-amber-500/10 text-amber-600'}`}>
                                         {pkg.status === 'active' ? "Active" : "Inactive"}
-                                    </Badge> */}
+                                    </Badge>
                                 </div>
 
                                 <div className="space-y-2 mb-4">
@@ -629,12 +630,12 @@ export default function PackagesManagement() {
                                     <p className="text-sm text-zinc-500 mt-1">{selectedPackageForDetails.description}</p>
                                 </div>
                                 <div className="text-right">
-                                    {/* <Badge className={`px-3 py-1.5 text-xs font-black uppercase tracking-widest
+                                    <Badge className={`px-3 py-1.5 text-xs font-black uppercase tracking-widest
                                         ${selectedPackageForDetails.status === 'active' ? 'bg-emerald-500/10 text-emerald-600' :
                                             selectedPackageForDetails.status === 'inactive' ? 'bg-rose-500/10 text-rose-600' :
                                                 'bg-amber-500/10 text-amber-600'}`}>
                                         {selectedPackageForDetails.status === 'active' ? "Active" : "Inactive"}
-                                    </Badge> */}
+                                    </Badge>
                                     {selectedPackageForDetails.badge_text && (
                                         <Badge variant="outline" className="mt-2 ml-2 text-[9px] font-black uppercase tracking-widest">
                                             {selectedPackageForDetails.badge_text}

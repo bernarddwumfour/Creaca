@@ -35,8 +35,8 @@ export default async function Page({ params }: PageProps) {
                 <Header lang={lang} t={dictionary.nav} />
                 <main className="min-h-screen bg-white dark:bg-[#09090b] flex items-center justify-center">
                     <div className="text-center">
-                        <h1 className="text-2xl font-bold mb-4">Course not found</h1>
-                        <p className="text-zinc-500">The course you're looking for doesn't exist or has been removed.</p>
+                        <h1 className="text-2xl font-bold mb-4">{dictionary.pages.learner.courses.notFound}</h1>
+                        <p className="text-zinc-500">{dictionary.pages.learner.courses.notFoundBody}</p>
                     </div>
                 </main>
                 <Footer lang={lang} t={dictionary.footer} />

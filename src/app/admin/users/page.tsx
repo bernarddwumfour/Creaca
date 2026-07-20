@@ -9,8 +9,8 @@
 // export default function RegistryTestPage() {
 //     const TEST_REGISTRY = [
 //         { id: "USR-001", name: "Bernard Nyanteh", status: "Active", role: "Super Admin", focus: "Neural Networks", access: "Full" },
-//         { id: "USR-002", name: "Alice Dupont", status: "Idle", role: "Student", focus: "Linear Algebra", access: "Limited" },
-//         { id: "USR-003", name: "Carlos Mendez", status: "Flagged", role: "Tutor", focus: "Calculus III", access: "Full" },
+//         { id: "USR-002", name: "Alice Dupont", status: "Idle", role: "Student", focus: "Data Analysis", access: "Limited" },
+//         { id: "USR-003", name: "Carlos Mendez", status: "Flagged", role: "Tutor", focus: "Web Development", access: "Full" },
 //         { id: "USR-004", name: "Kofi Mensah", status: "Banned", role: "Student", focus: "Data Structures", access: "None" },
 //         { id: "USR-005", name: "Sarah Chen", status: "Active", role: "Faculty", focus: "Quantum Computing", access: "Full" },
 //     ];
@@ -102,8 +102,8 @@
 //                     focus: {
 //                         "Neural Networks": <Layers size={14} className="text-orange-500" />,
 //                         "Quantum Computing": <FlaskConical size={14} className="text-violet-500" />,
-//                         "Calculus III": <Sigma size={14} className="text-blue-500" />,
-//                         "Linear Algebra": <Binary size={14} className="text-zinc-500" />,
+//                         "Web Development": <Sigma size={14} className="text-blue-500" />,
+//                         "Data Analysis": <Binary size={14} className="text-zinc-500" />,
 //                         "Data Structures": <HardDrive size={14} className="text-emerald-500" />
 //                     }
 //                 }}

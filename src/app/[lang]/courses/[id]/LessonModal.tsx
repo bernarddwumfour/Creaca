@@ -173,8 +173,7 @@ export default function LessonModal({ moduleData, isOpen, onClose }: LessonModal
                         <div>
                             <h3 className="text-base font-bold mb-2">Welcome to this Lesson!</h3>
                             <p className="text-sm text-zinc-600 dark:text-zinc-400 leading-relaxed">
-                                In this comprehensive lesson, we'll explore the fundamental concept of limits - 
-                                the foundation of calculus and essential for understanding how AI models learn and optimize.
+                                In this practical lesson, you’ll explore a core digital skill through clear explanations, guided examples, and hands-on practice.
                             </p>
                         </div>
                     </div>

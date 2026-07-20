@@ -30,8 +30,9 @@ declare global {
 
 const loginDict = {
   en: {
+    brandTagline: "Skills for the Digital Future",
     title: "Welcome Back",
-    subtitle: "Log in to continue your AI-guided math journey.",
+    subtitle: "Log in to continue building digital skills with AI guidance.",
     success: "Account created! You can now log in.",
     email: "Email Address",
     password: "Password",
@@ -57,6 +58,7 @@ const loginDict = {
     verifyLater: "Verify Later"
   },
   fr: {
+    brandTagline: "Des Compétences pour l’Avenir Numérique",
     title: "Bon retour",
     subtitle: "Connectez-vous pour continuer votre parcours.",
     success: "Compte créé ! Vous pouvez maintenant vous connecter.",
@@ -84,6 +86,7 @@ const loginDict = {
     verifyLater: "Vérifier plus tard"
   },
   es: {
+    brandTagline: "Habilidades para el Futuro Digital",
     title: "Bienvenido",
     subtitle: "Inicia sesión para continuar tu camino.",
     success: "¡Cuenta creada! Ahora puedes iniciar sesión.",
@@ -118,7 +121,7 @@ const loginSchema = z.object({
 });
 
 const mfaSchema = z.object({
-  code: z.string().min(6, "Code must be 6 digits").max(6, "Code must be 6 digits"),
+  code: z.string().min(6, "Code is too short").max(8, "Code is too long"),
 });
 
 function LoginForm({ lang, t }: { lang: Lang, t: any }) {
@@ -131,6 +134,7 @@ function LoginForm({ lang, t }: { lang: Lang, t: any }) {
   const [isMfaLoading, setIsMfaLoading] = useState(false);
   const [resendLoading, setResendLoading] = useState(false);
   const [mfaError, setMfaError] = useState<string | null>(null);
+  const [usingBackupCode, setUsingBackupCode] = useState(false);
   const [scriptLoaded, setScriptLoaded] = useState(false);
 
   // Email verification states
@@ -274,7 +278,7 @@ function LoginForm({ lang, t }: { lang: Lang, t: any }) {
     setResendSuccess(false);
     setResendError('');
     try {
-      await api.post(ENDPOINTS.AUTH.RESEND_VERIFICATION, { email: unverifiedEmail });
+      await api.post(ENDPOINTS.AUTH.RESEND_VERIFICATION);
       setResendSuccess(true);
       setTimeout(() => setResendSuccess(false), 5000);
     } catch (error: any) {
@@ -434,14 +438,15 @@ function LoginForm({ lang, t }: { lang: Lang, t: any }) {
               name="code"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel className="text-[10px] font-bold uppercase text-zinc-500 tracking-widest">{t.mfaCode}</FormLabel>
+                  <FormLabel className="text-[10px] font-bold uppercase text-zinc-500 tracking-widest">{usingBackupCode ? 'Backup code' : t.mfaCode}</FormLabel>
                   <FormControl>
-                    <Input {...field} placeholder="000000" className="h-12 text-center text-lg font-mono tracking-widest" maxLength={6} autoFocus />
+                    <Input {...field} placeholder={usingBackupCode ? 'XXXXXXXX' : '000000'} className="h-12 text-center text-lg font-mono tracking-widest" maxLength={usingBackupCode ? 8 : 6} autoFocus />
                   </FormControl>
                   <FormMessage className="text-[10px]" />
                 </FormItem>
               )}
             />
+            {mfaMethod === 'app' && <Button type="button" variant="link" className="h-auto p-0 text-xs" onClick={() => { setUsingBackupCode(value => !value); mfaForm.reset({code: ''}); }}>{usingBackupCode ? 'Use authenticator code' : 'Use a backup code instead'}</Button>}
             {mfaMethod === 'email' && (
               <div className="flex justify-end">
                 <Button type="button" variant="ghost" size="sm" onClick={async () => await sendMfaCode(mfaUserId!)} disabled={resendLoading} className="text-xs">
@@ -570,7 +575,7 @@ export default function LoginPage({ params }: { params: Promise<{ lang: Lang }> 
         </div>
         <div className="relative z-10 text-center text-white space-y-2">
           <h1 className="text-8xl font-black tracking-tighter">KYRIOS<span className="text-zinc-900">.</span></h1>
-          <p className="text-white/90 font-medium text-lg tracking-widest uppercase">Intelligence in Mathematics</p>
+          <p className="text-white/90 font-medium text-lg tracking-widest uppercase">{t.brandTagline}</p>
         </div>
       </div>
 

@@ -24,8 +24,22 @@ import {
     MousePointerClick
 } from 'lucide-react';
 import { Badge } from "@/components/ui/badge";
+import { useQuery } from '@tanstack/react-query';
+import api from '@/lib/axios';
+import { ENDPOINTS } from '@/lib/endpoints';
 
 export default function AdminDashboard() {
+    const { data } = useQuery({ queryKey: ['admin-stats'], queryFn: async () => (await api.get(ENDPOINTS.PLATFORM.ADMIN_STATS)).data.data });
+    const stats = [
+        { label: 'Total Users', val: data?.total_users ?? '—', icon: Users, color: 'text-blue-500' },
+        { label: 'Active Courses', val: data?.active_courses ?? '—', icon: Layers, color: 'text-emerald-500' },
+        { label: 'Active Subjects', val: data?.active_subjects ?? '—', icon: BookOpen, color: 'text-orange-500' },
+        { label: 'Subscriptions', val: data?.active_subscriptions ?? '—', icon: Activity, color: 'text-purple-500' },
+        { label: 'Purchases', val: data?.course_purchases ?? '—', icon: MousePointerClick, color: 'text-indigo-500' },
+        { label: 'Revenue (GHS)', val: data?.total_revenue ?? '—', icon: BarChart3, color: 'text-amber-500' },
+        { label: 'Completion', val: data ? `${data.completion_rate}%` : '—', icon: BrainCircuit, color: 'text-sky-500' },
+        { label: 'Subjects', val: data?.total_subjects ?? '—', icon: Globe, color: 'text-rose-500' },
+    ];
     return (
         <div className="space-y-6">
             {/* Standardized Admin Header - Matching Kyrios Style */}
@@ -61,16 +75,7 @@ export default function AdminDashboard() {
 
             {/* Stats Grid - Matching your dashboard style */}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                {[
-                    { label: 'Total Students', val: '4,842', icon: Users, color: 'text-blue-500' },
-                    { label: 'Avg. Accuracy', val: '78.5%', icon: BrainCircuit, color: 'text-orange-500' },
-                    { label: 'Active Modules', val: '156', icon: Layers, color: 'text-emerald-500' },
-                    { label: 'Server Load', val: '24%', icon: Activity, color: 'text-purple-500' },
-                    { label: 'Avg. Session', val: '42m', icon: Clock, color: 'text-amber-500' },
-                    { label: 'Security Alerts', val: '00', icon: ShieldAlert, color: 'text-rose-500' },
-                    { label: 'Live Users', val: '1.2k', icon: Globe, color: 'text-sky-500' },
-                    { label: 'Conversion', val: '12.4%', icon: MousePointerClick, color: 'text-indigo-500' },
-                ].map((stat, i) => (
+                {stats.map((stat, i) => (
                     <Card
                         key={i}
                         className="shadow-none  bg-white dark:bg-zinc-900/80 border border-zinc-200 dark:border-zinc-800 group hover:-translate-y-0.5 transition-all py-2"
@@ -106,7 +111,7 @@ export default function AdminDashboard() {
                         <div className="relative p-8 rounded-3xl border border-zinc-100 dark:border-zinc-800 bg-white dark:bg-[#111114] group hover:border-primary/30 transition-all">
                             <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 mb-8">
                                 <div>
-                                    <h3 className="text-xl font-black tracking-tight">Advanced Calculus II Update</h3>
+                                    <h3 className="text-xl font-black tracking-tight">Web Development Path Update</h3>
                                     <p className="text-sm text-zinc-500 mt-1">4 JSON Modules Pending Review</p>
                                 </div>
                                 <span className="text-lg font-black text-orange-600 tracking-tight">URGENT</span>
@@ -118,7 +123,7 @@ export default function AdminDashboard() {
                                 <div className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">
                                     Team: <span className="text-slate-900 dark:text-white font-black">Content A</span>
                                 </div>
-                                <Link href="/admin/curriculum/modules">
+                                <Link href="/admin/subjects/modules">
                                     <Button className="rounded-2xl font-black uppercase tracking-widest text-[10px] h-11 px-8 bg-zinc-900 dark:bg-zinc-100 dark:text-zinc-900 hover:bg-primary transition-all">
                                         Review Schema <ArrowRight size={16} className="ml-2" />
                                     </Button>

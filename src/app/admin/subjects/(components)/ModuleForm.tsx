@@ -30,11 +30,11 @@ const moduleSchema = z.object({
 
 // Mock options for the Selects
 const TOPIC_OPTIONS = [
-    { label: "Linear Algebra", value: "Linear Algebra" },
-    { label: "Calculus", value: "Calculus" },
-    { label: "Probability", value: "Probability" },
-    { label: "Discrete Math", value: "Discrete Math" },
-    { label: "Differential Equations", value: "Differential Equations" },
+    { label: "Web Development", value: "Web Development" },
+    { label: "Data Analysis", value: "Data Analysis" },
+    { label: "Digital Marketing", value: "Digital Marketing" },
+    { label: "Cybersecurity", value: "Cybersecurity" },
+    { label: "Product Design", value: "Product Design" },
 ];
 
 const DIFFICULTY_OPTIONS = [

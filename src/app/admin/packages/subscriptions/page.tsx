@@ -121,7 +121,7 @@ const STATUS_OPTIONS = [
 
 export default function SubscriptionsManagement() {
     const queryClient = useQueryClient();
-    const [activeModal, setActiveModal] = useState<'UPDATE' | null>(null);
+    const [activeModal, setActiveModal] = useState<'UPDATE' | 'DETAILS' | null>(null);
     const [selectedSubscription, setSelectedSubscription] = useState<Subscription | null>(null);
     const [viewMode, setViewMode] = useState<'list' | 'table'>('list');
     const [searchQuery, setSearchQuery] = useState('');
@@ -596,7 +596,7 @@ export default function SubscriptionsManagement() {
                                                         <Pencil size={16} /> Update Subscription
                                                     </DropdownMenuItem>
 
-                                                    <DropdownMenuItem className="flex items-center gap-3 p-3 rounded-xl cursor-pointer hover:bg-primary/10 hover:text-primary font-bold text-xs">
+                                                    <DropdownMenuItem onSelect={() => { setSelectedSubscription(subscription); setActiveModal('DETAILS'); }} className="flex items-center gap-3 p-3 rounded-xl cursor-pointer hover:bg-primary/10 hover:text-primary font-bold text-xs">
                                                         <Eye size={16} /> View Details
                                                     </DropdownMenuItem>
                                                 </DropdownMenuContent>
@@ -659,7 +659,8 @@ export default function SubscriptionsManagement() {
                             label: 'View Details',
                             icon: <Eye size={14} />,
                             onClick: (sub: Subscription) => {
-                                toast.info(`Viewing details for ${sub.user?.username}'s subscription`);
+                                setSelectedSubscription(sub);
+                                setActiveModal('DETAILS');
                             }
                         }
                     ]}
@@ -707,6 +708,9 @@ export default function SubscriptionsManagement() {
                         }}
                     />
                 )}
+            </CustomDialog>
+            <CustomDialog title="Subscription details" description="Complete subscription metadata" open={activeModal === 'DETAILS'} onOpenChange={() => { setActiveModal(null); setSelectedSubscription(null); }}>
+                {selectedSubscription && <div className="grid grid-cols-2 gap-4 py-4 text-sm"><div><p className="text-zinc-400">User</p><p className="font-bold">{selectedSubscription.user?.username}</p></div><div><p className="text-zinc-400">Package</p><p className="font-bold">{selectedSubscription.package?.name}</p></div><div><p className="text-zinc-400">Status</p><p className="font-bold capitalize">{selectedSubscription.status}</p></div><div><p className="text-zinc-400">Auto renew</p><p>{selectedSubscription.auto_renew ? 'Yes' : 'No'}</p></div><div><p className="text-zinc-400">Started</p><p>{new Date(selectedSubscription.start_date).toLocaleString()}</p></div><div><p className="text-zinc-400">Ends</p><p>{selectedSubscription.end_date ? new Date(selectedSubscription.end_date).toLocaleString() : 'Never'}</p></div></div>}
             </CustomDialog>
         </div>
     );

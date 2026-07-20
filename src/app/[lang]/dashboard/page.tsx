@@ -26,10 +26,10 @@ export default async function DashboardPage({ params }: PageProps) {
                     <div className="mx-auto space-y-8">
                         <div className='pt-10'>
                             <h1 className="text-3xl md:text-3xl font-black tracking-tighter">
-                                Student <span className="text-primary">Workspace.</span>
+                                {dictionary.pages.learner.dashboard.title} <span className="text-primary">{dictionary.pages.learner.dashboard.titleAccent}</span>
                             </h1>
                             <p className="text-zinc-500 dark:text-zinc-400 font-medium mt-2">
-                                Track your progress and continue your mathematical journey.
+                                {dictionary.pages.learner.dashboard.subtitle}
                             </p>
                         </div>
 

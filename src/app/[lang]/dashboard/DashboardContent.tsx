@@ -26,6 +26,8 @@ import api from '@/lib/axios';
 import { ENDPOINTS } from '@/lib/endpoints';
 import Link from 'next/link';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
+import { learnerDict } from '@/lib/dictionary/learner';
+import { Lang } from '@/lib/dictionary/dictionary';
 
 // Types
 interface Course {
@@ -91,7 +93,7 @@ interface EnrolledCourse {
 }
 
 // Update the PurchasedCourseCard component to include modules accordion
-function PurchasedCourseCard({ purchase, progress, onDeactivate }: { purchase: PurchasedCourse; progress: number; onDeactivate: () => void }) {
+function PurchasedCourseCard({ purchase, progress, onDeactivate, lang }: { purchase: PurchasedCourse; progress: number; onDeactivate: () => void; lang: string }) {
     const isCompleted = progress === 100;
 
     // Dummy modules data for purchased courses
@@ -182,7 +184,7 @@ function PurchasedCourseCard({ purchase, progress, onDeactivate }: { purchase: P
 
                     <div className="flex gap-3 mt-4">
                         <Button asChild className="flex-1" variant="outline">
-                            <Link href={`/courses/${purchase.course.slug}/learn`}>
+                            <Link href={`/${lang}/courses/${purchase.course.slug}`}>
                                 {isCompleted ? "Review Course" : "Continue Learning"}
                             </Link>
                         </Button>
@@ -197,7 +199,7 @@ function PurchasedCourseCard({ purchase, progress, onDeactivate }: { purchase: P
 }
 
 // Update the SubscriptionCourseCard component to include modules accordion
-function SubscriptionCourseCard({ course, progress }: { course: EnrolledCourse; progress: number }) {
+function SubscriptionCourseCard({ course, progress, lang }: { course: EnrolledCourse; progress: number; lang: string }) {
     const isCompleted = progress === 100;
 
     // Dummy modules data for subscription courses (using the existing modules from course object or generating)
@@ -290,7 +292,7 @@ function SubscriptionCourseCard({ course, progress }: { course: EnrolledCourse; 
 
                     <div className="flex gap-3 mt-4">
                         <Button asChild className="flex-1" variant="outline">
-                            <Link href={`/courses/${course.slug}/learn`}>
+                            <Link href={`/${lang}/courses/${course.slug}`}>
                                 {isCompleted ? "Review Course" : "Continue Learning"}
                             </Link>
                         </Button>
@@ -308,6 +310,7 @@ function SubscriptionCourseCard({ course, progress }: { course: EnrolledCourse; 
 
 
 export default function DashboardContent({ lang }: { lang: string }) {
+    const learner = learnerDict[(lang in learnerDict ? lang : 'en') as Lang].dashboard;
     const { user } = useAuth();
     const queryClient = useQueryClient();
     const [isCollapsed, setIsCollapsed] = useState(false);
@@ -450,81 +453,98 @@ export default function DashboardContent({ lang }: { lang: string }) {
 
     return (
         <div className="w-full mx-auto">
-            <style jsx global>{`
-                .gradient-tab[data-state=active] {
-                    background: linear-gradient(135deg, #ea580c 0%, #f97316 100%) !important;
-                    color: white !important;
-                }
-            `}</style>
-
             <Tabs value={activeTab} onValueChange={setActiveTab} className="flex flex-col md:!flex-row gap-8 items-start">
 
-                {/* NAVIGATION SIDEBAR */}
+                {/* NAVIGATION — horizontal top tab bar below `md` (icon-only, selected tab
+                    gets its label back), vertical collapsible sidebar at `md` and up
+                    (unchanged desktop behavior, driven by isCollapsed). */}
                 <div className={cn(
-                    "shrink-0 transition-all duration-500 ease-in-out relative border-r border-zinc-100 dark:border-zinc-800/50",
-                    isCollapsed ? "w-14" : "w-full md:w-64"
+                    "shrink-0 transition-all duration-500 ease-in-out relative w-full",
+                    "border-b border-zinc-100 dark:border-zinc-800/50 md:border-b-0 md:border-r",
+                    isCollapsed ? "md:w-14" : "md:w-64"
                 )}>
                     <button
                         onClick={() => setIsCollapsed(!isCollapsed)}
-                        className="absolute -right-3 top-10 z-50 w-6 h-6 bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-full flex items-center justify-center text-zinc-400 hover:text-orange-600 transition-all shadow-sm active:scale-90"
+                        className="hidden md:flex absolute -right-3 top-10 z-50 w-6 h-6 bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-full items-center justify-center text-zinc-400 hover:text-orange-600 transition-all shadow-sm active:scale-90"
                     >
                         <ChevronRight className={cn("transition-transform duration-500", !isCollapsed && "rotate-180")} size={12} />
                     </button>
 
                     <TabsList className={cn(
-                        "flex flex-col h-auto w-full bg-transparent space-y-1 p-0 justify-start items-start transition-all duration-500",
-                        isCollapsed ? "items-center" : "items-start"
+                        "flex flex-row md:flex-col h-auto w-full bg-muted rounded-lg gap-1 md:space-y-1 md:gap-0 p-1",
+                        "justify-between md:justify-start items-center md:items-start transition-all duration-500",
+                        isCollapsed ? "md:items-center" : "md:items-start"
                     )}>
-                        <div className={cn("px-4 py-2 mb-1 transition-opacity duration-300", isCollapsed ? "opacity-0 h-8" : "opacity-100")}>
+                        <div className={cn("hidden md:block px-4 py-2 mb-1 transition-opacity duration-300", isCollapsed ? "opacity-0 h-8" : "opacity-100")}>
                             {!isCollapsed && <p className="text-[10px] font-bold uppercase text-zinc-400 tracking-[0.2em] whitespace-nowrap">Learning</p>}
                         </div>
 
                         <TabsTrigger
                             value="overview"
                             className={cn(
-                                "gradient-tab w-full flex items-center px-4 font-bold text-xs uppercase tracking-wider rounded-xl transition-all data-[state=inactive]:hover:bg-zinc-100 dark:data-[state=inactive]:hover:bg-zinc-900",
-                                isCollapsed ? "justify-center py-6" : "justify-start gap-3 py-3"
+                                "flex-1 md:w-full md:flex-none flex items-center justify-center px-2 md:px-4 py-2.5 md:py-3 font-bold text-xs uppercase tracking-wider rounded-md transition-all text-foreground/60 hover:text-foreground data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-sm dark:data-[state=active]:bg-zinc-700",
+                                isCollapsed ? "md:justify-center md:py-6" : "md:justify-start md:gap-3"
                             )}
                         >
                             <LayoutDashboard size={16} className="shrink-0" />
-                            {!isCollapsed && <span className="truncate">Overview</span>}
+                            <span className={cn(
+                                "truncate",
+                                activeTab === 'overview' ? "ml-1.5 max-w-[8rem]" : "ml-0 max-w-0",
+                                "overflow-hidden transition-all duration-200",
+                                isCollapsed ? "md:ml-0 md:max-w-0" : "md:ml-3 md:max-w-none",
+                            )}>Overview</span>
                         </TabsTrigger>
 
                         <TabsTrigger
                             value="courses"
                             className={cn(
-                                "gradient-tab w-full flex items-center px-4 font-bold text-xs uppercase tracking-wider rounded-xl transition-all data-[state=inactive]:hover:bg-zinc-100 dark:data-[state=inactive]:hover:bg-zinc-900",
-                                isCollapsed ? "justify-center py-6" : "justify-start gap-3 py-3"
+                                "flex-1 md:w-full md:flex-none flex items-center justify-center px-2 md:px-4 py-2.5 md:py-3 font-bold text-xs uppercase tracking-wider rounded-md transition-all text-foreground/60 hover:text-foreground data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-sm dark:data-[state=active]:bg-zinc-700",
+                                isCollapsed ? "md:justify-center md:py-6" : "md:justify-start md:gap-3"
                             )}
                         >
                             <BookOpen size={16} className="shrink-0" />
-                            {!isCollapsed && <span className="truncate">My Courses</span>}
+                            <span className={cn(
+                                "truncate",
+                                activeTab === 'courses' ? "ml-1.5 max-w-[8rem]" : "ml-0 max-w-0",
+                                "overflow-hidden transition-all duration-200",
+                                isCollapsed ? "md:ml-0 md:max-w-0" : "md:ml-3 md:max-w-none",
+                            )}>My Courses</span>
                         </TabsTrigger>
 
-                        <div className={cn("px-4 py-2 mt-6 mb-1 transition-opacity duration-300", isCollapsed ? "opacity-0 h-8" : "opacity-100")}>
+                        <div className={cn("hidden md:block px-4 py-2 mt-6 mb-1 transition-opacity duration-300", isCollapsed ? "opacity-0 h-8" : "opacity-100")}>
                             {!isCollapsed && <p className="text-[10px] font-bold uppercase text-zinc-400 tracking-[0.2em] whitespace-nowrap">Progress</p>}
                         </div>
 
                         <TabsTrigger
                             value="stats"
                             className={cn(
-                                "gradient-tab w-full flex items-center px-4 font-bold text-xs uppercase tracking-wider rounded-xl transition-all data-[state=inactive]:hover:bg-zinc-100 dark:data-[state=inactive]:hover:bg-zinc-900",
-                                isCollapsed ? "justify-center py-6" : "justify-start gap-3 py-3"
+                                "flex-1 md:w-full md:flex-none flex items-center justify-center px-2 md:px-4 py-2.5 md:py-3 font-bold text-xs uppercase tracking-wider rounded-md transition-all text-foreground/60 hover:text-foreground data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-sm dark:data-[state=active]:bg-zinc-700",
+                                isCollapsed ? "md:justify-center md:py-6" : "md:justify-start md:gap-3"
                             )}
                         >
                             <Target size={16} className="shrink-0" />
-                            {!isCollapsed && <span className="truncate">Performance</span>}
+                            <span className={cn(
+                                "truncate",
+                                activeTab === 'stats' ? "ml-1.5 max-w-[8rem]" : "ml-0 max-w-0",
+                                "overflow-hidden transition-all duration-200",
+                                isCollapsed ? "md:ml-0 md:max-w-0" : "md:ml-3 md:max-w-none",
+                            )}>Performance</span>
                         </TabsTrigger>
 
                         <TabsTrigger
                             value="achievements"
                             className={cn(
-                                "gradient-tab w-full flex items-center px-4 font-bold text-xs uppercase tracking-wider rounded-xl transition-all data-[state=inactive]:hover:bg-zinc-100 dark:data-[state=inactive]:hover:bg-zinc-900",
-                                isCollapsed ? "justify-center py-6" : "justify-start gap-3 py-3"
+                                "flex-1 md:w-full md:flex-none flex items-center justify-center px-2 md:px-4 py-2.5 md:py-3 font-bold text-xs uppercase tracking-wider rounded-md transition-all text-foreground/60 hover:text-foreground data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-sm dark:data-[state=active]:bg-zinc-700",
+                                isCollapsed ? "md:justify-center md:py-6" : "md:justify-start md:gap-3"
                             )}
                         >
                             <Trophy size={16} className="shrink-0" />
-                            {!isCollapsed && <span className="truncate">Achievements</span>}
+                            <span className={cn(
+                                "truncate",
+                                activeTab === 'achievements' ? "ml-1.5 max-w-[8rem]" : "ml-0 max-w-0",
+                                "overflow-hidden transition-all duration-200",
+                                isCollapsed ? "md:ml-0 md:max-w-0" : "md:ml-3 md:max-w-none",
+                            )}>Achievements</span>
                         </TabsTrigger>
                     </TabsList>
                 </div>
@@ -713,6 +733,7 @@ export default function DashboardContent({ lang }: { lang: string }) {
                                                             const courseProgress = purchase.course.progress;
                                                             return (
                                                                 <PurchasedCourseCard
+                                                                    lang={lang}
                                                                     key={purchase.id}
                                                                     purchase={purchase}
                                                                     progress={courseProgress || 0}
@@ -730,6 +751,7 @@ export default function DashboardContent({ lang }: { lang: string }) {
                                                 <div className="space-y-4">
                                                     {enrolledCourses.map((course: EnrolledCourse) => (
                                                         <SubscriptionCourseCard
+                                                            lang={lang}
                                                             key={course.id}
                                                             course={course}
                                                             progress={course.progress}
@@ -788,6 +810,7 @@ export default function DashboardContent({ lang }: { lang: string }) {
                                                         const courseProgress = purchase.course.progress
                                                         return (
                                                             <PurchasedCourseCard
+                                                                lang={lang}
                                                                 key={purchase.id}
                                                                 purchase={purchase}
                                                                 progress={courseProgress || 0}
@@ -843,6 +866,7 @@ export default function DashboardContent({ lang }: { lang: string }) {
                                                 <div className="space-y-4">
                                                     {enrolledCourses.map((course: EnrolledCourse) => (
                                                         <SubscriptionCourseCard
+                                                            lang={lang}
                                                             key={course.id}
                                                             course={course}
                                                             progress={course.progress}
@@ -866,7 +890,7 @@ export default function DashboardContent({ lang }: { lang: string }) {
                                     {(activePurchases.length > 0 || enrolledCourses.length > 0) && (
                                         <Button asChild variant="outline" className="w-full h-14 mt-8 transition-all rounded-2xl hover:scale-[1]">
                                             <Link href={`/${lang}/courses`}>
-                                                + Browse more mathematics courses
+                                                {learner.browseMore}
                                             </Link>
                                         </Button>
                                     )}
@@ -883,8 +907,8 @@ export default function DashboardContent({ lang }: { lang: string }) {
                                 <CardHeader className="border-b border-zinc-100 dark:border-zinc-800/50 pb-12">
                                     <div className="flex justify-between items-start">
                                         <div>
-                                            <CardTitle className="text-xl font-black tracking-tight">Intelligence Metrics</CardTitle>
-                                            <CardDescription className="text-zinc-500 font-medium">Detailed breakdown of your mathematical proficiency.</CardDescription>
+                                            <CardTitle className="text-xl font-black tracking-tight">{learner.metricsTitle}</CardTitle>
+                                            <CardDescription className="text-zinc-500 font-medium">{learner.metricsDescription}</CardDescription>
                                         </div>
                                         <Badge className="bg-blue-500/10 text-blue-600 border-none font-black text-[10px] tracking-widest px-3">ANALYTICS LIVE</Badge>
                                     </div>

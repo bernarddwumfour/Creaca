@@ -34,6 +34,7 @@ export const ENDPOINTS = {
         MFA_STATUS: `${API_VERSION}/accounts/mfa/status/`,
         MFA_VERIFY_LOGIN: `${API_VERSION}/accounts/mfa/verify-login/`,
         MFA_SEND_EMAIL_CODE: `${API_VERSION}/accounts/mfa/send-email-code/`,
+        MFA_REGENERATE_BACKUP_CODES: `${API_VERSION}/accounts/mfa/backup-codes/regenerate/`,
     },
     ADMIN: {
         USERS: `${API_VERSION}/accounts/admin/users/`,
@@ -64,6 +65,7 @@ export const ENDPOINTS = {
         MY_REGISTRATIONS: `${API_VERSION}/subjects/courses/registrations/me/`,
 
         MY_PURCHASES: `${API_VERSION}/subjects/courses/purchases/`,
+        INITIATE_PURCHASE: `${API_VERSION}/subjects/courses/purchases/initiate/`,
         PURCHASE_COURSE: `${API_VERSION}/subjects/courses/purchases/buy/`,
         DEACTIVATE_PURCHASE: `${API_VERSION}/subjects/courses/purchases/:id/deactivate/`,
         REACTIVATE_PURCHASE: `${API_VERSION}/subjects/courses/purchases/:id/reactivate/`,
@@ -87,8 +89,20 @@ export const ENDPOINTS = {
         SUBSCRIPTION_HISTORY: `${API_VERSION}/packages/subscriptions/history/`,
         CANCEL_SUBSCRIPTION: `${API_VERSION}/packages/subscriptions/cancel/`,
         SUBSCRIBE: `${API_VERSION}/packages/subscriptions/subscribe/`,
+        INITIATE_SUBSCRIPTION: `${API_VERSION}/packages/subscriptions/initiate/`,
 
-    }
+    },
+    PAYMENTS: {
+        VERIFY: `${API_VERSION}/payments/verify/`,
+    },
+    PLATFORM: {
+        ADMIN_STATS: `${API_VERSION}/payments/admin/stats/`,
+        ADMIN_LOGS: `${API_VERSION}/payments/admin/logs/`,
+        ADMIN_SETTINGS: `${API_VERSION}/payments/admin/settings/`,
+        NOTIFICATIONS: `${API_VERSION}/payments/notifications/`,
+        MARK_ALL_NOTIFICATIONS_READ: `${API_VERSION}/payments/notifications/mark-all-read/`,
+        MARK_NOTIFICATION_READ: `${API_VERSION}/payments/notifications/:id/read/`,
+    },
 } as const;
 
 export const PUBLIC_URLS = [

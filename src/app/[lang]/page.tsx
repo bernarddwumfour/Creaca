@@ -31,7 +31,7 @@ export default async function Home({ params }: PageProps) {
       <AboutCresca t={home.aboutSection} aboutSection={home.aboutSection} />
       <HowItWorks t={home.tutorials} />
       {/* <PricingCarousel /> */}
-      <PricingSection />
+      <PricingSection lang={lang} />
       <Testimonials t={home.testimonials} />
       <Footer lang={lang} t={t.footer} />
     </div>
@@ -150,7 +150,7 @@ function AboutCresca({ t, aboutSection }: { t: any, aboutSection: any }) {
       <div className="lg:container mx-auto px-6 md:px-12 relative z-10">
         <div className="flex flex-col md:flex-row justify-between items-end gap-8 mb-16">
           <div className="max-w-xl space-y-4">
-            <h2 className="text-primary font-bold uppercase tracking-[0.3em] text-xs">About Kyrios</h2>
+            <h2 className="text-primary font-bold uppercase tracking-[0.3em] text-xs">{t.eyebrow}</h2>
             <h3 className="text-3xl md:text-4xl font-black text-slate-900 dark:text-white tracking-tight leading-tight">
               {t.title} <span className="text-orange-600 relative inline-block">
                 {t.titleAccent}
@@ -242,4 +242,3 @@ function WhyChooseUs({ t }: { t: any }) {
     </div>
   );
 }
-

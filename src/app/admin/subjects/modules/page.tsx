@@ -31,8 +31,8 @@ import { ModuleForm } from '../(components)/ModuleForm';
 import LessonModal from '@/app/[lang]/courses/[id]/LessonModal';
 
 const DUMMY_MODULES = [
-    { id: 'M1', title: "Vector Spaces", category: "Algebra", lessonsCount: 12, status: "Published", difficulty: "Intermediate" },
-    { id: 'M2', title: "Limits and Continuity", category: "Calculus", lessonsCount: 8, status: "Draft", difficulty: "Beginner" },
+    { id: 'M1', title: "Responsive Layouts", category: "Web Development", lessonsCount: 12, status: "Published", difficulty: "Intermediate" },
+    { id: 'M2', title: "Data Cleaning Basics", category: "Data Analysis", lessonsCount: 8, status: "Draft", difficulty: "Beginner" },
 ];
 
 export default function ModulesManagement() {
@@ -61,7 +61,7 @@ export default function ModulesManagement() {
                         Engineered <span className="text-orange-600">Modules.</span>
                     </h1>
                     <p className="text-zinc-500 font-medium tracking-tight text-sm">
-                        Deploy and manage high-fidelity JSON-driven mathematical units.
+                        Deploy and manage high-quality, JSON-driven digital-skills units.
                     </p>
                 </div>
 

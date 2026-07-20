@@ -3,11 +3,11 @@ export const contactDict = {
         hero: {
             title: "Contact",
             titleAccent: "Us",
-            description: "Have a question or want to learn more? We're here to help you on your journey to global communication."
+            description: "Have a question about a course, learning path, or your account? We’re here to support your digital-skills journey."
         },
         info: {
             badge: "Get in touch with us",
-            mainHeading: "Need a Help? Get in touch with us!",
+            mainHeading: "Need help? Get in touch with us!",
             coffee: {
                 title: "Ready for some coffee?",
                 address: "401 Broadway, 24th floor, Church View, London"
@@ -31,8 +31,8 @@ export const contactDict = {
             emailPlaceholder: "Enter your email here...",
             messageLabel: "Message",
             messagePlaceholder: "Enter your message",
-            submitButton: "Get Free Quote",
-            privacyNote: "I understand that my data will be hold securely in accordance with the",
+            submitButton: "Send Message",
+            privacyNote: "I understand that my data will be held securely in accordance with the",
             privacyLink: "privacy policy"
         },
         social: {
@@ -43,7 +43,7 @@ export const contactDict = {
         hero: {
             title: "Contactez",
             titleAccent: "Nous",
-            description: "Vous avez une question ou vous voulez en savoir plus ? Nous sommes là pour vous aider dans votre voyage vers la communication globale."
+            description: "Une question sur un cours, un parcours ou votre compte ? Nous sommes là pour accompagner votre apprentissage numérique."
         },
         info: {
             badge: "Entrez en contact avec nous",
@@ -71,9 +71,9 @@ export const contactDict = {
             emailPlaceholder: "Entrez votre email ici...",
             messageLabel: "Message",
             messagePlaceholder: "Entrez votre message",
-            submitButton: "Get Free Quote",
+            submitButton: "Envoyer le message",
             privacyNote: "Je comprends que mes données seront conservées en toute sécurité conformément à la",
-            privacyLink: "privacy policy"
+            privacyLink: "politique de confidentialité"
         },
         social: {
             heading: "Suivez notre parcours"
@@ -83,7 +83,7 @@ export const contactDict = {
         hero: {
             title: "Contáctenos",
             titleAccent: "",
-            description: "¿Tiene alguna pregunta o quiere saber más? Estamos aquí para ayudarle en su camino hacia la comunicación global."
+            description: "¿Tienes alguna pregunta sobre un curso, una ruta o tu cuenta? Estamos aquí para apoyar tu aprendizaje digital."
         },
         info: {
             badge: "Póngase en contacto con nosotros",
@@ -111,7 +111,7 @@ export const contactDict = {
             emailPlaceholder: "Ingrese su correo aquí...",
             messageLabel: "Mensaje",
             messagePlaceholder: "Ingrese su mensaje",
-            submitButton: "Obtener presupuesto gratuito",
+            submitButton: "Enviar mensaje",
             privacyNote: "Entiendo que mis datos serán tratados de forma segura de acuerdo con la",
             privacyLink: "política de privacidad"
         },

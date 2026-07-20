@@ -41,14 +41,14 @@ export default async function PackagesPage({ params }: PageProps) {
 
                 <div className="container mx-auto mt-24">
                     <h1 className="text-3xl md:text-4xl leading-tight font-extrabold max-w-full md:max-w-2/3">
-                        Choose Your <span className="text-orange-600">Learning Path</span>
+                        {dictionary.pages.learner.packages.title} <span className="text-orange-600">{dictionary.pages.learner.packages.titleAccent}</span>
                     </h1>
                     <p className="py-4 md:py-6 max-w-[750px] text-gray-500 leading-relaxed text-base md:text-lg">
-                        Select the perfect subscription plan that fits your learning goals and budget
+                        {dictionary.pages.learner.packages.subtitle}
                     </p>
                 </div>
 
-                <PackagesGrid />
+                <PackagesGrid lang={lang} />
             </div>
             <Footer lang={lang} t={dictionary.footer} />
         </>

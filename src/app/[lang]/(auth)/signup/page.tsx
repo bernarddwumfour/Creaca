@@ -28,8 +28,9 @@ declare global {
 
 const signupDict = {
   en: {
+    brandTagline: "Skills for the Digital Future",
     title: "Create Account",
-    subtitle: "Join the global community of AI math learners.",
+    subtitle: "Join a global community building practical digital skills.",
     firstName: "First Name",
     lastName: "Last Name",
     email: "Email Address",
@@ -47,6 +48,7 @@ const signupDict = {
     error: "Registration failed.",
   },
   fr: {
+    brandTagline: "Des Compétences pour l’Avenir Numérique",
     title: "Créer un compte",
     subtitle: "Rejoignez la communauté mondiale.",
     firstName: "Prénom",
@@ -66,6 +68,7 @@ const signupDict = {
     error: "Échec de l'inscription.",
   },
   es: {
+    brandTagline: "Habilidades para el Futuro Digital",
     title: "Crear Cuenta",
     subtitle: "Únete a la comunidad global.",
     firstName: "Nombre",
@@ -414,7 +417,7 @@ export default function SignupPage({ params }: { params: Promise<{ lang: Lang }>
         </div>
         <div className="relative z-10 text-center text-white">
           <h1 className="text-8xl font-black tracking-tighter">KYRIOS<span className="text-zinc-900">.</span></h1>
-          <p className="font-bold text-xl tracking-[0.3em] uppercase opacity-80">Solve the Futures</p>
+          <p className="font-bold text-xl tracking-[0.3em] uppercase opacity-80">{t.brandTagline}</p>
         </div>
       </div>
 

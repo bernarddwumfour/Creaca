@@ -7,8 +7,7 @@ import { Lang } from '@/lib/dictionary/dictionary'
 import LanguageSwitcher from './LanguageSwitcher'
 import {
   Menu, X, Sun, Moon, LayoutDashboard, LogOut,
-  Settings, ChevronDown, Bell, BookOpen,
-  CheckCircle2, Video, MessageSquare
+  Settings, ChevronDown, Bell, CheckCircle2
 } from 'lucide-react'
 import { useTheme } from 'next-themes'
 import { useAuth } from '@/context/AuthContext'
@@ -23,6 +22,10 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { generateAvatarFromUser } from '../profile/avatarHelpers'
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import api from '@/lib/axios'
+import { ENDPOINTS } from '@/lib/endpoints'
+import { learnerDict } from '@/lib/dictionary/learner'
 
 interface HeaderProps {
   lang: Lang;
@@ -36,53 +39,24 @@ interface HeaderProps {
   }
 }
 
-// Dummy Notifications Data
-const DUMMY_NOTIFICATIONS = [
-  {
-    id: 1,
-    title: "New Module Added",
-    description: "Calculus III: Advanced Integrals is now available.",
-    time: "2 mins ago",
-    icon: BookOpen,
-    color: "text-blue-500",
-    bg: "bg-blue-500/10"
-  },
-  {
-    id: 2,
-    title: "Question Solved",
-    description: "Your algebraic query has been resolved by the AI Tutor.",
-    time: "1 hour ago",
-    icon: CheckCircle2,
-    color: "text-emerald-500",
-    bg: "bg-emerald-500/10"
-  },
-  {
-    id: 3,
-    title: "Live Session Available",
-    description: "Dr. Smith is hosting a live Q&A session on Geometry.",
-    time: "3 hours ago",
-    icon: Video,
-    color: "text-orange-500",
-    bg: "bg-orange-500/10"
-  },
-  {
-    id: 4,
-    title: "New Message",
-    description: "You have a new message from the peer study group.",
-    time: "Yesterday",
-    icon: MessageSquare,
-    color: "text-purple-500",
-    bg: "bg-purple-500/10"
-  }
-];
-
 const Header = ({ lang, t }: HeaderProps) => {
+  const labels = learnerDict[lang in learnerDict ? lang : 'en'].header
   const [isScrolled, setIsScrolled] = useState(false)
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const [mounted, setMounted] = useState(false)
   const { theme, setTheme } = useTheme()
 
   const { user, logout } = useAuth()
+  const queryClient = useQueryClient()
+  const { data: notificationData } = useQuery({
+    queryKey: ['notifications'],
+    queryFn: async () => (await api.get(ENDPOINTS.PLATFORM.NOTIFICATIONS, { params: { page_size: 5 } })).data.data,
+    enabled: !!user,
+  })
+  const markRead = useMutation({
+    mutationFn: async (id: string) => api.patch(ENDPOINTS.PLATFORM.MARK_NOTIFICATION_READ.replace(':id', id)),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['notifications'] }),
+  })
 
   useEffect(() => {
     setMounted(true)
@@ -159,7 +133,7 @@ const Header = ({ lang, t }: HeaderProps) => {
                   onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
                 >
                   {theme === 'dark' ? <Sun size={18} /> : <Moon size={18} />}
-                  <span className="sr-only">Toggle theme</span>
+                  <span className="sr-only">{labels.theme}</span>
                 </Button>
               )}
 
@@ -175,7 +149,7 @@ const Header = ({ lang, t }: HeaderProps) => {
                   <Button asChild size="sm" variant="outline" className="hidden sm:flex rounded-full font-bold px-4 border-primary/20 hover:bg-primary/5 text-primary transition-all text-xs tracking-wide">
                     <Link href={dashboardPath} className="flex items-center gap-2">
                       <LayoutDashboard size={14} />
-                      Dashboard
+                      {labels.dashboard}
                     </Link>
                   </Button>
 
@@ -185,29 +159,28 @@ const Header = ({ lang, t }: HeaderProps) => {
                     <DropdownMenuTrigger asChild>
                       <Button variant="ghost" size="icon" className="relative rounded-full hover:bg-zinc-100 dark:hover:bg-zinc-900">
                         <Bell size={20} />
-                        <span className="absolute top-2 right-2 w-2 h-2 bg-primary rounded-full border-2 border-background animate-pulse" />
+                        {!!notificationData?.unread_count && <span className="absolute top-2 right-2 w-2 h-2 bg-primary rounded-full border-2 border-background animate-pulse" />}
                       </Button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end" className="w-120 mt-2 rounded-2xl p-0 dark:bg-[#111114] border-zinc-200 dark:border-zinc-800 shadow-2xl overflow-hidden">
                       <DropdownMenuLabel className="p-4 flex items-center justify-between bg-zinc-50/50 dark:bg-zinc-900/50">
-                        <span className="text-sm font-black tracking-tight">Notifications</span>
-                        <span className="text-[10px] font-bold bg-primary/10 text-primary px-2 py-0.5 rounded-full uppercase">4 New</span>
+                        <span className="text-sm font-black tracking-tight">{labels.notifications}</span>
+                        <span className="text-[10px] font-bold bg-primary/10 text-primary px-2 py-0.5 rounded-full uppercase">{notificationData?.unread_count || 0} {labels.newLabel}</span>
                       </DropdownMenuLabel>
                       <DropdownMenuSeparator className="m-0" />
                       <ScrollArea className="h-80">
-                        {DUMMY_NOTIFICATIONS.map((note) => (
-                          <DropdownMenuItem key={note.id} className="p-4 focus:bg-zinc-50 dark:focus:bg-zinc-900 cursor-pointer border-b border-zinc-100 dark:border-zinc-800 last:border-0">
+                        {(notificationData?.results || []).map((note: any) => (
+                          <DropdownMenuItem key={note.id} onClick={() => !note.is_read && markRead.mutate(note.id)} className="p-4 focus:bg-zinc-50 dark:focus:bg-zinc-900 cursor-pointer border-b border-zinc-100 dark:border-zinc-800 last:border-0">
                             <div className="flex gap-4">
-                              <div className={`h-10 w-10 shrink-0 rounded-xl flex items-center justify-center ${note.bg}`}>
-                                <note.icon size={18} className={note.color} />
+                              <div className="h-10 w-10 shrink-0 rounded-xl flex items-center justify-center bg-emerald-500/10">
+                                <CheckCircle2 size={18} className="text-emerald-500" />
                               </div>
                               <div className="space-y-1">
-                                <p className="text-[12px] font-black leading-none">{note.title}</p>
                                 <p className="text-[11px] font-medium text-zinc-500 leading-tight line-clamp-2">
-                                  {note.description}
+                                  {note.message}
                                 </p>
                                 <p className="text-[9px] font-bold text-zinc-400 uppercase tracking-tighter">
-                                  {note.time}
+                                  {new Date(note.created_at).toLocaleString()}
                                 </p>
                               </div>
                             </div>
@@ -217,7 +190,7 @@ const Header = ({ lang, t }: HeaderProps) => {
                       <DropdownMenuSeparator className="m-0" />
                       <Link href={`/${lang}/notifications`}>
                         <div className="p-3 text-center text-[10px] font-black uppercase text-primary hover:bg-zinc-50 dark:hover:bg-zinc-900 transition-colors">
-                          View All Notifications
+                          {labels.viewAll}
                         </div>
                       </Link>
                     </DropdownMenuContent>
@@ -249,12 +222,12 @@ const Header = ({ lang, t }: HeaderProps) => {
                       <DropdownMenuSeparator />
                       <DropdownMenuItem asChild>
                         <Link href={dashboardPath} className="flex items-center gap-2 p-2.5 py-3 text-xs font-bold rounded-xl cursor-pointer">
-                          <LayoutDashboard size={16} /> Dashboard
+                          <LayoutDashboard size={16} /> {labels.dashboard}
                         </Link>
                       </DropdownMenuItem>
                       <DropdownMenuItem asChild>
                         <Link href={`/${lang}/profile`} className="flex items-center gap-2 p-2.5 py-3 text-xs font-bold rounded-xl cursor-pointer">
-                          <Settings size={16} /> Profile
+                          <Settings size={16} /> {labels.profile}
                         </Link>
                       </DropdownMenuItem>
                       <DropdownMenuSeparator />
@@ -262,7 +235,7 @@ const Header = ({ lang, t }: HeaderProps) => {
                         onClick={logout}
                         className="flex items-center gap-2 p-2.5 text-xs font-bold rounded-xl cursor-pointer text-red-500 focus:text-red-500 focus:bg-red-50 dark:focus:bg-red-950/20"
                       >
-                        <LogOut size={16} /> Sign Out
+                        <LogOut size={16} /> {labels.signOut}
                       </DropdownMenuItem>
                     </DropdownMenuContent>
                   </DropdownMenu>
@@ -278,7 +251,7 @@ const Header = ({ lang, t }: HeaderProps) => {
           <button
             className="md:hidden ms-4 p-1 text-foreground focus:outline-none"
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-            aria-label="Toggle Menu"
+            aria-label={labels.menu}
           >
             {mobileMenuOpen ? <X size={22} strokeWidth={2.5} /> : <Menu size={22} strokeWidth={2.5} />}
           </button>
@@ -295,7 +268,7 @@ const Header = ({ lang, t }: HeaderProps) => {
             <LanguageSwitcher currentLang={lang} />
             {user ? (
               <Button asChild className="rounded-full px-8 font-bold" onClick={() => setMobileMenuOpen(false)}>
-                <Link href={dashboardPath}>Go to Dashboard</Link>
+                <Link href={dashboardPath}>{labels.goToDashboard}</Link>
               </Button>
             ) : (
               <Button asChild className="rounded-full px-8 font-bold" onClick={() => setMobileMenuOpen(false)}>
@@ -321,7 +294,7 @@ const Header = ({ lang, t }: HeaderProps) => {
             ))}
             {user && (
               <li onClick={logout}>
-                <span className="text-xl font-bold text-red-500 uppercase tracking-[0.2em]">Sign Out</span>
+                <span className="text-xl font-bold text-red-500 uppercase tracking-[0.2em]">{labels.signOut}</span>
               </li>
             )}
           </ul>
