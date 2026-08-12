@@ -46,6 +46,7 @@ import {
 
 import { useAuth } from '@/context/AuthContext';
 import { generateAvatarFromUser } from '../[lang]/profile/avatarHelpers';
+import { Spinner } from '@/widgets/loaders/Spinner';
 
 const SIDEBAR_LINKS = [
     { icon: LayoutDashboard, label: 'Overview', href: '/admin/dashboard' },
@@ -143,6 +144,8 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     // });
 
     // --- Helpers ---
+    const closeMobileSidebar = () => setSidebarOpen(false);
+
     const toggleMenu = (label: string) => {
         if (isCollapsed) setIsCollapsed(false);
         setOpenMenus(prev =>
@@ -165,15 +168,56 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         return () => document.removeEventListener('mousedown', handleClick);
     }, []);
 
-    if (isLoading || !user || !['ADMIN', 'STAFF'].includes(user.role)) return null;
+    // Auto-close the mobile sidebar drawer if the viewport grows into desktop
+    useEffect(() => {
+        const largeScreenQuery = window.matchMedia('(min-width: 1024px)');
+        const handleBreakpointChange = (event: MediaQueryListEvent) => {
+            if (event.matches) setSidebarOpen(false);
+        };
+        largeScreenQuery.addEventListener('change', handleBreakpointChange);
+        return () => largeScreenQuery.removeEventListener('change', handleBreakpointChange);
+    }, []);
+
+    // Lock body scroll + allow Escape to close while the mobile drawer is open
+    useEffect(() => {
+        if (!isSidebarOpen) return;
+        const handleKeyDown = (event: KeyboardEvent) => {
+            if (event.key === 'Escape') setSidebarOpen(false);
+        };
+        const originalOverflow = document.body.style.overflow;
+        document.body.style.overflow = 'hidden';
+        window.addEventListener('keydown', handleKeyDown);
+        return () => {
+            document.body.style.overflow = originalOverflow;
+            window.removeEventListener('keydown', handleKeyDown);
+        };
+    }, [isSidebarOpen]);
+
+    if (isLoading) {
+        return (
+            <div className="min-h-screen flex items-center justify-center bg-zinc-50 dark:bg-[#09090b]">
+                <Spinner size={40} />
+            </div>
+        );
+    }
+    if (!user || !['ADMIN', 'STAFF'].includes(user.role)) return null; // redirect effect above already handles this
 
     return (
         <div className="min-h-screen bg-zinc-50 dark:bg-[#09090b] flex">
+            {isSidebarOpen && (
+                <button
+                    type="button"
+                    aria-label="Close navigation menu"
+                    className="fixed inset-0 z-40 bg-black/40 backdrop-blur-sm lg:hidden"
+                    onClick={closeMobileSidebar}
+                />
+            )}
+
             {/* SIDEBAR */}
             <aside className={cn(
-                "fixed inset-y-0 left-0 z-50 bg-white dark:bg-[#111114] border-r border-zinc-200 dark:border-zinc-800 transition-all duration-500 ease-in-out lg:translate-x-0",
+                "fixed inset-y-0 left-0 z-50 flex flex-col w-72 max-w-[calc(100vw-3rem)] bg-white dark:bg-[#111114] border-r border-zinc-200 dark:border-zinc-800 transition-all duration-500 ease-in-out lg:translate-x-0",
                 isSidebarOpen ? 'translate-x-0' : '-translate-x-full',
-                isCollapsed ? "w-20" : "w-64"
+                isCollapsed ? "lg:w-20" : "lg:w-64"
             )}>
                 {/* Desktop Collapse Toggle */}
                 <button
@@ -183,7 +227,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                     <ChevronRight className={cn("transition-transform duration-500", !isCollapsed && "rotate-180")} size={12} />
                 </button>
 
-                <div className={cn("p-6 transition-all duration-500", isCollapsed ? "px-0 flex justify-center" : "px-6")}>
+                <div className={cn("shrink-0 p-6 transition-all duration-500", isCollapsed ? "px-0 flex justify-center" : "px-6")}>
                     <Link href="/" className="flex items-center gap-2">
                         <span className={cn("font-black text-2xl tracking-tighter transition-all duration-300", isCollapsed ? "scale-75" : "")}>
                             K{!isCollapsed && "YRIOS"}<span className="text-orange-600">.</span>
@@ -191,7 +235,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                     </Link>
                 </div>
 
-                <nav className={cn("px-4 space-y-1 mt-4 transition-all duration-500", isCollapsed ? "px-2" : "px-4")}>
+                <nav className={cn("flex-1 overflow-y-auto px-4 space-y-1 mt-4 transition-all duration-500", isCollapsed ? "px-2" : "px-4")}>
                     {SIDEBAR_LINKS.map((link) => {
                         const hasChildren = link.isCollapsible && link.children;
                         const isOpen = openMenus.includes(link.label);
@@ -221,6 +265,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                                                 <Link
                                                     key={child.label}
                                                     href={child.href}
+                                                    onClick={closeMobileSidebar}
                                                     className={cn(
                                                         "flex items-center gap-3 px-3 py-2 text-[10px] font-black uppercase tracking-widest rounded-lg transition-all",
                                                         pathname === child.href ? 'text-orange-600 bg-orange-600/5' : 'text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300'
@@ -240,6 +285,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                             <Link
                                 key={link.label}
                                 href={link.href as string}
+                                onClick={closeMobileSidebar}
                                 className={cn(
                                     "flex items-center text-sm font-bold rounded-lg transition-all group py-2.5",
                                     isActive ? 'bg-orange-600/10 text-orange-600' : 'text-zinc-500 hover:text-orange-600 hover:bg-zinc-50 dark:hover:bg-zinc-900/50',
@@ -256,15 +302,21 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
             {/* MAIN CONTENT AREA */}
             <main className={cn(
-                "flex-1 flex flex-col transition-all duration-500 ease-in-out",
+                "flex-1 min-w-0 flex flex-col transition-all duration-500 ease-in-out",
                 isCollapsed ? "lg:ml-20" : "lg:ml-64"
             )}>
                 {/* HEADER */}
-                <header className="h-16 border-b border-zinc-200 dark:border-zinc-800 bg-white/80 dark:bg-[#09090b]/80 backdrop-blur-xl flex items-center justify-between px-8 sticky top-0 z-40">
+                <header className="h-16 border-b border-zinc-200 dark:border-zinc-800 bg-white/80 dark:bg-[#09090b]/80 backdrop-blur-xl flex items-center justify-between px-4 sm:px-6 lg:px-8 sticky top-0 z-30 lg:z-40">
                     <div className="flex items-center gap-4">
-                        <button onClick={() => setSidebarOpen(!isSidebarOpen)} className="lg:hidden text-zinc-500 hover:text-orange-600">
+                        <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => setSidebarOpen(!isSidebarOpen)}
+                            aria-label={isSidebarOpen ? "Close navigation menu" : "Open navigation menu"}
+                            className="lg:hidden rounded-full hover:bg-zinc-100 dark:hover:bg-zinc-900"
+                        >
                             {isSidebarOpen ? <X /> : <Menu />}
-                        </button>
+                        </Button>
 
                         {/* NAV SEARCH */}
                         <div className="relative" ref={searchRef}>
@@ -357,7 +409,10 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                     </div>
                 </header>
 
-                <div className={`p-8 px-10 mx-auto w-full relative ${isCollapsed ? " max-w-[calc(100vw-100px)]" : " max-w-[calc(100vw-300px)]"}`}>
+                <div className={cn(
+                    "p-4 sm:p-6 lg:p-8 lg:px-10 mx-auto w-full relative overflow-x-auto",
+                    isCollapsed ? "max-w-full lg:max-w-[calc(100vw-100px)]" : "max-w-full lg:max-w-[calc(100vw-300px)]"
+                )}>
                     {children}
                 </div>
             </main>

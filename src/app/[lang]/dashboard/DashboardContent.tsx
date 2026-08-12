@@ -488,8 +488,7 @@ export default function DashboardContent({ lang }: { lang: string }) {
                         >
                             <LayoutDashboard size={16} className="shrink-0" />
                             <span className={cn(
-                                "truncate",
-                                activeTab === 'overview' ? "ml-1.5 max-w-[8rem]" : "ml-0 max-w-0",
+                                "hidden md:inline truncate",
                                 "overflow-hidden transition-all duration-200",
                                 isCollapsed ? "md:ml-0 md:max-w-0" : "md:ml-3 md:max-w-none",
                             )}>Overview</span>
@@ -504,8 +503,7 @@ export default function DashboardContent({ lang }: { lang: string }) {
                         >
                             <BookOpen size={16} className="shrink-0" />
                             <span className={cn(
-                                "truncate",
-                                activeTab === 'courses' ? "ml-1.5 max-w-[8rem]" : "ml-0 max-w-0",
+                                "hidden md:inline truncate",
                                 "overflow-hidden transition-all duration-200",
                                 isCollapsed ? "md:ml-0 md:max-w-0" : "md:ml-3 md:max-w-none",
                             )}>My Courses</span>
@@ -524,8 +522,7 @@ export default function DashboardContent({ lang }: { lang: string }) {
                         >
                             <Target size={16} className="shrink-0" />
                             <span className={cn(
-                                "truncate",
-                                activeTab === 'stats' ? "ml-1.5 max-w-[8rem]" : "ml-0 max-w-0",
+                                "hidden md:inline truncate",
                                 "overflow-hidden transition-all duration-200",
                                 isCollapsed ? "md:ml-0 md:max-w-0" : "md:ml-3 md:max-w-none",
                             )}>Performance</span>
@@ -540,8 +537,7 @@ export default function DashboardContent({ lang }: { lang: string }) {
                         >
                             <Trophy size={16} className="shrink-0" />
                             <span className={cn(
-                                "truncate",
-                                activeTab === 'achievements' ? "ml-1.5 max-w-[8rem]" : "ml-0 max-w-0",
+                                "hidden md:inline truncate",
                                 "overflow-hidden transition-all duration-200",
                                 isCollapsed ? "md:ml-0 md:max-w-0" : "md:ml-3 md:max-w-none",
                             )}>Achievements</span>
@@ -557,7 +553,7 @@ export default function DashboardContent({ lang }: { lang: string }) {
                         <Card className={cardAnimationClasses}>
                             {cardInnerOverlay}
                             <div className="relative z-20">
-                                <CardHeader className="border-b border-zinc-100 dark:border-zinc-800/50 pb-12">
+                                <CardHeader className="border-b border-zinc-100 dark:border-zinc-800/50 pb-6 md:pb-12">
                                     <div className="flex justify-between items-start">
                                         <div>
                                             <CardTitle className="text-xl font-black tracking-tight">Learning Analytics</CardTitle>
@@ -567,7 +563,7 @@ export default function DashboardContent({ lang }: { lang: string }) {
                                     </div>
                                 </CardHeader>
 
-                                <CardContent className="pt-8 bg-zinc-100 dark:bg-zinc-900/20 space-y-4 overflow-hidden py-6 rounded-lg">
+                                <CardContent className="pt-4 md:pt-8 bg-zinc-100 dark:bg-zinc-900/20 space-y-4 overflow-hidden py-3 md:py-6 rounded-lg">
                                     <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                                         {[
                                             { label: "Total Courses", value: totalCourses, icon: BookOpen, color: "primary" },
@@ -575,7 +571,7 @@ export default function DashboardContent({ lang }: { lang: string }) {
                                             { label: "Hours Learnt", value: totalHoursLearnt, icon: Clock, color: "blue" },
                                             { label: "Avg Progress", value: `${averageProgress}%`, icon: Target, color: "orange" }
                                         ].map((stat, i) => (
-                                            <div key={i} className="p-5 bg-white dark:bg-zinc-900/80 border border-zinc-200 dark:border-zinc-800 rounded-2xl flex flex-col gap-3">
+                                            <div key={i} className="p-2.5 md:p-5 bg-white dark:bg-zinc-900/80 border border-zinc-200 dark:border-zinc-800 rounded-2xl flex flex-col gap-3">
                                                 <stat.icon className={`text-${stat.color}-500`} size={18} />
                                                 <div>
                                                     <p className="text-[9px] font-black uppercase text-zinc-400 tracking-widest">{stat.label}</p>
@@ -586,7 +582,7 @@ export default function DashboardContent({ lang }: { lang: string }) {
                                     </div>
 
                                     <div className="grid grid-cols-1 lg:grid-cols-5 gap-4">
-                                        <div className="lg:col-span-2 p-6 bg-white dark:bg-zinc-900/80 border border-zinc-200 dark:border-zinc-800 rounded-2xl">
+                                        <div className="lg:col-span-2 p-3 md:p-6 bg-white dark:bg-zinc-900/80 border border-zinc-200 dark:border-zinc-800 rounded-2xl">
                                             <div className="flex items-center justify-between mb-8">
                                                 <h3 className="text-xl font-black tracking-tight">Current Courses</h3>
                                                 <Button variant="ghost" size="sm" className="text-xs font-medium" onClick={() => setActiveTab('courses')}>
@@ -596,7 +592,7 @@ export default function DashboardContent({ lang }: { lang: string }) {
                                             <div className="relative overflow-hidden">
                                                 <div className="flex gap-6 overflow-x-auto snap-x snap-mandatory scrollbar-hide pb-4 -mx-1 px-1">
                                                     {allActiveCourses.slice(0, 2).map((course: any) => (
-                                                        <div key={course.id} className="min-w-full snap-center bg-zinc-50 dark:bg-zinc-900 border border-zinc-100 dark:border-zinc-800 rounded-3xl p-8">
+                                                        <div key={course.id} className="min-w-full snap-center bg-zinc-50 dark:bg-zinc-900 border border-zinc-100 dark:border-zinc-800 rounded-3xl p-4 md:p-8">
                                                             <div className="flex items-center gap-4 mb-6">
                                                                 <div>
                                                                     <p className="font-bold">{course.title}</p>
@@ -613,7 +609,7 @@ export default function DashboardContent({ lang }: { lang: string }) {
                                                         </div>
                                                     ))}
                                                     {allActiveCourses.length === 0 && (
-                                                        <div className="min-w-full snap-center bg-zinc-50 dark:bg-zinc-900 border border-zinc-100 dark:border-zinc-800 rounded-3xl p-8 text-center">
+                                                        <div className="min-w-full snap-center bg-zinc-50 dark:bg-zinc-900 border border-zinc-100 dark:border-zinc-800 rounded-3xl p-4 md:p-8 text-center">
                                                             <p className="text-zinc-500">No active courses. Browse and enroll in new courses!</p>
                                                             <Button asChild className="mt-4">
                                                                 <Link href={`/${lang}/courses`}>Browse Courses</Link>
@@ -624,7 +620,7 @@ export default function DashboardContent({ lang }: { lang: string }) {
                                             </div>
                                         </div>
 
-                                        <div className="lg:col-span-3 p-8 bg-white dark:bg-zinc-900/80 border border-zinc-200 dark:border-zinc-800 rounded-2xl flex flex-col gap-6">
+                                        <div className="lg:col-span-3 p-4 md:p-8 bg-white dark:bg-zinc-900/80 border border-zinc-200 dark:border-zinc-800 rounded-2xl flex flex-col gap-6">
                                             <p className="text-[10px] font-black uppercase text-zinc-400 tracking-[0.2em]">Performance Summary</p>
                                             <div className="space-y-4">
                                                 <div className="flex justify-between items-center border-b border-zinc-100 dark:border-zinc-800 pb-3">
@@ -637,7 +633,7 @@ export default function DashboardContent({ lang }: { lang: string }) {
                                                 </div>
                                                 <div className="flex justify-between items-center border-b border-zinc-100 dark:border-zinc-800 pb-3">
                                                     <span className="text-xs font-bold text-zinc-500">Current Streak</span>
-                                                    <span className="text-sm font-black text-orange-500">{Math.floor(Math.random() * 20) + 1} days</span>
+                                                    <span className="text-sm font-black text-zinc-500">Not tracked</span>
                                                 </div>
                                             </div>
                                             <div className="mt-auto p-4 bg-zinc-50 dark:bg-zinc-900/50 rounded-xl border border-dashed border-zinc-200 dark:border-zinc-800">
@@ -661,7 +657,7 @@ export default function DashboardContent({ lang }: { lang: string }) {
                         <Card className={cardAnimationClasses}>
                             {cardInnerOverlay}
                             <div className="relative z-20">
-                                <CardHeader className="border-b border-zinc-100 dark:border-zinc-800/50 pb-12">
+                                <CardHeader className="border-b border-zinc-100 dark:border-zinc-800/50 pb-6 md:pb-12">
                                     <div className="flex justify-between items-start flex-wrap gap-4">
                                         <div>
                                             <CardTitle className="text-xl font-black tracking-tight">My Courses</CardTitle>
@@ -705,7 +701,7 @@ export default function DashboardContent({ lang }: { lang: string }) {
                                     </div>
                                 </CardHeader>
 
-                                <CardContent className="pt-8 bg-zinc-100 dark:bg-zinc-900/20 overflow-hidden py-6 rounded-lg">
+                                <CardContent className="pt-4 md:pt-8 bg-zinc-100 dark:bg-zinc-900/20 overflow-hidden py-3 md:py-6 rounded-lg">
                                     {/* 
                                     {courseFilter === 'all' && <h3 className="text-lg font-black mb-4 flex items-center gap-2">
                                         <ShoppingBag size={18} className="text-primary" />
@@ -904,7 +900,7 @@ export default function DashboardContent({ lang }: { lang: string }) {
                         <Card className={cardAnimationClasses}>
                             {cardInnerOverlay}
                             <div className="relative z-20">
-                                <CardHeader className="border-b border-zinc-100 dark:border-zinc-800/50 pb-12">
+                                <CardHeader className="border-b border-zinc-100 dark:border-zinc-800/50 pb-6 md:pb-12">
                                     <div className="flex justify-between items-start">
                                         <div>
                                             <CardTitle className="text-xl font-black tracking-tight">{learner.metricsTitle}</CardTitle>
@@ -914,14 +910,14 @@ export default function DashboardContent({ lang }: { lang: string }) {
                                     </div>
                                 </CardHeader>
 
-                                <CardContent className="pt-8 bg-zinc-100 dark:bg-zinc-900/20 space-y-4 py-6 rounded-lg">
-                                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                <CardContent className="pt-4 md:pt-8 bg-zinc-100 dark:bg-zinc-900/20 space-y-4 py-3 md:py-6 rounded-lg">
+                                    <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
                                         {[
                                             { label: "Average Grade", value: averageProgress > 90 ? "A+" : averageProgress > 80 ? "A" : averageProgress > 70 ? "B+" : "In Progress", icon: Target, color: "primary" },
                                             { label: "Completion Rate", value: totalCourses > 0 ? `${Math.round((completedCourses / totalCourses) * 100)}%` : "0%", icon: CheckCircle2, color: "emerald" },
                                             { label: "Study Time", value: `${totalHoursLearnt}h`, icon: Clock, color: "blue" }
                                         ].map((stat, i) => (
-                                            <div key={i} className="p-5 bg-white dark:bg-zinc-900/80 border border-zinc-200 dark:border-zinc-800 rounded-xl flex flex-col gap-3">
+                                            <div key={i} className="p-2.5 md:p-5 bg-white dark:bg-zinc-900/80 border border-zinc-200 dark:border-zinc-800 rounded-xl flex flex-col gap-3">
                                                 <stat.icon className={`text-${stat.color}-500`} size={18} />
                                                 <div>
                                                     <p className="text-[9px] font-black uppercase text-zinc-400 tracking-widest">{stat.label}</p>
@@ -932,7 +928,7 @@ export default function DashboardContent({ lang }: { lang: string }) {
                                     </div>
 
                                     <div className="grid grid-cols-1 gap-4">
-                                        <div className="lg:col-span-3 p-8 bg-white dark:bg-zinc-900/80 border border-zinc-200 dark:border-zinc-800 rounded-xl flex flex-col gap-6">
+                                        <div className="lg:col-span-3 p-4 md:p-8 bg-white dark:bg-zinc-900/80 border border-zinc-200 dark:border-zinc-800 rounded-xl flex flex-col gap-6">
                                             <p className="text-[10px] font-black uppercase text-zinc-400 tracking-[0.2em]">Course Progress Summary</p>
                                             <div className="space-y-4">
                                                 {[...enrolledCourses, ...activePurchases.map((p: PurchasedCourse) => ({
@@ -964,12 +960,12 @@ export default function DashboardContent({ lang }: { lang: string }) {
                         <Card className={cardAnimationClasses}>
                             {cardInnerOverlay}
                             <div className="relative z-20">
-                                <CardHeader className="border-b border-zinc-100 dark:border-zinc-800/50 pb-12">
+                                <CardHeader className="border-b border-zinc-100 dark:border-zinc-800/50 pb-6 md:pb-12">
                                     <CardTitle className="text-xl font-black tracking-tight">Milestones</CardTitle>
                                     <CardDescription className="text-zinc-500 font-medium">Badges and rewards earned through consistent study.</CardDescription>
                                 </CardHeader>
 
-                                <CardContent className="pt-8 bg-zinc-100 dark:bg-zinc-900/20 py-8 rounded-xl">
+                                <CardContent className="pt-4 md:pt-8 bg-zinc-100 dark:bg-zinc-900/20 py-4 md:py-8 rounded-xl">
                                     <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
                                         {[
                                             { name: "First Course", icon: Zap, color: "text-yellow-500", unlocked: totalCourses >= 1, date: totalCourses >= 1 ? "Earned" : "Locked" },
@@ -979,7 +975,7 @@ export default function DashboardContent({ lang }: { lang: string }) {
                                         ].map((badge, i) => (
                                             <div
                                                 key={i}
-                                                className={`flex flex-col items-center text-center space-y-3 p-6 rounded-xl bg-white dark:bg-zinc-900/80 border border-zinc-200 dark:border-zinc-800 transition-all hover:scale-[1.02] cursor-pointer ${!badge.unlocked ? 'opacity-50' : ''}`}
+                                                className={`flex flex-col items-center text-center space-y-3 p-3 md:p-6 rounded-xl bg-white dark:bg-zinc-900/80 border border-zinc-200 dark:border-zinc-800 transition-all hover:scale-[1.02] cursor-pointer ${!badge.unlocked ? 'opacity-50' : ''}`}
                                             >
                                                 <div className={`w-16 h-16 rounded-full bg-zinc-50 dark:bg-zinc-900 border border-zinc-100 dark:border-zinc-800 flex items-center justify-center shadow-inner ${badge.color}`}>
                                                     <badge.icon size={32} />

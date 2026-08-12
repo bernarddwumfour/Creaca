@@ -1,7 +1,16 @@
+// Ported from myUpskill's app/widgets/custom-table/DataTable.tsx — adapted:
+// - Import paths (DataDisplay/CustomDialog live at repo-root widgets/,
+//   CustomSheet/ImagePreviewModal at src/widgets/).
+// - DropdownMenuTrigger `render={...}` (Base UI, used upstream) -> Radix
+//   `asChild`, matching Creaca's actual dropdown-menu primitive.
+// - Colors: gray-* -> zinc-*, matching the rest of Kyrios's design language.
+// - `isLoading`/`sortConfig` props are Kyrios-specific additions (not in the
+//   ported source) for the skeleton-loading and sort-arrow-glyph wiring the
+//   admin pages already depend on — kept as additive props layered on top.
 'use client';
 
-import React, { useState, useMemo, useEffect, ReactNode } from 'react';
-import { MoreVertical, Settings2, ChevronRight, Download, Inbox } from 'lucide-react';
+import React, { useState, useMemo, useEffect } from 'react';
+import { MoreVertical, Settings2, ChevronRight, Download, Inbox, ChevronDown, ChevronLeft, ChevronRight as ChevronRightIcon, ArrowUp, ArrowDown } from 'lucide-react';
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -9,6 +18,7 @@ import { Badge } from "@/components/ui/badge";
 import {
     DropdownMenu,
     DropdownMenuContent,
+    DropdownMenuGroup,
     DropdownMenuItem,
     DropdownMenuLabel,
     DropdownMenuSeparator,
@@ -20,10 +30,12 @@ import Link from 'next/link';
 
 import { DataDisplay } from '../DataDisplay/DataDisplay';
 import { CustomDialog } from '../CustomDialog/CustomDialog';
-
-// --- Types ---
+import { CustomSheet } from '../../src/widgets/custom-sheet/CustomSheet';
+import MultiImagePreviewModal from '../../src/widgets/image-preview-modal/ImagePreviewModal';
+import { TableSkeleton } from '../../src/widgets/custom-table/TableSkeleton';
 
 type ColorOption = 'emerald' | 'orange' | 'zinc' | 'blue' | 'rose' | 'amber' | 'violet';
+type ViewType = 'dialog' | 'sheet';
 
 interface DisplayConfig {
     id: string;
@@ -31,6 +43,10 @@ interface DisplayConfig {
     icon: React.ReactNode;
     getData: (item: any) => Record<string, any>;
     excludeKeys?: string[];
+    component?: (data: any, onClose?: () => void) => React.ReactNode;
+    viewType?: ViewType;
+    sheetSide?: 'left' | 'right' | 'top' | 'bottom';
+    sheetSize?: 'sm' | 'md' | 'lg' | 'xl' | 'full';
 }
 
 interface DataTableProps<T> {
@@ -43,19 +59,143 @@ interface DataTableProps<T> {
     badges?: Record<string, Record<string, ColorOption>>;
     icons?: Record<string, Record<string, React.ReactNode>>;
     links?: Record<string, (item: T) => string>;
+    images?: Record<string, (item: T) => string | string[]>;
     actions?: {
         label: string | ((item: T) => string);
-        icon: React.ReactNode | ((item: T) => React.ReactNode);
+        icon?: React.ReactNode | ((item: T) => React.ReactNode);
         variant?: 'default' | 'destructive' | 'outline' | ((item: T) => 'default' | 'destructive' | 'outline');
         onClick: (item: T) => void;
     }[];
+    renderActions?: (item: T) => React.ReactNode;
     bulkActions?: {
         label: string;
         onClick: (items: T[]) => void;
         icon?: React.ReactNode;
-        variant?: 'default' | 'destructive'
+        variant?: 'default' | 'destructive';
+        color?: 'emerald' | 'orange' | 'blue' | 'rose' | 'violet' | 'amber';
+        disabled?: boolean;
     }[];
+    bulkActionsMessage?: string;
     onSelectionChange?: (selectedItems: T[]) => void;
+    actionsFirst?: boolean;
+    arrays?: Record<string, { maxItems?: number }>;
+    objects?: Record<string, { maxItems?: number }>;
+    stickyActions?: boolean;
+    isLoading?: boolean;
+    sortConfig?: { sortBy: string; sortOrder: 'asc' | 'desc' };
+}
+
+const getButtonColorClasses = (color?: string) => {
+    switch (color) {
+        case 'emerald': return 'bg-emerald-600/90 hover:bg-emerald-700 text-white';
+        case 'orange': return 'bg-orange-600/90 hover:bg-orange-700 text-white';
+        case 'blue': return 'bg-blue-600/90 hover:bg-blue-700 text-white';
+        case 'rose': return 'bg-rose-600/90 hover:bg-rose-700 text-white';
+        case 'violet': return 'bg-violet-600/90 hover:bg-violet-700 text-white';
+        case 'amber': return 'bg-amber-600/90 hover:bg-amber-700 text-white';
+        default: return '';
+    }
+};
+
+function MultiImageCell({ images, alt }: { images: string[]; alt: string }) {
+    const [open, setOpen] = useState(false);
+    const [selectedIndex, setSelectedIndex] = useState(0);
+
+    if (!images || images.length === 0) return <span className="text-muted-foreground">—</span>;
+
+    const currentImage = images[selectedIndex];
+    const hasMultiple = images.length > 1;
+
+    const handlePrevImage = (e: React.MouseEvent) => {
+        e.stopPropagation();
+        setSelectedIndex((prev) => (prev > 0 ? prev - 1 : images.length - 1));
+    };
+
+    const handleNextImage = (e: React.MouseEvent) => {
+        e.stopPropagation();
+        setSelectedIndex((prev) => (prev < images.length - 1 ? prev + 1 : 0));
+    };
+
+    const handleOpenPreview = () => {
+        setSelectedIndex(0);
+        setOpen(true);
+    };
+
+    return (
+        <>
+            <div className="relative group inline-block">
+                <div
+                    className="relative w-10 h-10 rounded-md overflow-hidden cursor-pointer border border-zinc-200 dark:border-zinc-800 hover:ring-2 hover:ring-zinc-900 dark:hover:ring-white transition-all"
+                    onClick={handleOpenPreview}
+                >
+                    <img src={currentImage} alt={alt} className="w-full h-full object-cover transition-transform group-hover:scale-110" />
+                </div>
+
+                {hasMultiple && (
+                    <div className="absolute inset-0 flex items-center justify-between opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
+                        <button onClick={handlePrevImage} className="pointer-events-auto bg-black/50 hover:bg-black/70 text-white rounded-full p-0.5 w-5 h-5 flex items-center justify-center text-xs transition-all -translate-x-6">
+                            <ChevronLeft size={12} />
+                        </button>
+                        <button onClick={handleNextImage} className="pointer-events-auto bg-black/50 hover:bg-black/70 text-white rounded-full p-0.5 w-5 h-5 flex items-center justify-center text-xs transition-all translate-x-6">
+                            <ChevronRightIcon size={12} />
+                        </button>
+                    </div>
+                )}
+
+                {hasMultiple && (
+                    <div className="absolute -bottom-1 -right-1 bg-black/70 text-white text-[8px] font-bold rounded-full px-1 min-w-[16px] text-center">
+                        {selectedIndex + 1}/{images.length}
+                    </div>
+                )}
+            </div>
+
+            <MultiImagePreviewModal images={images} alt={alt} initialIndex={selectedIndex} open={open} onClose={() => setOpen(false)} />
+        </>
+    );
+}
+
+function ArrayCell({ value, maxItems = 3, onExpand }: { value: any[]; maxItems?: number; onExpand: () => void }) {
+    if (!value || value.length === 0) return <span className="text-xs font-bold tracking-tight text-zinc-700 dark:text-zinc-300">—</span>;
+
+    const displayItems = value.slice(0, maxItems);
+    const remaining = value.length - maxItems;
+
+    return (
+        <div className="flex flex-wrap gap-1.5 cursor-pointer" onClick={onExpand}>
+            {displayItems.map((item, idx) => (
+                <Badge key={idx} variant="secondary" className="bg-zinc-100 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 font-mono text-[10px] font-semibold px-2 py-0.5 rounded-full border-none hover:bg-zinc-200 dark:hover:bg-zinc-700 transition-colors">
+                    {typeof item === 'object' ? JSON.stringify(item) : String(item)}
+                </Badge>
+            ))}
+            {remaining > 0 && (
+                <Badge variant="secondary" className="bg-zinc-100 dark:bg-zinc-800 text-zinc-500 dark:text-zinc-500 font-mono text-[10px] font-semibold px-2 py-0.5 rounded-full border-none hover:bg-zinc-200 dark:hover:bg-zinc-700 transition-colors">
+                    +{remaining}
+                </Badge>
+            )}
+        </div>
+    );
+}
+
+function ObjectCell({ value, maxItems = 3, onExpand }: { value: Record<string, any>; maxItems?: number; onExpand: () => void }) {
+    if (!value || Object.keys(value).length === 0) return <span className="text-xs font-bold tracking-tight text-zinc-700 dark:text-zinc-300">—</span>;
+
+    const entries = Object.entries(value).slice(0, maxItems);
+    const remaining = Object.keys(value).length - maxItems;
+
+    return (
+        <div className="flex flex-wrap gap-1.5 cursor-pointer" onClick={onExpand}>
+            {entries.map(([k, v], idx) => (
+                <Badge key={idx} variant="secondary" className="bg-zinc-100 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 font-mono text-[10px] font-semibold px-2 py-0.5 rounded-full border-none hover:bg-zinc-200 dark:hover:bg-zinc-700 transition-colors">
+                    {k}: {typeof v === 'object' ? JSON.stringify(v) : String(v)}
+                </Badge>
+            ))}
+            {remaining > 0 && (
+                <Badge variant="secondary" className="bg-zinc-100 dark:bg-zinc-800 text-zinc-500 dark:text-zinc-500 font-mono text-[10px] font-semibold px-2 py-0.5 rounded-full border-none hover:bg-zinc-200 dark:hover:bg-zinc-700 transition-colors">
+                    +{remaining} more
+                </Badge>
+            )}
+        </div>
+    );
 }
 
 export function DataTable<T extends { id: string | number }>({
@@ -68,23 +208,42 @@ export function DataTable<T extends { id: string | number }>({
     badges = {},
     icons = {},
     links = {},
+    images = {},
     actions = [],
-    bulkActions,
+    renderActions,
+    bulkActions = [],
     onSelectionChange,
+    actionsFirst = true,
+    arrays = {},
+    objects = {},
+    bulkActionsMessage = "Select Rows To Perform Bulk Actions On.",
+    stickyActions = true,
+    isLoading = false,
+    sortConfig,
 }: DataTableProps<T>) {
-    // --- State ---
     const [selectedIds, setSelectedIds] = useState<Set<string | number>>(new Set());
-    const [activeView, setActiveView] = useState<{ data: any; config: DisplayConfig } | null>(null);
+    const [activeView, setActiveView] = useState<{
+        data: any;
+        config: DisplayConfig;
+        onClose: () => void;
+    } | null>(null);
+    const [showMoreBulkActions, setShowMoreBulkActions] = useState(false);
+    const [showMobileBulkActions, setShowMobileBulkActions] = useState(false);
+    const [expandedData, setExpandedData] = useState<{ data: any; title: string; onClose: () => void } | null>(null);
 
-    // --- Column Logic ---
     const allKeys = useMemo(() => (data.length > 0 ? Object.keys(data[0]) : []), [data]);
     const [visibleColumns, setVisibleColumns] = useState<string[]>([]);
 
+    // Depend on the *values* (joined keys), not array identity — allKeys and
+    // excludeColumns are recreated on every render, so identity deps would
+    // re-run this effect -> setState -> re-render forever.
+    const allKeysKey = allKeys.join("|");
+    const excludeKey = excludeColumns.join("|");
     useEffect(() => {
         setVisibleColumns(allKeys.filter(k => !excludeColumns.includes(k)));
-    }, [allKeys, excludeColumns]);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [allKeysKey, excludeKey]);
 
-    // --- Handlers ---
     const exportToCSV = () => {
         if (data.length === 0) return;
         const headers = visibleColumns.join(',');
@@ -121,10 +280,32 @@ export function DataTable<T extends { id: string | number }>({
         onSelectionChange?.(data.filter(i => next.has(i.id)));
     };
 
-    // --- Cell Renderer ---
+    const handleExpandObject = (value: any, key: string) => {
+        setExpandedData({ data: value, title: `Details: ${key}`, onClose: () => setExpandedData(null) });
+    };
+
+    const handleExpandArray = (value: any[], key: string) => {
+        const arrayAsObject = value.reduce((acc, item, index) => {
+            acc[`[${index}]`] = item;
+            return acc;
+        }, {} as Record<string, any>);
+
+        setExpandedData({
+            data: arrayAsObject,
+            title: `Details: ${key} (${value.length} items)`,
+            onClose: () => setExpandedData(null),
+        });
+    };
+
     const renderCell = (item: T, key: string) => {
         const rawValue = (item as any)[key];
         const stringValue = String(rawValue ?? '');
+
+        if (images[key]) {
+            const imageValue = images[key](item);
+            const imageUrls = Array.isArray(imageValue) ? imageValue : (imageValue ? [imageValue] : []);
+            return <MultiImageCell images={imageUrls} alt={stringValue} />;
+        }
 
         if (icons[key]?.[stringValue]) {
             return (
@@ -180,10 +361,43 @@ export function DataTable<T extends { id: string | number }>({
             );
         }
 
+        if (Array.isArray(rawValue)) {
+            const config = arrays[key] || { maxItems: 3 };
+            return <ArrayCell value={rawValue} maxItems={config.maxItems} onExpand={() => handleExpandArray(rawValue, key)} />;
+        }
+
+        if (typeof rawValue === 'object' && rawValue !== null && !Array.isArray(rawValue)) {
+            const config = objects[key] || { maxItems: 3 };
+            return <ObjectCell value={rawValue} maxItems={config.maxItems} onExpand={() => handleExpandObject(rawValue, key)} />;
+        }
+
         return <span className="text-xs font-bold tracking-tight text-zinc-700 dark:text-zinc-300">{stringValue || '-'}</span>;
     };
 
-    // --- Empty State Render (Hides Table entirely) ---
+    const visibleBulkActions = bulkActions.slice(0, 3);
+    const moreBulkActions = bulkActions.slice(3);
+    const hasActions = actions.length > 0 || !!renderActions;
+    const showCheckboxes = bulkActions.length > 0;
+
+    // Sticky positioning only kicks in at lg: and up — on phone screens a
+    // pinned actions/checkbox column eats too much of the already-narrow
+    // viewport, so below lg it scrolls with the rest of the table instead.
+    const stickyCheckboxClass = stickyActions && actionsFirst && showCheckboxes
+        ? "lg:sticky lg:left-0 lg:bg-white lg:dark:bg-[#09090b] lg:z-10 lg:after:absolute lg:after:right-0 lg:after:top-0 lg:after:h-full lg:after:w-[1px] lg:after:bg-zinc-200 lg:dark:after:bg-zinc-800"
+        : "";
+
+    const stickyActionsLeftClass = stickyActions && actionsFirst && hasActions
+        ? `lg:sticky ${showCheckboxes ? 'lg:left-[40px]' : 'lg:left-0'} lg:bg-white lg:dark:bg-[#09090b] lg:z-10 lg:after:absolute lg:after:right-0 lg:after:top-0 lg:after:h-full lg:after:w-[1px] lg:after:bg-zinc-200 lg:dark:after:bg-zinc-800`
+        : "";
+
+    const stickyActionsRightClass = stickyActions && !actionsFirst && hasActions
+        ? "lg:sticky lg:right-0 lg:bg-white lg:dark:bg-[#09090b] lg:z-10 lg:before:absolute lg:before:left-0 lg:before:top-0 lg:before:h-full lg:before:w-[1px] lg:before:bg-zinc-200 lg:dark:before:bg-zinc-800"
+        : "";
+
+    if (isLoading) {
+        return <TableSkeleton columns={visibleColumns.length || 5} />;
+    }
+
     if (data.length === 0) {
         return (
             <Card className="shadow-none border-zinc-200 dark:border-zinc-800 bg-white dark:bg-[#09090b] rounded-xl border-dashed">
@@ -192,62 +406,150 @@ export function DataTable<T extends { id: string | number }>({
                         <Inbox size={20} className="text-zinc-400" />
                     </div>
                     <div className="text-center space-y-1">
-                        <h3 className="text-[11px] font-black uppercase tracking-[0.3em] text-zinc-900 dark:text-white">
-                            {emptyTitle}
-                        </h3>
-                        <p className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest leading-relaxed">
-                            {emptyDescription}
-                        </p>
+                        <h3 className="text-[11px] font-black uppercase tracking-[0.3em] text-zinc-900 dark:text-white">{emptyTitle}</h3>
+                        <p className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest leading-relaxed">{emptyDescription}</p>
                     </div>
                 </CardContent>
             </Card>
         );
     }
 
-    // --- Main Table Render ---
+    const renderColumnHeader = (key: string) => (
+        <span className="inline-flex items-center gap-1">
+            {key.replace(/([A-Z])/g, ' $1')}
+            {sortConfig?.sortBy === key && (
+                sortConfig.sortOrder === 'asc'
+                    ? <ArrowUp size={10} className="text-orange-600" />
+                    : <ArrowDown size={10} className="text-orange-600" />
+            )}
+        </span>
+    );
+
+    const renderRowActions = (item: T) => (
+        renderActions ? renderActions(item) : (
+            <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                    <Button aria-label="Row actions" variant="ghost" size="icon" className="h-8 w-8 transition-all rounded-lg hover:bg-zinc-100 dark:hover:bg-zinc-800/50">
+                        <MoreVertical size={14} className="text-zinc-500 dark:text-zinc-400" />
+                    </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-56 rounded-xl shadow-2xl border-zinc-200 dark:border-zinc-800 bg-white dark:bg-[#09090b] p-1">
+                    {displayConfigs.map((config) => (
+                        <DropdownMenuItem
+                            key={config.id}
+                            onClick={() => setActiveView({ data: config.getData(item), config, onClose: () => setActiveView(null) })}
+                            className="font-bold text-xs gap-3 py-3 px-3 cursor-pointer rounded-lg text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-900"
+                        >
+                            <div className="text-zinc-600 dark:text-zinc-400">{config.icon}</div>{config.label}
+                        </DropdownMenuItem>
+                    ))}
+                    {displayConfigs.length > 0 && actions.length > 0 && <DropdownMenuSeparator className="bg-zinc-200 dark:bg-zinc-800" />}
+                    {actions.map((a, i) => (
+                        <DropdownMenuItem
+                            key={i}
+                            onClick={() => a.onClick(item)}
+                            className={cn(
+                                "font-bold text-xs gap-3 py-3 px-3 cursor-pointer rounded-lg text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-900",
+                                typeof a.variant === 'function' ? (a.variant(item) === 'destructive' && "text-rose-600 dark:text-rose-400") : (a.variant === 'destructive' && "text-rose-600 dark:text-rose-400")
+                            )}
+                        >
+                            {typeof a.icon === 'function' ? a.icon(item) : a.icon}{typeof a.label === 'function' ? a.label(item) : a.label}
+                        </DropdownMenuItem>
+                    ))}
+                </DropdownMenuContent>
+            </DropdownMenu>
+        )
+    );
+
     return (
         <div className="space-y-4">
-            <div className="flex items-center justify-between px-1">
+            <div className="flex items-center justify-between gap-4 px-1">
                 <div className="flex items-center gap-2">
-                    {selectedIds.size > 0 && bulkActions && (
-                        <div className="flex items-center gap-2 animate-in fade-in slide-in-from-left-2">
-                            <span className="text-[10px] font-black uppercase text-orange-600 bg-orange-500/10 px-3 py-1.5 rounded-lg tracking-widest mr-2">
-                                {selectedIds.size} Selected
+                    {showCheckboxes && selectedIds.size > 0 && bulkActions.length > 0 && (
+                        <div className="flex items-center gap-2">
+                            <span className="text-[10px] font-black uppercase text-zinc-600 dark:text-zinc-400 bg-zinc-100 dark:bg-zinc-800 px-3 py-1.5 rounded-lg tracking-widest">
+                                {selectedIds.size} <span className="hidden md:inline">Selected</span>
                             </span>
-                            {bulkActions.map((action, i) => (
+
+                            {/* Mobile: no room for multiple buttons — a single dropdown with every action */}
+                            <DropdownMenu open={showMobileBulkActions} onOpenChange={setShowMobileBulkActions}>
+                                <DropdownMenuTrigger asChild>
+                                    <Button variant="outline" size="sm" className="sm:hidden h-8 text-[10px] font-black uppercase tracking-widest gap-2 rounded-lg border-zinc-300 dark:border-zinc-700">
+                                        Actions <ChevronDown size={12} />
+                                    </Button>
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent align="start" className="w-48 rounded-xl shadow-2xl bg-white dark:bg-[#09090b] border-zinc-200 dark:text-zinc-300 dark:border-zinc-800">
+                                    {bulkActions.map((action, i) => (
+                                        <DropdownMenuItem
+                                            key={i}
+                                            onClick={() => { action.onClick(data.filter(d => selectedIds.has(d.id))); setShowMobileBulkActions(false); }}
+                                            className={cn("font-bold text-xs gap-3 py-3 px-3 cursor-pointer rounded-lg dark:hover:bg-zinc-800/90", action.variant === 'destructive' && "text-rose-600 dark:text-rose-400")}
+                                            disabled={action.disabled}
+                                        >
+                                            {action.icon}{action.label}
+                                        </DropdownMenuItem>
+                                    ))}
+                                </DropdownMenuContent>
+                            </DropdownMenu>
+
+                            {/* sm and up: first 3 actions as buttons, the rest behind "More Actions" */}
+                            {visibleBulkActions.map((action, i) => (
                                 <Button
                                     key={i}
-                                    variant={action.variant === 'destructive' ? "destructive" : "outline"}
+                                    variant={action.variant === 'destructive' ? "destructive" : "default"}
                                     size="sm"
                                     onClick={() => action.onClick(data.filter(d => selectedIds.has(d.id)))}
-                                    className="h-6 !py-5 text-[10px] font-black uppercase tracking-widest gap-2 rounded-lg"
+                                    className={cn("hidden sm:inline-flex h-8 text-[10px] font-black uppercase tracking-widest gap-2 rounded-lg", action.color && getButtonColorClasses(action.color))}
+                                    disabled={action.disabled}
                                 >
                                     {action.icon}{action.label}
                                 </Button>
                             ))}
+                            {moreBulkActions.length > 0 && (
+                                <DropdownMenu open={showMoreBulkActions} onOpenChange={setShowMoreBulkActions}>
+                                    <DropdownMenuTrigger asChild>
+                                        <Button variant="outline" size="sm" className="hidden sm:inline-flex h-8 text-[10px] font-black uppercase tracking-widest gap-2 rounded-lg border-zinc-300 dark:border-zinc-700">
+                                            More Actions <ChevronDown size={12} />
+                                        </Button>
+                                    </DropdownMenuTrigger>
+                                    <DropdownMenuContent align="start" className="w-48 rounded-xl shadow-2xl bg-white dark:bg-[#09090b] border-zinc-200 dark:text-zinc-300 dark:border-zinc-800">
+                                        {moreBulkActions.map((action, i) => (
+                                            <DropdownMenuItem
+                                                key={i}
+                                                onClick={() => { action.onClick(data.filter(d => selectedIds.has(d.id))); setShowMoreBulkActions(false); }}
+                                                className={cn("font-bold text-xs gap-3 py-3 px-3 cursor-pointer rounded-lg dark:hover:bg-zinc-800/90", action.variant === 'destructive' && "text-rose-600 dark:text-rose-400")}
+                                                disabled={action.disabled}
+                                            >
+                                                {action.icon}{action.label}
+                                            </DropdownMenuItem>
+                                        ))}
+                                    </DropdownMenuContent>
+                                </DropdownMenu>
+                            )}
                         </div>
                     )}
+                    {showCheckboxes && selectedIds.size === 0 && (
+                        <p className='p-2 text-sm bg-zinc-100 rounded-md text-zinc-600 dark:text-zinc-300 dark:bg-zinc-900/90'>
+                            <span className="sm:hidden">Select rows</span>
+                            <span className="hidden sm:inline">{bulkActionsMessage}</span>
+                        </p>
+                    )}
                 </div>
-
-                <div className="flex items-center gap-2 ml-auto">
-                    <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={exportToCSV}
-                        className="h-8 text-[10px] font-black uppercase tracking-widest gap-2 rounded-lg"
-                    >
-                        <Download size={14} /> Export
+                <div className="flex items-center gap-2">
+                    <Button variant="outline" size="sm" onClick={exportToCSV} className="h-8 text-[10px] font-black uppercase tracking-widest gap-2 rounded-lg border-zinc-300 dark:border-zinc-700 text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800/50 dark:bg-zinc-800/70">
+                        <Download size={14} /> <span className="hidden md:inline">Export</span>
                     </Button>
-
                     <DropdownMenu>
                         <DropdownMenuTrigger asChild>
-                            <Button variant="outline" size="sm" className="h-8 text-[10px] font-black uppercase tracking-widest gap-2 rounded-lg">
+                            <Button variant="outline" size="sm" className="h-8 text-[10px] font-black uppercase tracking-widest gap-2 rounded-lg border-zinc-300 dark:border-zinc-700 text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800/50 dark:bg-zinc-800/70">
                                 <Settings2 size={14} /> Columns
                             </Button>
                         </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end" className="w-48 rounded-xl border-zinc-200 dark:border-zinc-800 shadow-2xl">
-                            <DropdownMenuLabel className="text-[9px] font-black uppercase tracking-widest text-zinc-400 p-3 text-center">Toggle Columns</DropdownMenuLabel>
-                            <DropdownMenuSeparator />
+                        <DropdownMenuContent align="end" className="w-48 rounded-xl border-zinc-200 dark:border-zinc-800 shadow-2xl bg-white dark:bg-[#09090b]">
+                            <DropdownMenuGroup>
+                                <DropdownMenuLabel className="text-[9px] font-black uppercase tracking-widest text-zinc-400 dark:text-zinc-500 p-3 text-center">Toggle Columns</DropdownMenuLabel>
+                            </DropdownMenuGroup>
+                            <DropdownMenuSeparator className="bg-zinc-200 dark:bg-zinc-800" />
                             {allKeys.map((key) => (
                                 <DropdownMenuCheckboxItem
                                     key={key}
@@ -255,7 +557,7 @@ export function DataTable<T extends { id: string | number }>({
                                     onCheckedChange={(checked) => {
                                         setVisibleColumns(prev => checked ? [...prev, key] : prev.filter(k => k !== key));
                                     }}
-                                    className="text-xs font-bold capitalize py-2 pr-3 pl-8 gap-0 cursor-pointer focus:bg-zinc-50 dark:focus:bg-zinc-900"
+                                    className="text-xs font-bold capitalize py-2 pr-3 pl-8 gap-0 cursor-pointer focus:bg-zinc-100 dark:focus:bg-zinc-900 rounded-lg"
                                 >
                                     {key.replace(/([A-Z])/g, ' $1')}
                                 </DropdownMenuCheckboxItem>
@@ -271,56 +573,19 @@ export function DataTable<T extends { id: string | number }>({
                         <table className="w-full text-left border-separate border-spacing-0">
                             <thead className="bg-zinc-50/50 dark:bg-zinc-900/50 border-b border-zinc-200 dark:border-zinc-800">
                                 <tr>
-                                    <th className="p-4 w-10 border-b border-zinc-200 dark:border-zinc-800 align-middle">
-                                        <Checkbox checked={selectedIds.size === data.length} onCheckedChange={handleToggleAll} />
-                                    </th>
-                                    {visibleColumns.map(key => (
-                                        <th key={key} className="p-4 text-[9px] font-black uppercase text-zinc-400 tracking-[0.25em] border-b border-zinc-200 dark:border-zinc-800 align-middle">
-                                            {key.replace(/([A-Z])/g, ' $1')}
-                                        </th>
-                                    ))}
-                                    <th className="p-4 w-10 border-b border-zinc-200 dark:border-zinc-800 align-middle"></th>
+                                    {showCheckboxes && <th className={cn("p-4 w-10 border-b border-zinc-200 dark:border-zinc-800 align-middle", stickyCheckboxClass)}><Checkbox checked={selectedIds.size === data.length} onCheckedChange={handleToggleAll} /></th>}
+                                    {actionsFirst && hasActions && <th className={cn("p-4 text-[9px] font-black uppercase text-zinc-400 dark:text-zinc-500 tracking-[0.25em] border-b border-zinc-200 dark:border-zinc-800 align-middle whitespace-nowrap", stickyActionsLeftClass)}><span>Actions</span></th>}
+                                    {visibleColumns.map(key => <th key={key} className="p-4 text-[9px] font-black uppercase text-zinc-400 dark:text-zinc-500 tracking-[0.25em] border-b border-zinc-200 dark:border-zinc-800 align-middle whitespace-nowrap">{renderColumnHeader(key)}</th>)}
+                                    {!actionsFirst && hasActions && <th className={cn("p-4 text-[9px] font-black uppercase text-zinc-400 dark:text-zinc-500 tracking-[0.25em] border-b border-zinc-200 dark:border-zinc-800 align-middle whitespace-nowrap", stickyActionsRightClass)}><span>Actions</span></th>}
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-zinc-100 dark:divide-zinc-800">
                                 {data.map((item) => (
-                                    <tr key={item.id} className={cn(
-                                        "hover:bg-zinc-50/30 dark:hover:bg-zinc-900/20 transition-colors group",
-                                        selectedIds.has(item.id) && "bg-orange-500/[0.02]"
-                                    )}>
-                                        <td className="p-4 w-10 h-px align-middle border-none">
-                                            <Checkbox checked={selectedIds.has(item.id)} onCheckedChange={() => handleToggleOne(item.id)} />
-                                        </td>
-                                        {visibleColumns.map(key => (
-                                            <td key={key} className="p-4 py-3 h-px align-middle whitespace-nowrap border-none">
-                                                {renderCell(item, key)}
-                                            </td>
-                                        ))}
-                                        <td className="p-4 py-3 text-right h-px align-middle border-none">
-                                            <DropdownMenu>
-                                                <DropdownMenuTrigger asChild>
-                                                    <Button variant="ghost" size="icon" className="h-8 w-8 opacity-0 group-hover:opacity-100 transition-all"><MoreVertical size={14} /></Button>
-                                                </DropdownMenuTrigger>
-                                                <DropdownMenuContent align="end" className="w-56 rounded-xl shadow-2xl border-zinc-200 dark:border-zinc-800">
-                                                    {displayConfigs.map((config) => (
-                                                        <DropdownMenuItem
-                                                            key={config.id}
-                                                            onClick={() => setActiveView({ data: config.getData(item), config })}
-                                                            className="font-bold text-xs gap-3 py-3 px-3 cursor-pointer"
-                                                        >
-                                                            <div className="text-orange-600">{config.icon}</div>
-                                                            {config.label}
-                                                        </DropdownMenuItem>
-                                                    ))}
-                                                    {displayConfigs.length > 0 && <DropdownMenuSeparator />}
-                                                    {actions.map((a, i) => (
-                                                        <DropdownMenuItem key={i} onClick={() => a.onClick(item)} className={cn("font-bold text-xs gap-3 py-3 px-3 cursor-pointer", a.variant === 'destructive' && "text-rose-500")}>
-                                                            {a.icon as ReactNode}{a.label as string}
-                                                        </DropdownMenuItem>
-                                                    ))}
-                                                </DropdownMenuContent>
-                                            </DropdownMenu>
-                                        </td>
+                                    <tr key={item.id} className={cn("hover:bg-zinc-50/30 dark:hover:bg-zinc-900/20 transition-colors group", showCheckboxes && selectedIds.has(item.id) && "bg-orange-500/[0.02]")}>
+                                        {showCheckboxes && <td className={cn("p-4 w-10 h-px align-middle border-none", stickyCheckboxClass)}><Checkbox checked={selectedIds.has(item.id)} onCheckedChange={() => handleToggleOne(item.id)} /></td>}
+                                        {actionsFirst && hasActions && <td className={cn("p-4 py-3 text-left h-px align-middle border-none", stickyActionsLeftClass)}>{renderRowActions(item)}</td>}
+                                        {visibleColumns.map(key => <td key={key} className="p-4 py-3 h-px align-middle whitespace-nowrap border-none">{renderCell(item, key)}</td>)}
+                                        {!actionsFirst && hasActions && <td className={cn("p-4 py-3 text-right h-px align-middle border-none", stickyActionsRightClass)}>{renderRowActions(item)}</td>}
                                     </tr>
                                 ))}
                             </tbody>
@@ -329,16 +594,34 @@ export function DataTable<T extends { id: string | number }>({
                 </CardContent>
             </Card>
 
-            <CustomDialog
-                title={activeView?.config.label || "Information"}
-                description="Metadata overview."
-                open={!!activeView}
-                onOpenChange={(open) => !open && setActiveView(null)}
-            >
-                {activeView && (
-                    <DataDisplay data={activeView.data} excludeKeys={activeView.config.excludeKeys} />
-                )}
-            </CustomDialog>
+            {activeView && (() => {
+                const { config, data: viewData, onClose } = activeView;
+                if (config.component) {
+                    if (config.viewType === 'sheet') {
+                        return (
+                            <CustomSheet title={config.label} description="" side={config.sheetSide || 'right'} size={config.sheetSize || 'lg'} open={!!activeView} onOpenChange={(open) => !open && onClose()}>
+                                {config.component(viewData, onClose)}
+                            </CustomSheet>
+                        );
+                    }
+                    return (
+                        <CustomDialog title={config.label} description="" open={!!activeView} onOpenChange={(open) => !open && onClose()} contentWidth="max-w-2xl">
+                            {config.component(viewData, onClose)}
+                        </CustomDialog>
+                    );
+                }
+                return (
+                    <CustomDialog title={config.label} description="" open={!!activeView} onOpenChange={(open) => !open && onClose()} contentWidth="max-w-2xl">
+                        <DataDisplay data={viewData} excludeKeys={config.excludeKeys} />
+                    </CustomDialog>
+                );
+            })()}
+
+            {expandedData && (
+                <CustomDialog title={expandedData.title} description="" open={!!expandedData} onOpenChange={(open) => !open && expandedData.onClose()} contentWidth="max-w-2xl">
+                    <DataDisplay data={expandedData.data} />
+                </CustomDialog>
+            )}
         </div>
     );
 }

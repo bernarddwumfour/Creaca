@@ -1,10 +1,9 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { Suspense, useState } from 'react';
+import { useSearchParams, usePathname, useRouter } from 'next/navigation';
 import {
     Plus,
-    Search,
-    MoreHorizontal,
     Pencil,
     Trash2,
     Package as PackageIcon,
@@ -12,35 +11,18 @@ import {
     LayoutGrid,
     RefreshCw,
     Archive,
-    Loader2,
     Eye,
-    FileText,
-    DollarSign,
-    CreditCard,
     Clock,
     Zap,
     Award,
     CheckCircle2,
     XCircle,
     Brain,
-    Mic,
-    Video,
-    Download,
-    Star,
     TrendingUp
 } from 'lucide-react';
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import {
-    DropdownMenu,
-    DropdownMenuContent,
-    DropdownMenuItem,
-    DropdownMenuLabel,
-    DropdownMenuSeparator,
-    DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { CustomDialog } from '../../../../widgets/CustomDialog/CustomDialog';
@@ -49,8 +31,15 @@ import { DataTable } from '../../../../widgets/Customtable/DataTable';
 import { PackageForm } from './PackageForm';
 import api from '@/lib/axios';
 import { ENDPOINTS } from '@/lib/endpoints';
+import { apiMessage } from '@/lib/api-message';
 import { ToggleGroup, ToggleGroupItem } from '../../../../widgets/ToggleGroup/ToggleGroup';
 import { Separator } from "@/components/ui/separator";
+import { CustomFilterFromUrl, type FilterConfig } from '@/widgets/custom-filter/CustomFilterFromUrl';
+import { CustomSortFromUrl, type SortConfig } from '@/widgets/custom-sort/CustomSortFromUrl';
+import { CustomPagination } from '@/widgets/custom-pagination/CustomPagination';
+import { ActionsDropdown, type ActionItem } from '@/widgets/actions-dropdown/ActionsDropdown';
+import { TableSkeleton } from '@/widgets/custom-table/TableSkeleton';
+import { PageHeader } from '@/widgets/page-header/PageHeader';
 
 interface Package {
     id: string;
@@ -91,14 +80,16 @@ interface PackagesResponse {
     data: {
         results: Package[];
         pagination: {
+            current_page: number;
+            per_page: number;
             total: number;
             total_pages: number;
-            current_page: number;
-            page_size: number;
             has_next: boolean;
             has_previous: boolean;
             next_page: number | null;
             previous_page: number | null;
+            start_index: number;
+            end_index: number;
         };
     };
     errors: any[];
@@ -109,22 +100,85 @@ interface PackagesResponse {
     };
 }
 
+const STATUS_OPTIONS = [
+    { label: 'Active', value: 'active' },
+    { label: 'Inactive', value: 'inactive' },
+];
+
+const BILLING_OPTIONS = [
+    { label: 'Monthly', value: 'monthly' },
+    { label: 'Yearly', value: 'yearly' },
+    { label: 'Lifetime', value: 'lifetime' },
+];
+
+const SORT_OPTIONS = [
+    { value: 'name', label: 'Name' },
+    { value: 'price', label: 'Price' },
+    { value: 'display_order', label: 'Display Order' },
+    { value: 'created_at', label: 'Created' },
+];
+
+// Hoisted to module scope — see courses/page.tsx for why.
+const FILTERS: FilterConfig = {
+    fields: [
+        { name: 'billing_cycle', type: 'select', placeholder: 'Billing', options: BILLING_OPTIONS },
+        { name: 'status', type: 'select', placeholder: 'Status', options: STATUS_OPTIONS },
+    ],
+    searchPlaceholder: 'Search packages...',
+};
+
+const SORTS: SortConfig = {
+    options: SORT_OPTIONS,
+    defaultSortBy: 'display_order',
+    defaultSortOrder: 'asc',
+};
+
 export default function PackagesManagement() {
+    return (
+        <Suspense fallback={<TableSkeleton />}>
+            <PackagesManagementInner />
+        </Suspense>
+    );
+}
+
+function PackagesManagementInner() {
     const queryClient = useQueryClient();
+    const searchParams = useSearchParams();
+    const pathname = usePathname();
+    const router = useRouter();
+
     const [activeModal, setActiveModal] = useState<'CREATE' | 'UPDATE' | 'DELETE' | null>(null);
     const [selectedPackage, setSelectedPackage] = useState<Package | null>(null);
-    const [viewMode, setViewMode] = useState<'list' | 'table'>('list');
-    const [searchQuery, setSearchQuery] = useState('');
-    const [page, setPage] = useState(1);
-    const [pageSize] = useState(10);
+    const [viewMode, setViewMode] = useState<'list' | 'table'>('table');
     const [detailsModalOpen, setDetailsModalOpen] = useState(false);
     const [selectedPackageForDetails, setSelectedPackageForDetails] = useState<Package | null>(null);
 
+    const pageSize = 10;
+    const page = parseInt(searchParams.get('page') || '1', 10);
+    const search = searchParams.get('search') || '';
+    const status = searchParams.get('status') || '';
+    const billingCycle = searchParams.get('billing_cycle') || '';
+    const sortBy = searchParams.get('sort_by') || '';
+    const sortOrder = (searchParams.get('sort_order') as 'asc' | 'desc') || 'asc';
+
+    const setPage = (nextPage: number) => {
+        const params = new URLSearchParams(searchParams.toString());
+        params.set('page', String(nextPage));
+        router.replace(`${pathname}?${params.toString()}`, { scroll: false });
+    };
+
     const { data: response, isLoading, refetch } = useQuery<PackagesResponse>({
-        queryKey: [ENDPOINTS.PACKAGES.LIST_PACKAGES, page, pageSize],
+        queryKey: [ENDPOINTS.PACKAGES.LIST_PACKAGES, page, pageSize, search, status, billingCycle, sortBy, sortOrder],
         queryFn: async () => {
             const { data } = await api.get(ENDPOINTS.PACKAGES.LIST_PACKAGES, {
-                params: { page, page_size: pageSize }
+                params: {
+                    page, page_size: pageSize,
+                    search: search || undefined,
+                    status: status || undefined,
+                    billing_cycle: billingCycle || undefined,
+                    sort_by: sortBy || undefined,
+                    sort_order: sortBy ? sortOrder : undefined,
+                }
             });
             return data;
         },
@@ -132,17 +186,6 @@ export default function PackagesManagement() {
 
     const packages = response?.data?.results || [];
     const pagination = response?.data?.pagination;
-
-    const filteredPackages = React.useMemo(() => {
-        if (!packages.length) return [];
-        if (!searchQuery) return packages;
-
-        const query = searchQuery.toLowerCase();
-        return packages.filter((pkg: Package) =>
-            pkg.name?.toLowerCase().includes(query) ||
-            pkg.description?.toLowerCase().includes(query)
-        );
-    }, [packages, searchQuery]);
 
     const invalidatePackages = () => {
         queryClient.invalidateQueries({ queryKey: [ENDPOINTS.PACKAGES.LIST_PACKAGES] });
@@ -157,8 +200,7 @@ export default function PackagesManagement() {
             invalidatePackages();
             closeModals();
         } catch (error: any) {
-            const errorMessage = error.response?.data?.message || error.message || "Failed to delete package.";
-            toast.error(errorMessage);
+            toast.error(apiMessage(error, "Failed to delete package."));
         }
     };
 
@@ -170,8 +212,7 @@ export default function PackagesManagement() {
             toast.success(data.message || `Package "${pkg.name}" ${newStatus === 'active' ? 'activated' : 'deactivated'} successfully.`);
             invalidatePackages();
         } catch (error: any) {
-            const errorMessage = error.response?.data?.message || error.message || `Failed to update package status.`;
-            toast.error(errorMessage);
+            toast.error(apiMessage(error, "Failed to update package status."));
         }
     };
 
@@ -199,63 +240,7 @@ export default function PackagesManagement() {
 
             invalidatePackages();
         } catch (error: any) {
-            const errorMessage = error.response?.data?.message || error.message || `Failed to ${action} ${items.length} package(s).`;
-            toast.error(errorMessage);
-        }
-    };
-
-    const handleExport = async (items: Package[]) => {
-        if (items.length === 0) {
-            toast.warning("No packages selected for export.");
-            return;
-        }
-
-        try {
-            const exportData = items.map(pkg => ({
-                ID: pkg.id,
-                Name: pkg.name,
-                Slug: pkg.slug,
-                Description: pkg.description,
-                Status: pkg.status,
-                Price: pkg.price,
-                Original_Price: pkg.original_price,
-                Currency: pkg.currency,
-                Billing_Cycle: pkg.billing_cycle,
-                Trial_Days: pkg.trial_days,
-                Max_Difficulty: pkg.max_difficulty,
-                Is_Unlimited: pkg.is_unlimited,
-                Max_Courses_At_Level: pkg.max_courses_at_level,
-                Max_Students: pkg.max_students,
-                Includes_Certificate: pkg.includes_certificate,
-                Can_Download_Materials: pkg.can_download_materials,
-                Includes_Video_Lessons: pkg.includes_video_lessons,
-                Video_Quality: pkg.video_quality,
-                Text_To_Audio: pkg.text_to_audio,
-                Audio_To_Text: pkg.audio_to_text,
-                Audio_Minutes_Per_Month: pkg.audio_minutes_per_month,
-                AI_Credits_Per_Month: pkg.ai_credits_per_month,
-                AI_Question_Generation: pkg.ai_question_generation,
-                AI_Explanations: pkg.ai_explanations,
-                Is_Featured: pkg.is_featured,
-                Badge_Text: pkg.badge_text,
-                Display_Order: pkg.display_order,
-                Created_At: pkg.created_at,
-                Updated_At: pkg.updated_at
-            }));
-
-            const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: 'application/json' });
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = `packages_export_${new Date().toISOString().split('T')[0]}.json`;
-            document.body.appendChild(a);
-            a.click();
-            document.body.removeChild(a);
-            URL.revokeObjectURL(url);
-
-            toast.success(`${items.length} package(s) exported successfully.`);
-        } catch (error: any) {
-            toast.error(error.message || "Failed to export packages.");
+            toast.error(apiMessage(error, `Failed to ${action} ${items.length} package(s).`));
         }
     };
 
@@ -334,29 +319,18 @@ export default function PackagesManagement() {
         }
     ];
 
-    const actions = [
+    // Row actions, pre-bound per row for ActionsDropdown (both list and
+    // table view render through renderActions).
+    const rowActions = (pkg: Package): ActionItem[] => [
+        { label: 'View Details', icon: <Eye size={14} />, onClick: () => handleViewDetails(pkg) },
+        { label: 'Update Package', icon: <Pencil size={14} />, onClick: () => handleUpdateClick(pkg) },
         {
-            label: 'View Details',
-            icon: <Eye size={14} />,
-            onClick: handleViewDetails
+            label: pkg.status === 'active' ? 'Deactivate' : 'Activate',
+            icon: pkg.status === 'active' ? <Archive size={14} /> : <RefreshCw size={14} />,
+            variant: pkg.status === 'active' ? 'destructive' : 'default',
+            onClick: () => handleUpdateStatus(pkg, pkg.status === 'active' ? 'inactive' : 'active'),
         },
-        {
-            label: 'Update Package',
-            icon: <Pencil size={14} />,
-            onClick: handleUpdateClick
-        },
-        {
-            label: (pkg: Package) => pkg.status === 'active' ? 'Deactivate' : 'Activate',
-            icon: (pkg: Package) => pkg.status === 'active' ? <Archive size={14} /> : <RefreshCw size={14} />,
-            variant: (pkg: Package): 'destructive' | 'default' => pkg.status === 'active' ? 'destructive' : 'default',
-            onClick: (pkg: Package) => handleUpdateStatus(pkg, pkg.status === 'active' ? 'inactive' : 'active')
-        },
-        {
-            label: 'Delete Package',
-            icon: <Trash2 size={14} />,
-            variant: 'destructive' as const,
-            onClick: handleDeleteClick
-        }
+        { label: 'Delete Package', icon: <Trash2 size={14} />, variant: 'destructive', onClick: () => handleDeleteClick(pkg) },
     ];
 
     const bulkActions = [
@@ -377,88 +351,53 @@ export default function PackagesManagement() {
             variant: 'destructive' as const,
             onClick: (items: Package[]) => handleBulkAction(items, "delete")
         },
-        {
-            label: 'Export Data',
-            icon: <FileText size={14} />,
-            onClick: handleExport
-        }
     ];
-
-    if (isLoading) {
-        return (
-            <div className='h-full min-h-[300px] w-full flex items-center justify-center'>
-                <Loader2 className='animate-spin h-12 w-12 m-auto text-primary' />
-            </div>
-        );
-    }
 
     return (
         <div className="space-y-8">
-            {/* Header */}
-            <div className="flex justify-between items-end">
-                <div className="max-w-xl space-y-2">
-                    <p className="text-[10px] font-bold uppercase text-zinc-400 tracking-[0.2em]">
-                        SUBSCRIPTION MANAGEMENT
-                    </p>
-                    <h1 className="text-2xl md:text-3xl font-black tracking-tight">
-                        Package <span className="text-orange-600">Registry.</span>
-                    </h1>
-                    <p className="text-zinc-500 font-medium tracking-tight text-sm">
-                        Manage subscription plans, pricing tiers, and feature access for the ecosystem.
-                    </p>
-                </div>
+            <PageHeader
+                eyebrow="SUBSCRIPTION MANAGEMENT"
+                title={<>Package <span className="text-orange-600">Registry.</span></>}
+                description="Manage subscription plans, pricing tiers, and feature access for the ecosystem."
+                actions={
+                    <>
+                        <ToggleGroup
+                            type="single"
+                            value={viewMode}
+                            onValueChange={(value: any) => value && setViewMode(value as 'list' | 'table')}
+                            className="border border-zinc-200 dark:border-zinc-800 rounded-xl p-1 bg-white dark:bg-zinc-900/80"
+                        >
+                            <ToggleGroupItem value="list" className="rounded-lg data-[state=on]:bg-zinc-100 dark:data-[state=on]:bg-zinc-800 gap-3 px-3 py-1">
+                                <LayoutGrid size={16} /> <span className="hidden sm:inline">List view</span>
+                            </ToggleGroupItem>
+                            <ToggleGroupItem value="table" className="rounded-lg data-[state=on]:bg-zinc-100 dark:data-[state=on]:bg-zinc-800 gap-3 px-3 py-1">
+                                <LayoutList size={16} /><span className="hidden sm:inline">Table view</span>
+                            </ToggleGroupItem>
+                        </ToggleGroup>
 
-                <div className="flex gap-3">
-                    <ToggleGroup
-                        type="single"
-                        value={viewMode}
-                        onValueChange={(value: any) => value && setViewMode(value as 'list' | 'table')}
-                        className="border border-zinc-200 dark:border-zinc-800 rounded-xl p-1 bg-white dark:bg-zinc-900/80"
-                    >
-                        <ToggleGroupItem value="list" className="rounded-lg data-[state=on]:bg-zinc-100 dark:data-[state=on]:bg-zinc-800 gap-3 p-3">
-                            <LayoutGrid size={16} /> <span>List view</span>
-                        </ToggleGroupItem>
-                        <ToggleGroupItem value="table" className="rounded-lg data-[state=on]:bg-zinc-100 dark:data-[state=on]:bg-zinc-800 gap-3 p-3">
-                            <LayoutList size={16} /><span>Table view</span>
-                        </ToggleGroupItem>
-                    </ToggleGroup>
+                        <Button variant="outline" onClick={() => refetch()} className="rounded-xl h-11 w-11 p-0 transition-all">
+                            <RefreshCw size={18} className={isLoading ? "animate-spin" : ""} />
+                        </Button>
 
-                    <Button variant="outline" onClick={() => refetch()} className="rounded-xl h-11 w-11 p-0 transition-all">
-                        <RefreshCw size={18} className={isLoading ? "animate-spin" : ""} />
-                    </Button>
+                        <Button onClick={() => setActiveModal('CREATE')} className="rounded-xl font-black uppercase tracking-widest bg-primary hover:bg-orange-600 h-11 px-6 text-[10px] transition-all">
+                            <Plus size={18} className="mr-2" /> Create Package
+                        </Button>
+                    </>
+                }
+            />
 
-                    <Button onClick={() => setActiveModal('CREATE')} className="rounded-xl font-black uppercase tracking-widest bg-primary hover:bg-orange-600 h-11 px-6 text-[10px] transition-all">
-                        <Plus size={18} className="mr-2" /> Create Package
-                    </Button>
-                </div>
-            </div>
-
-            {/* Filter Bar */}
-            <div className="flex gap-4 items-center bg-white dark:bg-zinc-900/80 p-2 rounded-2xl border border-zinc-200 dark:border-zinc-800">
-                <div className="relative flex-1">
-                    <Search className="absolute left-4 top-3.5 text-zinc-400" size={18} />
-                    <Input
-                        placeholder="Search packages by name or description..."
-                        value={searchQuery}
-                        onChange={(e) => setSearchQuery(e.target.value)}
-                        className="pl-12 h-12 bg-transparent border-none focus-visible:ring-0 font-medium placeholder:text-zinc-400"
-                    />
-                </div>
-                <div className="hidden md:flex items-center gap-2 pr-2">
-                    <Button variant="ghost" className="font-black text-[10px] uppercase tracking-[0.2em] text-zinc-400 hover:text-primary transition-colors">
-                        By Billing
-                    </Button>
-                    <div className="h-6 w-[1px] bg-zinc-200 dark:bg-zinc-800" />
-                    <Button variant="ghost" className="font-black text-[10px] uppercase tracking-[0.2em] text-zinc-400 hover:text-primary transition-colors">
-                        By Status
-                    </Button>
-                </div>
+            {/* Filter + Sort Bar */}
+            <div className="flex flex-wrap gap-3 items-center justify-between bg-white dark:bg-zinc-900/80 p-3 rounded-2xl border border-zinc-200 dark:border-zinc-800">
+                <CustomFilterFromUrl config={FILTERS} />
+                <CustomSortFromUrl config={SORTS} />
             </div>
 
             {/* View Renderer */}
-            {viewMode === 'list' ? (
+            {isLoading ? (
+                <TableSkeleton />
+            ) : viewMode === 'list' ? (
                 <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-4">
-                    {filteredPackages.map((pkg: Package) => (
+                    {packages.map((pkg: Package) => (
                         <Card
                             key={pkg.id}
                             className={`shadow-none bg-white dark:bg-zinc-900/80 border-2 transition-all overflow-hidden relative
@@ -536,36 +475,17 @@ export default function PackagesManagement() {
                                     )}
                                 </div>
 
-                                <DropdownMenu>
-                                    <DropdownMenuTrigger asChild>
-                                        <Button variant="outline" className="w-full rounded-xl font-bold text-xs">
-                                            <MoreHorizontal size={14} className="mr-2" /> Actions
-                                        </Button>
-                                    </DropdownMenuTrigger>
-                                    <DropdownMenuContent align="end" className="w-56 p-2 rounded-2xl">
-                                        <DropdownMenuLabel className="px-3 py-2 text-[10px] font-black uppercase tracking-[0.2em] text-zinc-500">
-                                            Package Controls
-                                        </DropdownMenuLabel>
-                                        <DropdownMenuItem onSelect={() => handleViewDetails(pkg)} className="flex items-center gap-3 p-3 rounded-xl cursor-pointer hover:bg-primary/10 hover:text-primary font-bold text-xs">
-                                            <Eye size={16} /> View Details
-                                        </DropdownMenuItem>
-                                        <DropdownMenuItem onSelect={() => handleUpdateClick(pkg)} className="flex items-center gap-3 p-3 rounded-xl cursor-pointer hover:bg-primary/10 hover:text-primary font-bold text-xs">
-                                            <Pencil size={16} /> Update Package
-                                        </DropdownMenuItem>
-                                        <DropdownMenuItem onSelect={() => handleUpdateStatus(pkg, pkg.status === 'active' ? 'inactive' : 'active')} className="flex items-center gap-3 p-3 rounded-xl cursor-pointer hover:bg-primary/10 hover:text-primary font-bold text-xs">
-                                            <RefreshCw size={16} /> {pkg.status === 'active' ? 'Deactivate' : 'Activate'}
-                                        </DropdownMenuItem>
-                                        <DropdownMenuSeparator className="bg-zinc-100 dark:bg-zinc-800 my-1" />
-                                        <DropdownMenuItem onSelect={() => handleDeleteClick(pkg)} className="flex items-center gap-3 p-3 rounded-xl cursor-pointer text-red-500 hover:bg-red-50 dark:hover:bg-red-950 font-bold text-xs">
-                                            <Trash2 size={16} /> Delete Package
-                                        </DropdownMenuItem>
-                                    </DropdownMenuContent>
-                                </DropdownMenu>
+                                <ActionsDropdown
+                                    actions={rowActions(pkg)}
+                                    maxVisible={0}
+                                    showLabels
+                                    className="w-full justify-center rounded-xl border border-zinc-200 dark:border-zinc-800"
+                                />
                             </CardContent>
                         </Card>
                     ))}
 
-                    {filteredPackages.length === 0 && (
+                    {packages.length === 0 && (
                         <div className="col-span-full text-center py-12 bg-white dark:bg-zinc-900/80 rounded-2xl border border-zinc-200 dark:border-zinc-800">
                             <PackageIcon className="mx-auto h-12 w-12 text-zinc-400 mb-4" />
                             <h3 className="text-lg font-bold text-zinc-600 dark:text-zinc-400">No packages found</h3>
@@ -574,26 +494,19 @@ export default function PackagesManagement() {
                     )}
 
                     {pagination && (
-                        <div className="col-span-full flex justify-between items-center pt-4">
-                            <div className="text-sm text-zinc-500">
-                                Showing {filteredPackages.length} of {pagination.total} packages
-                            </div>
-                            <div className="flex gap-2">
-                                <Button variant="outline" size="sm" onClick={() => setPage(p => Math.max(1, p - 1))} disabled={!pagination.has_previous}>
-                                    Previous
-                                </Button>
-                                <Button variant="outline" size="sm" onClick={() => setPage(p => p + 1)} disabled={!pagination.has_next}>
-                                    Next
-                                </Button>
-                            </div>
+                        <div className="col-span-full">
+                            <CustomPagination pagination={pagination} onPageChange={setPage} showLimitSelector={false} />
                         </div>
                     )}
                 </div>
             ) : (
+                <div className="space-y-4">
                 <DataTable
-                    data={filteredPackages}
+                    data={packages}
+                    isLoading={isLoading}
+                    sortConfig={sortBy ? { sortBy, sortOrder } : undefined}
                     displayConfigs={displayConfigs}
-                    actions={actions}
+                    renderActions={(pkg) => <ActionsDropdown actions={rowActions(pkg)} maxVisible={3} showLabels={false} />}
                     bulkActions={bulkActions}
                     excludeColumns={['id', 'slug', 'description', 'created_at', 'updated_at', 'original_price', 'max_courses_at_level', 'max_students', 'video_quality', 'audio_minutes_per_month', 'ai_credits_per_month', 'display_order', 'badge_text']}
                     dots={{
@@ -610,6 +523,10 @@ export default function PackagesManagement() {
                     emptyTitle="No packages found"
                     emptyDescription="No subscription packages match your current filters."
                 />
+                {pagination && (
+                    <CustomPagination pagination={pagination} onPageChange={setPage} showLimitSelector={false} />
+                )}
+                </div>
             )}
 
             {/* Package Details Modal */}

@@ -26,6 +26,7 @@ export const ENDPOINTS = {
         // Avatar endpoints
         UPDATE_AVATAR: `${API_VERSION}/accounts/me/avatar/update/`,
         RESET_AVATAR: `${API_VERSION}/accounts/me/avatar/reset/`,
+        DELETE_ACCOUNT: `${API_VERSION}/accounts/me/delete/`,
 
         // MFA endpoints
         MFA_SETUP: `${API_VERSION}/accounts/mfa/setup/`,
@@ -96,6 +97,7 @@ export const ENDPOINTS = {
         VERIFY: `${API_VERSION}/payments/verify/`,
     },
     PLATFORM: {
+        CONTACT: `${API_VERSION}/platform/contact/`,
         ADMIN_STATS: `${API_VERSION}/payments/admin/stats/`,
         ADMIN_LOGS: `${API_VERSION}/payments/admin/logs/`,
         ADMIN_SETTINGS: `${API_VERSION}/payments/admin/settings/`,

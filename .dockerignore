@@ -1,0 +1,6 @@
+.env*
+.git
+.next
+node_modules
+firebase-debug.log
+npm-debug.log

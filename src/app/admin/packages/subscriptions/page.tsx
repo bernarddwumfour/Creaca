@@ -1,9 +1,8 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { Suspense, useState } from 'react';
+import { useSearchParams, usePathname, useRouter } from 'next/navigation';
 import {
-    Search,
-    MoreHorizontal,
     CreditCard,
     LayoutList,
     LayoutGrid,
@@ -25,13 +24,6 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import {
-    DropdownMenu,
-    DropdownMenuContent,
-    DropdownMenuItem,
-    DropdownMenuLabel,
-    DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import {
     Select,
     SelectContent,
     SelectItem,
@@ -41,6 +33,7 @@ import {
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { ENDPOINTS } from '@/lib/endpoints';
+import { apiMessage } from '@/lib/api-message';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -49,6 +42,12 @@ import api from '@/lib/axios';
 import { ToggleGroup, ToggleGroupItem } from '../../../../../widgets/ToggleGroup/ToggleGroup';
 import { DataTable } from '../../../../../widgets/Customtable/DataTable';
 import { CustomDialog } from '../../../../../widgets/CustomDialog/CustomDialog';
+import { CustomFilterFromUrl, type FilterConfig } from '@/widgets/custom-filter/CustomFilterFromUrl';
+import { CustomSortFromUrl, type SortConfig } from '@/widgets/custom-sort/CustomSortFromUrl';
+import { CustomPagination } from '@/widgets/custom-pagination/CustomPagination';
+import { ActionsDropdown, type ActionItem } from '@/widgets/actions-dropdown/ActionsDropdown';
+import { TableSkeleton } from '@/widgets/custom-table/TableSkeleton';
+import { PageHeader } from '@/widgets/page-header/PageHeader';
 
 interface Subscription {
     id: string;
@@ -83,14 +82,16 @@ interface SubscriptionsResponse {
     data: {
         results: Subscription[];
         pagination: {
+            current_page: number;
+            per_page: number;
             total: number;
             total_pages: number;
-            current_page: number;
-            page_size: number;
             has_next: boolean;
             has_previous: boolean;
             next_page: number | null;
             previous_page: number | null;
+            start_index: number;
+            end_index: number;
         };
     };
     errors: any[];
@@ -119,20 +120,64 @@ const STATUS_OPTIONS = [
     { value: 'cancelled', label: 'Cancelled', color: 'rose' },
 ];
 
+const SORT_OPTIONS = [
+    { value: 'created_at', label: 'Created' },
+    { value: 'status', label: 'Status' },
+    { value: 'package', label: 'Package' },
+];
+
+// Hoisted to module scope — see courses/page.tsx for why.
+const FILTERS: FilterConfig = {
+    fields: [{ name: 'status', type: 'select', placeholder: 'Status', options: STATUS_OPTIONS.map(o => ({ label: o.label, value: o.value })) }],
+    searchPlaceholder: 'Search by username, email, or package...',
+};
+
+const SORTS: SortConfig = {
+    options: SORT_OPTIONS,
+    defaultSortBy: 'created_at',
+    defaultSortOrder: 'desc',
+};
+
 export default function SubscriptionsManagement() {
+    return (
+        <Suspense fallback={<TableSkeleton />}>
+            <SubscriptionsManagementInner />
+        </Suspense>
+    );
+}
+
+function SubscriptionsManagementInner() {
     const queryClient = useQueryClient();
+    const searchParams = useSearchParams();
+    const pathname = usePathname();
+    const router = useRouter();
+
     const [activeModal, setActiveModal] = useState<'UPDATE' | 'DETAILS' | null>(null);
     const [selectedSubscription, setSelectedSubscription] = useState<Subscription | null>(null);
-    const [viewMode, setViewMode] = useState<'list' | 'table'>('list');
-    const [searchQuery, setSearchQuery] = useState('');
-    const [statusFilter, setStatusFilter] = useState<string>('all');
-    const [page, setPage] = useState(1);
-    const [pageSize] = useState(10);
+    const [viewMode, setViewMode] = useState<'list' | 'table'>('table');
+
+    const pageSize = 10;
+    const page = parseInt(searchParams.get('page') || '1', 10);
+    const search = searchParams.get('search') || '';
+    const statusFilter = searchParams.get('status') || 'all';
+    const sortBy = searchParams.get('sort_by') || '';
+    const sortOrder = (searchParams.get('sort_order') as 'asc' | 'desc') || 'asc';
+
+    const setPage = (nextPage: number) => {
+        const params = new URLSearchParams(searchParams.toString());
+        params.set('page', String(nextPage));
+        router.replace(`${pathname}?${params.toString()}`, { scroll: false });
+    };
 
     const { data: response, isLoading, refetch } = useQuery<SubscriptionsResponse>({
-        queryKey: [ENDPOINTS.SUBSCRIPTIONS.LIST_SUBSCRIPTIONS, page, pageSize, statusFilter],
+        queryKey: [ENDPOINTS.SUBSCRIPTIONS.LIST_SUBSCRIPTIONS, page, pageSize, search, statusFilter, sortBy, sortOrder],
         queryFn: async () => {
-            const params: any = { page, page_size: pageSize };
+            const params: any = {
+                page, page_size: pageSize,
+                search: search || undefined,
+                sort_by: sortBy || undefined,
+                sort_order: sortBy ? sortOrder : undefined,
+            };
             if (statusFilter !== 'all') {
                 params.status = statusFilter;
             }
@@ -143,19 +188,6 @@ export default function SubscriptionsManagement() {
 
     const subscriptions = response?.data?.results || [];
     const pagination = response?.data?.pagination;
-
-    const filteredSubscriptions = React.useMemo(() => {
-        if (!subscriptions.length) return [];
-        if (!searchQuery) return subscriptions;
-
-        const query = searchQuery.toLowerCase();
-        return subscriptions.filter((sub: Subscription) =>
-            sub.user?.username?.toLowerCase().includes(query) ||
-            sub.user?.email?.toLowerCase().includes(query) ||
-            `${sub.user?.first_name} ${sub.user?.last_name}`.toLowerCase().includes(query) ||
-            sub.package?.name?.toLowerCase().includes(query)
-        );
-    }, [subscriptions, searchQuery]);
 
     const invalidateSubscriptions = () => {
         queryClient.invalidateQueries({ queryKey: [ENDPOINTS.SUBSCRIPTIONS.LIST_SUBSCRIPTIONS] });
@@ -183,8 +215,7 @@ export default function SubscriptionsManagement() {
             setActiveModal(null);
             setSelectedSubscription(null);
         } catch (error: any) {
-            const errorMessage = error.response?.data?.message || error.message || "Failed to update subscription.";
-            toast.error(errorMessage);
+            toast.error(apiMessage(error, "Failed to update subscription."));
         }
     };
 
@@ -257,6 +288,20 @@ export default function SubscriptionsManagement() {
         }
     ];
 
+    // Row actions, pre-bound per row for ActionsDropdown (both list and
+    // table view render through renderActions).
+    const rowActions = (sub: Subscription): ActionItem[] => [
+        {
+            label: 'Update Subscription',
+            icon: <Pencil size={14} />,
+            onClick: () => { setSelectedSubscription(sub); setActiveModal('UPDATE'); },
+        },
+        {
+            label: 'View Details',
+            icon: <Eye size={14} />,
+            onClick: () => { setSelectedSubscription(sub); setActiveModal('DETAILS'); },
+        },
+    ];
 
     // Update Form Component
     function UpdateSubscriptionForm({ subscription, onSuccess }: { subscription: Subscription; onSuccess: () => void }) {
@@ -291,7 +336,7 @@ export default function SubscriptionsManagement() {
                 toast.success(data.message || `Subscription updated successfully.`);
                 onSuccess();
             } catch (error: any) {
-                const errorMessage = error.response?.data?.message || error.message || "Failed to update subscription.";
+                const errorMessage = apiMessage(error, "Failed to update subscription.");
                 toast.error(errorMessage);
                 form.setError('root', { message: errorMessage });
             } finally {
@@ -444,83 +489,47 @@ export default function SubscriptionsManagement() {
         );
     }
 
-    if (isLoading) {
-        return (
-            <div className='h-full min-h-[300px] w-full flex items-center justify-center'>
-                <Loader2 className='animate-spin h-12 w-12 m-auto text-primary' />
-            </div>
-        );
-    }
-
     return (
         <div className="space-y-8">
-            {/* Header */}
-            <div className="flex justify-between items-end">
-                <div className="max-w-xl space-y-2">
-                    <p className="text-[10px] font-bold uppercase text-zinc-400 tracking-[0.2em]">
-                        SUBSCRIPTION MANAGEMENT
-                    </p>
-                    <h1 className="text-2xl md:text-3xl font-black tracking-tight">
-                        Subscription <span className="text-orange-600">Registry.</span>
-                    </h1>
-                    <p className="text-zinc-500 font-medium tracking-tight text-sm">
-                        Monitor and manage user subscriptions across the platform.
-                    </p>
-                </div>
+            <PageHeader
+                eyebrow="SUBSCRIPTION MANAGEMENT"
+                title={<>Subscription <span className="text-orange-600">Registry.</span></>}
+                description="Monitor and manage user subscriptions across the platform."
+                actions={
+                    <>
+                        <ToggleGroup
+                            type="single"
+                            value={viewMode}
+                            onValueChange={(value: any) => value && setViewMode(value as 'list' | 'table')}
+                            className="border border-zinc-200 dark:border-zinc-800 rounded-xl p-1 bg-white dark:bg-zinc-900/80"
+                        >
+                            <ToggleGroupItem value="list" className="rounded-lg data-[state=on]:bg-zinc-100 dark:data-[state=on]:bg-zinc-800 gap-3 px-3 py-1">
+                                <LayoutGrid size={16} /> <span className="hidden sm:inline">List view</span>
+                            </ToggleGroupItem>
+                            <ToggleGroupItem value="table" className="rounded-lg data-[state=on]:bg-zinc-100 dark:data-[state=on]:bg-zinc-800 gap-3 px-3 py-1">
+                                <LayoutList size={16} /><span className="hidden sm:inline">Table view</span>
+                            </ToggleGroupItem>
+                        </ToggleGroup>
 
-                <div className="flex gap-3">
-                    <ToggleGroup
-                        type="single"
-                        value={viewMode}
-                        onValueChange={(value: any) => value && setViewMode(value as 'list' | 'table')}
-                        className="border border-zinc-200 dark:border-zinc-800 rounded-xl p-1 bg-white dark:bg-zinc-900/80"
-                    >
-                        <ToggleGroupItem value="list" className="rounded-lg data-[state=on]:bg-zinc-100 dark:data-[state=on]:bg-zinc-800 gap-3 p-3">
-                            <LayoutGrid size={16} /> <span>List view</span>
-                        </ToggleGroupItem>
-                        <ToggleGroupItem value="table" className="rounded-lg data-[state=on]:bg-zinc-100 dark:data-[state=on]:bg-zinc-800 gap-3 p-3">
-                            <LayoutList size={16} /><span>Table view</span>
-                        </ToggleGroupItem>
-                    </ToggleGroup>
+                        <Button variant="outline" onClick={() => refetch()} className="rounded-xl h-11 w-11 p-0 transition-all">
+                            <RefreshCw size={18} className={isLoading ? "animate-spin" : ""} />
+                        </Button>
+                    </>
+                }
+            />
 
-                    <Button variant="outline" onClick={() => refetch()} className="rounded-xl h-11 w-11 p-0 transition-all">
-                        <RefreshCw size={18} className={isLoading ? "animate-spin" : ""} />
-                    </Button>
-                </div>
-            </div>
-
-            {/* Filter Bar */}
-            <div className="flex gap-4 items-center bg-white dark:bg-zinc-900/80 p-2 rounded-2xl border border-zinc-200 dark:border-zinc-800">
-                <div className="relative flex-1">
-                    <Search className="absolute left-4 top-3.5 text-zinc-400" size={18} />
-                    <Input
-                        placeholder="Search by username, email, or package..."
-                        value={searchQuery}
-                        onChange={(e) => setSearchQuery(e.target.value)}
-                        className="pl-12 h-12 bg-transparent border-none focus-visible:ring-0 font-medium placeholder:text-zinc-400"
-                    />
-                </div>
-                <div className="flex items-center gap-2">
-                    <Select value={statusFilter} onValueChange={setStatusFilter}>
-                        <SelectTrigger className="w-[140px] h-10 border-zinc-200 dark:border-zinc-800 rounded-xl">
-                            <SelectValue placeholder="Filter by status" />
-                        </SelectTrigger>
-                        <SelectContent>
-                            <SelectItem value="all">All Status</SelectItem>
-                            {STATUS_OPTIONS.map((option) => (
-                                <SelectItem key={option.value} value={option.value}>
-                                    {option.label}
-                                </SelectItem>
-                            ))}
-                        </SelectContent>
-                    </Select>
-                </div>
+            {/* Filter + Sort Bar */}
+            <div className="flex flex-wrap gap-3 items-center justify-between bg-white dark:bg-zinc-900/80 p-3 rounded-2xl border border-zinc-200 dark:border-zinc-800">
+                <CustomFilterFromUrl config={FILTERS} />
+                <CustomSortFromUrl config={SORTS} />
             </div>
 
             {/* View Renderer */}
-            {viewMode === 'list' ? (
+            {isLoading ? (
+                <TableSkeleton />
+            ) : viewMode === 'list' ? (
                 <div className="grid grid-cols-1 gap-4">
-                    {filteredSubscriptions.map((subscription: Subscription) => (
+                    {subscriptions.map((subscription: Subscription) => (
                         <Card
                             key={subscription.id}
                             className="shadow-none bg-white dark:bg-zinc-900/80 border border-zinc-200 dark:border-zinc-800 group hover:-translate-y-0.5 transition-all overflow-hidden"
@@ -575,32 +584,7 @@ export default function SubscriptionsManagement() {
                                                 {subscription.status}
                                             </div>
 
-                                            <DropdownMenu>
-                                                <DropdownMenuTrigger asChild>
-                                                    <Button variant="ghost" size="icon" className="rounded-xl hover:bg-zinc-100 dark:hover:bg-zinc-800 h-10 w-10 transition-colors">
-                                                        <MoreHorizontal size={20} />
-                                                    </Button>
-                                                </DropdownMenuTrigger>
-                                                <DropdownMenuContent align="end" className="w-56 p-2 rounded-2xl">
-                                                    <DropdownMenuLabel className="px-3 py-2 text-[10px] font-black uppercase tracking-[0.2em] text-zinc-500">
-                                                        Subscription Controls
-                                                    </DropdownMenuLabel>
-
-                                                    <DropdownMenuItem
-                                                        onSelect={() => {
-                                                            setSelectedSubscription(subscription);
-                                                            setActiveModal('UPDATE');
-                                                        }}
-                                                        className="flex items-center gap-3 p-3 rounded-xl cursor-pointer hover:bg-primary/10 hover:text-primary font-bold text-xs"
-                                                    >
-                                                        <Pencil size={16} /> Update Subscription
-                                                    </DropdownMenuItem>
-
-                                                    <DropdownMenuItem onSelect={() => { setSelectedSubscription(subscription); setActiveModal('DETAILS'); }} className="flex items-center gap-3 p-3 rounded-xl cursor-pointer hover:bg-primary/10 hover:text-primary font-bold text-xs">
-                                                        <Eye size={16} /> View Details
-                                                    </DropdownMenuItem>
-                                                </DropdownMenuContent>
-                                            </DropdownMenu>
+                                            <ActionsDropdown actions={rowActions(subscription)} maxVisible={1} showLabels={false} className="rounded-xl" />
                                         </div>
                                     </div>
                                 </div>
@@ -608,7 +592,7 @@ export default function SubscriptionsManagement() {
                         </Card>
                     ))}
 
-                    {filteredSubscriptions.length === 0 && (
+                    {subscriptions.length === 0 && (
                         <div className="text-center py-12 bg-white dark:bg-zinc-900/80 rounded-2xl border border-zinc-200 dark:border-zinc-800">
                             <CreditCard className="mx-auto h-12 w-12 text-zinc-400 mb-4" />
                             <h3 className="text-lg font-bold text-zinc-600 dark:text-zinc-400">No subscriptions found</h3>
@@ -617,53 +601,17 @@ export default function SubscriptionsManagement() {
                     )}
 
                     {pagination && (
-                        <div className="flex justify-between items-center pt-4">
-                            <div className="text-sm text-zinc-500">
-                                Showing {filteredSubscriptions.length} of {pagination.total} subscriptions
-                            </div>
-                            <div className="flex gap-2">
-                                <Button
-                                    variant="outline"
-                                    size="sm"
-                                    onClick={() => setPage(p => Math.max(1, p - 1))}
-                                    disabled={!pagination.has_previous}
-                                >
-                                    Previous
-                                </Button>
-                                <Button
-                                    variant="outline"
-                                    size="sm"
-                                    onClick={() => setPage(p => p + 1)}
-                                    disabled={!pagination.has_next}
-                                >
-                                    Next
-                                </Button>
-                            </div>
-                        </div>
+                        <CustomPagination pagination={pagination} onPageChange={setPage} showLimitSelector={false} className="pt-4" />
                     )}
                 </div>
             ) : (
+                <div className="space-y-4">
                 <DataTable
-                    data={filteredSubscriptions}
+                    data={subscriptions}
+                    isLoading={isLoading}
+                    sortConfig={sortBy ? { sortBy, sortOrder } : undefined}
                     displayConfigs={displayConfigs}
-                    actions={[
-                        {
-                            label: 'Update Subscription',
-                            icon: <Pencil size={14} />,
-                            onClick: (sub: Subscription) => {
-                                setSelectedSubscription(sub);
-                                setActiveModal('UPDATE');
-                            }
-                        },
-                        {
-                            label: 'View Details',
-                            icon: <Eye size={14} />,
-                            onClick: (sub: Subscription) => {
-                                setSelectedSubscription(sub);
-                                setActiveModal('DETAILS');
-                            }
-                        }
-                    ]}
+                    renderActions={(sub) => <ActionsDropdown actions={rowActions(sub)} maxVisible={3} showLabels={false} />}
                     excludeColumns={['id', 'payment_method', 'created_at', 'updated_at', 'trial_end_date', 'package', 'user']}
                     dots={{
                         status: {
@@ -686,6 +634,10 @@ export default function SubscriptionsManagement() {
                     emptyTitle="No subscriptions found"
                     emptyDescription="No subscriptions match your current filters."
                 />
+                {pagination && (
+                    <CustomPagination pagination={pagination} onPageChange={setPage} showLimitSelector={false} />
+                )}
+                </div>
             )}
 
             {/* Update Subscription Modal */}

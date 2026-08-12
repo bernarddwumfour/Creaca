@@ -1,21 +1,10 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
 import { Toaster } from 'sonner'; // Add this import
 import "./globals.css";
 import { ThemeProvider } from "@/components/ui/theme-provider";
 import NextTopLoader from 'nextjs-toploader';
 import { AuthProvider } from "@/context/AuthContext";
 import Providers from "@/context/providers";
-
-const geistSans = Geist({
-  variable: "--font-geist-sans",
-  subsets: ["latin"],
-});
-
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
-  subsets: ["latin"],
-});
 
 export const metadata: Metadata = {
   title: "KYRIOS",
@@ -30,7 +19,7 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
+        className="antialiased"
       >
         <AuthProvider>
           <ThemeProvider

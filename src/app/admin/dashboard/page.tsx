@@ -74,14 +74,14 @@ export default function AdminDashboard() {
             </div>
 
             {/* Stats Grid - Matching your dashboard style */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
                 {stats.map((stat, i) => (
                     <Card
                         key={i}
                         className="shadow-none  bg-white dark:bg-zinc-900/80 border border-zinc-200 dark:border-zinc-800 group hover:-translate-y-0.5 transition-all py-2"
                     >
-                        <CardContent className="p-6 flex items-center gap-4">
-                            <div className={`p-3 rounded-2xl bg-zinc-100 dark:bg-zinc-800 ${stat.color} transition-all group-hover:scale-110`}>
+                        <CardContent className="p-3 sm:p-6 flex items-center gap-4">
+                            <div className={`p-2 sm:p-3 rounded-2xl bg-zinc-100 dark:bg-zinc-800 ${stat.color} transition-all group-hover:scale-110`}>
                                 <stat.icon size={20} />
                             </div>
                             <div>
@@ -96,7 +96,7 @@ export default function AdminDashboard() {
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                 {/* Content Pipeline Tracking */}
                 <Card className="shadow-none lg:col-span-2 bg-white dark:bg-zinc-900/80 border border-zinc-200 dark:border-zinc-800  overflow-hidden">
-                    <CardHeader className="border-b border-zinc-100 dark:border-zinc-800/50 pb-6">
+                    <CardHeader className="border-b border-zinc-100 dark:border-zinc-800/50 pb-3 sm:pb-6">
                         <div className="flex justify-between items-center">
                             <CardTitle className="text-[10px] font-black uppercase tracking-[0.2em] text-zinc-400 flex items-center gap-2">
                                 <BarChart3 size={14} className="text-primary" />
@@ -107,8 +107,8 @@ export default function AdminDashboard() {
                             </Badge>
                         </div>
                     </CardHeader>
-                    <CardContent className="p-8">
-                        <div className="relative p-8 rounded-3xl border border-zinc-100 dark:border-zinc-800 bg-white dark:bg-[#111114] group hover:border-primary/30 transition-all">
+                    <CardContent className="p-4 sm:p-8">
+                        <div className="relative p-4 sm:p-8 rounded-3xl border border-zinc-100 dark:border-zinc-800 bg-white dark:bg-[#111114] group hover:border-primary/30 transition-all">
                             <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 mb-8">
                                 <div>
                                     <h3 className="text-xl font-black tracking-tight">Web Development Path Update</h3>
@@ -135,13 +135,13 @@ export default function AdminDashboard() {
 
                 {/* System Alerts & Insights */}
                 <Card className="shadow-none  bg-white dark:bg-zinc-900/80 border border-zinc-200 dark:border-zinc-800 ">
-                    <CardHeader className="pb-6">
+                    <CardHeader className="pb-3 sm:pb-6">
                         <CardTitle className="text-[10px] font-black uppercase tracking-[0.2em] text-primary flex items-center gap-2">
                             <Zap size={14} /> CRITICAL INSIGHTS
                         </CardTitle>
                     </CardHeader>
                     <CardContent className="space-y-6">
-                        <div className="p-6 rounded-3xl bg-orange-500/5 border border-orange-500/10">
+                        <div className="p-3 sm:p-6 rounded-3xl bg-orange-500/5 border border-orange-500/10">
                             <div className="flex items-center gap-3 mb-4">
                                 <div className="p-2 bg-orange-500/10 rounded-xl text-orange-600">
                                     <BookOpen size={18} />

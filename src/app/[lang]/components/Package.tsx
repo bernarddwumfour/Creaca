@@ -98,7 +98,7 @@ export function Package({ package: pkg, isSubscribing, onSubscribe }: PackageCar
                         )} */}
 
                         {pkg.access_summary && pkg.access_summary.map((summary) => {
-                            return <div className="flex items-start gap-3 text-[13px] font-bold text-slate-700 dark:text-zinc-300">
+                            return <div key={summary} className="flex items-start gap-3 text-[13px] font-bold text-slate-700 dark:text-zinc-300">
                                 <Check className="w-3 h-3 text-primary" strokeWidth={4} />
                                 {summary}
                             </div>

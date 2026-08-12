@@ -1,13 +1,11 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { Suspense, useState } from 'react';
+import { useSearchParams, usePathname, useRouter } from 'next/navigation';
 import {
     Users,
-    Search,
-    MoreHorizontal,
     Eye,
     RefreshCw,
-    Loader2,
     Calendar,
     User,
     BookOpen,
@@ -16,31 +14,24 @@ import {
     XCircle,
     Award,
     Clock,
-    ChevronLeft,
-    ChevronRight,
     LayoutGrid,
     LayoutList,
-    FileText
 } from 'lucide-react';
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import {
-    DropdownMenu,
-    DropdownMenuContent,
-    DropdownMenuItem,
-    DropdownMenuLabel,
-    DropdownMenuSeparator,
-    DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { toast } from 'sonner';
 import { CustomDialog } from '../../../../../widgets/CustomDialog/CustomDialog';
 import { DataTable } from '../../../../../widgets/Customtable/DataTable';
 import { ToggleGroup, ToggleGroupItem } from '../../../../../widgets/ToggleGroup/ToggleGroup';
 import api from '@/lib/axios';
 import { ENDPOINTS } from '@/lib/endpoints';
+import { CustomFilterFromUrl, type FilterConfig } from '@/widgets/custom-filter/CustomFilterFromUrl';
+import { CustomSortFromUrl, type SortConfig } from '@/widgets/custom-sort/CustomSortFromUrl';
+import { CustomPagination } from '@/widgets/custom-pagination/CustomPagination';
+import { ActionsDropdown, type ActionItem } from '@/widgets/actions-dropdown/ActionsDropdown';
+import { TableSkeleton } from '@/widgets/custom-table/TableSkeleton';
+import { PageHeader } from '@/widgets/page-header/PageHeader';
 
 interface Registration {
     id: string;
@@ -82,14 +73,16 @@ interface RegistrationsResponse {
     data: {
         results: Registration[];
         pagination: {
+            current_page: number;
+            per_page: number;
             total: number;
             total_pages: number;
-            current_page: number;
-            page_size: number;
             has_next: boolean;
             has_previous: boolean;
             next_page: number | null;
             previous_page: number | null;
+            start_index: number;
+            end_index: number;
         };
     };
     errors: any[];
@@ -99,6 +92,30 @@ interface RegistrationsResponse {
         request_id: string | null;
     };
 }
+
+const STATUS_OPTIONS = [
+    { label: 'Active', value: 'active' },
+    { label: 'Completed', value: 'completed' },
+    { label: 'Dropped', value: 'dropped' },
+];
+
+const SORT_OPTIONS = [
+    { value: 'enrolled_at', label: 'Enrolled' },
+    { value: 'status', label: 'Status' },
+    { value: 'course', label: 'Course' },
+];
+
+// Hoisted to module scope — see courses/page.tsx for why.
+const FILTERS: FilterConfig = {
+    fields: [{ name: 'status', type: 'select', placeholder: 'Status', options: STATUS_OPTIONS }],
+    searchPlaceholder: 'Search by student name, email, or course...',
+};
+
+const SORTS: SortConfig = {
+    options: SORT_OPTIONS,
+    defaultSortBy: 'enrolled_at',
+    defaultSortOrder: 'desc',
+};
 
 const STATUS_COLORS = {
     active: { bg: 'bg-emerald-500/10', text: 'text-emerald-600', icon: CheckCircle, label: 'Active' },
@@ -116,19 +133,46 @@ const getDifficultyLabel = (difficulty: string) => {
 };
 
 export default function AdminRegistrationsPage() {
-    const queryClient = useQueryClient();
-    const [viewMode, setViewMode] = useState<'list' | 'table'>('list');
-    const [searchQuery, setSearchQuery] = useState('');
-    const [page, setPage] = useState(1);
-    const [pageSize] = useState(10);
+    return (
+        <Suspense fallback={<TableSkeleton />}>
+            <AdminRegistrationsPageInner />
+        </Suspense>
+    );
+}
+
+function AdminRegistrationsPageInner() {
+    const searchParams = useSearchParams();
+    const pathname = usePathname();
+    const router = useRouter();
+
+    const [viewMode, setViewMode] = useState<'list' | 'table'>('table');
     const [detailModalOpen, setDetailModalOpen] = useState(false);
     const [selectedRegistration, setSelectedRegistration] = useState<Registration | null>(null);
 
+    const pageSize = 10;
+    const page = parseInt(searchParams.get('page') || '1', 10);
+    const search = searchParams.get('search') || '';
+    const status = searchParams.get('status') || '';
+    const sortBy = searchParams.get('sort_by') || '';
+    const sortOrder = (searchParams.get('sort_order') as 'asc' | 'desc') || 'asc';
+
+    const setPage = (nextPage: number) => {
+        const params = new URLSearchParams(searchParams.toString());
+        params.set('page', String(nextPage));
+        router.replace(`${pathname}?${params.toString()}`, { scroll: false });
+    };
+
     const { data: response, isLoading, refetch } = useQuery<RegistrationsResponse>({
-        queryKey: ['admin-registrations', page, pageSize],
+        queryKey: ['admin-registrations', page, pageSize, search, status, sortBy, sortOrder],
         queryFn: async () => {
             const { data } = await api.get(ENDPOINTS.COURSES.ADMIN_LIST_REGISTRATIONS, {
-                params: { page, page_size: pageSize }
+                params: {
+                    page, page_size: pageSize,
+                    search: search || undefined,
+                    status: status || undefined,
+                    sort_by: sortBy || undefined,
+                    sort_order: sortBy ? sortOrder : undefined,
+                }
             });
             return data;
         },
@@ -136,56 +180,6 @@ export default function AdminRegistrationsPage() {
 
     const registrations = response?.data?.results || [];
     const pagination = response?.data?.pagination;
-
-    const filteredRegistrations = React.useMemo(() => {
-        if (!registrations.length) return [];
-        if (!searchQuery) return registrations;
-
-        const query = searchQuery.toLowerCase();
-        return registrations.filter((reg: Registration) =>
-            reg.user?.name?.toLowerCase().includes(query) ||
-            reg.user?.email?.toLowerCase().includes(query) ||
-            reg.course?.name?.toLowerCase().includes(query)
-        );
-    }, [registrations, searchQuery]);
-
-    const handleExport = async (items: Registration[]) => {
-        if (items.length === 0) {
-            toast.warning("No registrations selected for export.");
-            return;
-        }
-
-        try {
-            const exportData = items.map(reg => ({
-                ID: reg.id,
-                Student_Name: reg.user.name,
-                Student_Email: reg.user.email,
-                Course: reg.course.name,
-                Subject: reg.course.subject.name,
-                Difficulty: reg.course.difficulty,
-                Status: reg.status,
-                Progress: `${reg.progress}%`,
-                Package: reg.subscription.package,
-                Enrolled_At: reg.enrolled_at,
-                Completed_At: reg.completed_at,
-                Dropped_At: reg.dropped_at
-            }));
-
-            const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: 'application/json' });
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = `registrations_export_${new Date().toISOString().split('T')[0]}.json`;
-            document.body.appendChild(a);
-            a.click();
-            document.body.removeChild(a);
-            URL.revokeObjectURL(url);
-
-            toast.success(`${items.length} registration(s) exported successfully.`);
-        } catch (error: any) {
-            toast.error(error.message || "Failed to export registrations.");
-        }
-    };
 
     const handleViewDetails = (registration: Registration) => {
         setSelectedRegistration(registration);
@@ -224,107 +218,62 @@ export default function AdminRegistrationsPage() {
         }
     ];
 
-    // Table actions
-    const actions = [
-        {
-            label: 'View Details',
-            icon: <Eye size={14} />,
-            onClick: handleViewDetails
-        }
+    const rowActions = (reg: Registration): ActionItem[] => [
+        { label: 'View Details', icon: <Eye size={14} />, onClick: () => handleViewDetails(reg) },
     ];
-
-    // Bulk actions
-    const bulkActions = [
-        {
-            label: 'Export Selected',
-            icon: <FileText size={14} />,
-            onClick: handleExport
-        }
-    ];
-
-    if (isLoading) {
-        return (
-            <div className='h-full min-h-[300px] w-full flex items-center justify-center'>
-                <Loader2 className='animate-spin h-12 w-12 m-auto text-primary' />
-            </div>
-        );
-    }
 
     return (
         <div className="space-y-8">
-            {/* Header */}
-            <div className="flex justify-between items-end">
-                <div className="max-w-xl space-y-2">
-                    <p className="text-[10px] font-bold uppercase text-zinc-400 tracking-[0.2em]">
-                        ADMIN / REGISTRATIONS
-                    </p>
-                    <h1 className="text-2xl md:text-3xl font-black tracking-tight">
-                        Course <span className="text-orange-600">Registrations</span>
-                    </h1>
-                    <p className="text-zinc-500 font-medium tracking-tight text-sm">
-                        Manage student enrollments and track course access across the platform.
-                    </p>
-                </div>
-
-                <div className="flex gap-3">
-                    {/* View Toggle */}
-                    <ToggleGroup
-                        type="single"
-                        value={viewMode}
-                        onValueChange={(value: any) => value && setViewMode(value as 'list' | 'table')}
-                        className="border border-zinc-200 dark:border-zinc-800 rounded-xl p-1 bg-white dark:bg-zinc-900/80"
-                    >
-                        <ToggleGroupItem
-                            value="list"
-                            className="rounded-lg data-[state=on]:bg-zinc-100 dark:data-[state=on]:bg-zinc-800 gap-3 p-3"
+            <PageHeader
+                eyebrow="ADMIN / REGISTRATIONS"
+                title={<>Course <span className="text-orange-600">Registrations</span></>}
+                description="Manage student enrollments and track course access across the platform."
+                actions={
+                    <>
+                        <ToggleGroup
+                            type="single"
+                            value={viewMode}
+                            onValueChange={(value: any) => value && setViewMode(value as 'list' | 'table')}
+                            className="border border-zinc-200 dark:border-zinc-800 rounded-xl p-1 bg-white dark:bg-zinc-900/80"
                         >
-                            <LayoutGrid size={16} /> <span>List view</span>
-                        </ToggleGroupItem>
-                        <ToggleGroupItem
-                            value="table"
-                            className="rounded-lg data-[state=on]:bg-zinc-100 dark:data-[state=on]:bg-zinc-800 gap-3 p-3"
+                            <ToggleGroupItem
+                                value="list"
+                                className="rounded-lg data-[state=on]:bg-zinc-100 dark:data-[state=on]:bg-zinc-800 gap-3 px-3 py-1"
+                            >
+                                <LayoutGrid size={16} /> <span className="hidden sm:inline">List view</span>
+                            </ToggleGroupItem>
+                            <ToggleGroupItem
+                                value="table"
+                                className="rounded-lg data-[state=on]:bg-zinc-100 dark:data-[state=on]:bg-zinc-800 gap-3 px-3 py-1"
+                            >
+                                <LayoutList size={16} /><span className="hidden sm:inline">Table view</span>
+                            </ToggleGroupItem>
+                        </ToggleGroup>
+
+                        <Button
+                            variant="outline"
+                            onClick={() => refetch()}
+                            className="rounded-xl h-11 w-11 p-0 transition-all"
                         >
-                            <LayoutList size={16} /><span>Table view</span>
-                        </ToggleGroupItem>
-                    </ToggleGroup>
+                            <RefreshCw size={18} className={isLoading ? "animate-spin" : ""} />
+                        </Button>
+                    </>
+                }
+            />
 
-                    <Button
-                        variant="outline"
-                        onClick={() => refetch()}
-                        className="rounded-xl h-11 w-11 p-0 transition-all"
-                    >
-                        <RefreshCw size={18} className={isLoading ? "animate-spin" : ""} />
-                    </Button>
-                </div>
-            </div>
-
-            {/* Filter Bar */}
-            <div className="flex gap-4 items-center bg-white dark:bg-zinc-900/80 p-2 rounded-2xl border border-zinc-200 dark:border-zinc-800">
-                <div className="relative flex-1">
-                    <Search className="absolute left-4 top-3.5 text-zinc-400" size={18} />
-                    <Input
-                        placeholder="Search by student name, email, or course..."
-                        value={searchQuery}
-                        onChange={(e) => setSearchQuery(e.target.value)}
-                        className="pl-12 h-12 bg-transparent border-none focus-visible:ring-0 font-medium placeholder:text-zinc-400"
-                    />
-                </div>
-                <div className="hidden md:flex items-center gap-2 pr-2">
-                    <Button variant="ghost" className="font-black text-[10px] uppercase tracking-[0.2em] text-zinc-400 hover:text-primary transition-colors">
-                        By Status
-                    </Button>
-                    <div className="h-6 w-[1px] bg-zinc-200 dark:bg-zinc-800" />
-                    <Button variant="ghost" className="font-black text-[10px] uppercase tracking-[0.2em] text-zinc-400 hover:text-primary transition-colors">
-                        By Course
-                    </Button>
-                </div>
+            {/* Filter + Sort Bar */}
+            <div className="flex flex-wrap gap-3 items-center justify-between bg-white dark:bg-zinc-900/80 p-3 rounded-2xl border border-zinc-200 dark:border-zinc-800">
+                <CustomFilterFromUrl config={FILTERS} />
+                <CustomSortFromUrl config={SORTS} />
             </div>
 
             {/* View Renderer */}
-            {viewMode === 'list' ? (
+            {isLoading ? (
+                <TableSkeleton />
+            ) : viewMode === 'list' ? (
                 /* LIST VIEW - Cards */
                 <div className="grid grid-cols-1 gap-4">
-                    {filteredRegistrations.map((reg: Registration) => {
+                    {registrations.map((reg: Registration) => {
                         const statusStyle = STATUS_COLORS[reg.status as keyof typeof STATUS_COLORS] || STATUS_COLORS.active;
                         const StatusIcon = statusStyle.icon;
                         const progressColor = reg.progress >= 75 ? 'bg-emerald-500' : reg.progress >= 50 ? 'bg-blue-500' : reg.progress >= 25 ? 'bg-amber-500' : 'bg-rose-500';
@@ -403,29 +352,7 @@ export default function AdminRegistrationsPage() {
                                             </div>
 
                                             <div className="flex items-center gap-4">
-                                                <DropdownMenu>
-                                                    <DropdownMenuTrigger asChild>
-                                                        <Button
-                                                            variant="ghost"
-                                                            size="icon"
-                                                            className="rounded-xl hover:bg-zinc-100 dark:hover:bg-zinc-800 h-10 w-10 transition-colors"
-                                                        >
-                                                            <MoreHorizontal size={20} />
-                                                        </Button>
-                                                    </DropdownMenuTrigger>
-                                                    <DropdownMenuContent align="end" className="w-56 p-2 rounded-2xl">
-                                                        <DropdownMenuLabel className="px-3 py-2 text-[10px] font-black uppercase tracking-[0.2em] text-zinc-500">
-                                                            Registration Controls
-                                                        </DropdownMenuLabel>
-
-                                                        <DropdownMenuItem
-                                                            onSelect={() => handleViewDetails(reg)}
-                                                            className="flex items-center gap-3 p-3 rounded-xl cursor-pointer hover:bg-primary/10 hover:text-primary font-bold text-xs"
-                                                        >
-                                                            <Eye size={16} /> View Details
-                                                        </DropdownMenuItem>
-                                                    </DropdownMenuContent>
-                                                </DropdownMenu>
+                                                <ActionsDropdown actions={rowActions(reg)} maxVisible={1} showLabels={false} className="rounded-xl" />
                                             </div>
                                         </div>
                                     </div>
@@ -434,7 +361,7 @@ export default function AdminRegistrationsPage() {
                         );
                     })}
 
-                    {filteredRegistrations.length === 0 && (
+                    {registrations.length === 0 && (
                         <div className="text-center py-12 bg-white dark:bg-zinc-900/80 rounded-2xl border border-zinc-200 dark:border-zinc-800">
                             <Users className="mx-auto h-12 w-12 text-zinc-400 mb-4" />
                             <h3 className="text-lg font-bold text-zinc-600 dark:text-zinc-400">No registrations found</h3>
@@ -442,43 +369,19 @@ export default function AdminRegistrationsPage() {
                         </div>
                     )}
 
-                    {/* Pagination Info */}
-                    {pagination && pagination.total_pages > 1 && (
-                        <div className="flex justify-between items-center pt-4">
-                            <div className="text-sm text-zinc-500">
-                                Showing {((pagination.current_page - 1) * pagination.page_size) + 1} to{' '}
-                                {Math.min(pagination.current_page * pagination.page_size, pagination.total)} of {pagination.total} registrations
-                            </div>
-                            <div className="flex gap-2">
-                                <Button
-                                    variant="outline"
-                                    size="sm"
-                                    onClick={() => setPage(p => Math.max(1, p - 1))}
-                                    disabled={!pagination.has_previous}
-                                >
-                                    <ChevronLeft size={16} />
-                                    Previous
-                                </Button>
-                                <Button
-                                    variant="outline"
-                                    size="sm"
-                                    onClick={() => setPage(p => p + 1)}
-                                    disabled={!pagination.has_next}
-                                >
-                                    Next
-                                    <ChevronRight size={16} />
-                                </Button>
-                            </div>
-                        </div>
+                    {pagination && (
+                        <CustomPagination pagination={pagination} onPageChange={setPage} showLimitSelector={false} className="pt-4" />
                     )}
                 </div>
             ) : (
                 /* TABLE VIEW - Using DataTable */
+                <div className="space-y-4">
                 <DataTable
-                    data={filteredRegistrations}
+                    data={registrations}
+                    isLoading={isLoading}
+                    sortConfig={sortBy ? { sortBy, sortOrder } : undefined}
                     displayConfigs={displayConfigs}
-                    actions={actions}
-                    bulkActions={bulkActions}
+                    renderActions={(reg) => <ActionsDropdown actions={rowActions(reg)} maxVisible={3} showLabels={false} />}
                     excludeColumns={['id', 'user', 'course', 'subscription', 'created_at', 'updated_at', 'completed_at', 'dropped_at', 'is_completed']}
                     dots={{
                         status: {
@@ -497,6 +400,10 @@ export default function AdminRegistrationsPage() {
                     emptyTitle="No registrations found"
                     emptyDescription="No course registrations match your current filters."
                 />
+                {pagination && (
+                    <CustomPagination pagination={pagination} onPageChange={setPage} showLimitSelector={false} />
+                )}
+                </div>
             )}
 
             {/* Registration Detail Modal */}

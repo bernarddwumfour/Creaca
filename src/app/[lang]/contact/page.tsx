@@ -3,10 +3,8 @@ import { getDictionary } from '@/lib/dictionary/get-dictionary';
 import React from 'react'
 import Header from '../components/Header';
 import Footer from '../components/Footer';
-import { ArrowRightCircle, Coffee, Mail, MessageCircle, Phone, User } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
+import { Mail } from 'lucide-react';
+import { ContactForm } from './ContactForm';
 
 type PageProps = {
     params: {
@@ -104,73 +102,20 @@ async function page({ params }: PageProps) {
                                             {t.info.mainHeading}
                                         </h3>
                                     </div>
-                                    <div className="w-full space-y-4 border-l-4 border-primary pl-6 py-2 bg-primary/[0.02] rounded-r-xl">
-                                        <div className="flex items-center gap-4">
-                                            <Coffee className="text-primary" size={24} />
-                                            <h2 className="text-zinc-900 text-lg md:text-xl font-bold dark:text-gray-300">{t.info.coffee.title}</h2>
-                                        </div>
-                                        <p className="text-zinc-500 text-sm md:text-base leading-relaxed">{t.info.coffee.address}</p>
-                                    </div>
-                                    <div className="space-y-4">
-                                        <div className="flex items-center gap-4">
-                                            <Phone className="text-primary" size={24} />
-                                            <h2 className="text-zinc-900 text-lg md:text-xl font-bold dark:text-gray-300">{t.info.reachOut.title}</h2>
-                                        </div>
-                                        <p className="text-zinc-500 text-sm md:text-base leading-relaxed">
-                                            Phone : {t.info.reachOut.phone} <br />
-                                            Fax : {t.info.reachOut.fax}
-                                        </p>
-                                    </div>
-                                    <div className="space-y-4">
+                                    <div className="w-full space-y-4 border-l-4 border-primary bg-primary/[0.02] py-6 pl-6 rounded-r-xl">
                                         <div className="flex items-center gap-4">
                                             <Mail className="text-primary" size={24} />
                                             <h2 className="text-zinc-900 text-lg md:text-xl font-bold dark:text-gray-300">{t.info.assist.title}</h2>
                                         </div>
                                         <p className="text-zinc-500 text-sm md:text-base leading-relaxed">
-                                            {t.info.assist.email1} <br />
-                                            {t.info.assist.email2}
+                                            Use the secure form and our support team will reply to the email address you provide.
                                         </p>
                                     </div>
                                 </div>
                             </div>
 
                             {/* Right Side: Form */}
-                            <div className="w-full group p-[3px] bg-slate-100/50 dark:bg-zinc-900/50 overflow-hidden rounded-2xl shadow-xl relative z-10">
-                                <div className="absolute w-[98%] h-[98%] top-[1%] left-[1%] overflow-hidden bg-slate-100 dark:bg-zinc-900 shadow-xs hover:shadow-sm rounded-sm" />
-                                <div className="absolute inset-[-100%] bg-[conic-gradient(from_0deg,transparent_0deg,transparent_150deg,#ea580c_230deg,transparent_210deg)] opacity-0 group-hover:opacity-100 group-hover:animate-spin transition-opacity duration-500 pointer-events-none -z-1" style={{ animationDuration: '3s' }} />
-                                <div className="relative h-full flex flex-col p-8 rounded-3xl bg-white/50 dark:bg-[#111114]/80 backdrop-blur-2xl z-10 border border-slate-100 dark:border-white/5 overflow-hidden space-y-8">
-                                    <h3 className="text-2xl md:text-3xl font-black text-zinc-900 dark:text-white">{t.form.title}</h3>
-                                    <div className="space-y-6">
-                                        <div className="space-y-2">
-                                            <p className="text-xs md:text-sm font-black text-zinc-900 ml-1 dark:text-gray-300">{t.form.nameLabel}</p>
-                                            <div className="relative">
-                                                <Input className="h-12 border-zinc-200 dark:border-zinc-800 focus-visible:ring-primary rounded-xl pr-10" placeholder={t.form.namePlaceholder} />
-                                                <User className="absolute right-4 top-1/2 -translate-y-1/2 text-zinc-400" size={18} />
-                                            </div>
-                                        </div>
-                                        <div className="space-y-2">
-                                            <p className="text-xs md:text-sm font-black text-zinc-900 ml-1 dark:text-gray-300">{t.form.emailLabel}</p>
-                                            <div className="relative">
-                                                <Input className="h-12 border-zinc-200 dark:border-zinc-800 focus-visible:ring-primary rounded-xl pr-10" placeholder={t.form.emailPlaceholder} />
-                                                <Mail className="absolute right-4 top-1/2 -translate-y-1/2 text-zinc-400" size={18} />
-                                            </div>
-                                        </div>
-                                        <div className="space-y-2">
-                                            <p className="text-xs md:text-sm font-black text-zinc-900 ml-1 dark:text-gray-300">{t.form.messageLabel}</p>
-                                            <div className="relative">
-                                                <Textarea className="min-h-[120px] rounded-xl  border-zinc-200 dark:border-zinc-800 focus-visible:ring-primary  bg-zinc-50/50 pt-4" placeholder={t.form.messagePlaceholder} />
-                                                <MessageCircle className="absolute right-4 top-5 text-zinc-400" size={18} />
-                                            </div>
-                                        </div>
-                                        <Button size="lg" className="w-full rounded-full font-bold py-6 md:py-8 text-base md:text-lg shadow-lg">
-                                            {t.form.submitButton} <ArrowRightCircle className="ml-2" />
-                                        </Button>
-                                        <p className="text-[10px] md:text-xs text-center text-zinc-500">
-                                            {t.form.privacyNote} <span className="underline font-bold text-zinc-900">{t.form.privacyLink}</span>
-                                        </p>
-                                    </div>
-                                </div>
-                            </div>
+                            <ContactForm lang={lang} copy={t.form} />
                         </div>
                     </div>
                     {/* Decorative Bubbles */}
@@ -189,33 +134,6 @@ async function page({ params }: PageProps) {
 
                 <div className="h-[2px] w-8/10 mx-auto bg-gradient-to-r from-transparent via-orange-500 to-transparent opacity-50" />
 
-                {/* Social Media Section with Wavy Animation */}
-                <div className="py-12 md:py-24 flex flex-col items-center justify-center space-y-6">
-                    <h4 className="text-zinc-900 dark:text-gray-400 font-bold uppercase tracking-widest text-xs">
-                        {t.social.heading}
-                    </h4>
-
-                    <div className="flex space-x-4 justify-center group/container">
-                        {socialLinks.map((social, i) => (
-                            <SocialLink
-                                key={social.name}
-                                href={social.href}
-                                // Inline delay for the wavy stagger
-                                style={{ transitionDelay: `${i * 75}ms` }}
-                                className="w-10 h-10 md:w-12 md:h-12 bg-primary rounded-full flex items-center justify-center shadow-lg shadow-primary/20 transition-all duration-300 ease-out hover:scale-110 hover:-translate-y-3"
-                            >
-                                <svg
-                                    viewBox={social.viewBox}
-                                    fill="none"
-                                    xmlns="http://www.w3.org/2000/svg"
-                                    className="w-5 h-5 fill-white"
-                                >
-                                    {social.icon}
-                                </svg>
-                            </SocialLink>
-                        ))}
-                    </div>
-                </div>
             </main>
 
             <Footer lang={lang} t={dictionary.footer} />

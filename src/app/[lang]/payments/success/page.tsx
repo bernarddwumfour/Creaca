@@ -14,7 +14,8 @@ export default function PaymentSuccessPage() {
   const { lang: rawLang } = useParams<{ lang: string }>();
   const lang = (rawLang in dict ? rawLang : 'en') as Lang;
   const t = dict[lang].pages.payments;
-  const reference = useSearchParams().get('reference') || useSearchParams().get('trxref');
+  const searchParams = useSearchParams();
+  const reference = searchParams.get('reference') || searchParams.get('trxref');
   const [state, setState] = useState<'verifying' | 'success' | 'pending' | 'failed'>('verifying');
 
   useEffect(() => {

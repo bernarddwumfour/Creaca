@@ -1,16 +1,14 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { Suspense, useState } from 'react';
+import { useSearchParams, usePathname, useRouter } from 'next/navigation';
 import {
     Plus,
-    Search,
-    MoreHorizontal,
     Layers,
     BookOpen,
     Pencil,
     Trash2,
     GraduationCap,
-    LayoutDashboard,
     LayoutList,
     LayoutGrid,
     RefreshCw,
@@ -27,16 +25,7 @@ import {
 } from 'lucide-react';
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import {
-    DropdownMenu,
-    DropdownMenuContent,
-    DropdownMenuItem,
-    DropdownMenuLabel,
-    DropdownMenuSeparator,
-    DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { CustomDialog } from '../../../../../widgets/CustomDialog/CustomDialog';
@@ -45,8 +34,15 @@ import { DataTable } from '../../../../../widgets/Customtable/DataTable';
 import { CourseForm } from '../(components)/CourseForm';
 import api from '@/lib/axios';
 import { ENDPOINTS } from '@/lib/endpoints';
+import { apiMessage } from '@/lib/api-message';
 import { ToggleGroup, ToggleGroupItem } from '../../../../../widgets/ToggleGroup/ToggleGroup';
 import { CustomSelect } from '../../../../../widgets/CustomSelect/CustomSelect';
+import { CustomFilterFromUrl, type FilterConfig } from '@/widgets/custom-filter/CustomFilterFromUrl';
+import { CustomSortFromUrl, type SortConfig } from '@/widgets/custom-sort/CustomSortFromUrl';
+import { CustomPagination } from '@/widgets/custom-pagination/CustomPagination';
+import { ActionsDropdown, type ActionItem } from '@/widgets/actions-dropdown/ActionsDropdown';
+import { TableSkeleton } from '@/widgets/custom-table/TableSkeleton';
+import { PageHeader } from '@/widgets/page-header/PageHeader';
 
 interface Course {
     id: string;
@@ -85,14 +81,16 @@ interface CoursesResponse {
     data: {
         results: Course[];
         pagination: {
+            current_page: number;
+            per_page: number;
             total: number;
             total_pages: number;
-            current_page: number;
-            page_size: number;
             has_next: boolean;
             has_previous: boolean;
             next_page: number | null;
             previous_page: number | null;
+            start_index: number;
+            end_index: number;
         };
     };
     errors: any[];
@@ -103,14 +101,59 @@ interface CoursesResponse {
     };
 }
 
+const DIFFICULTY_OPTIONS = [
+    { label: 'Beginner', value: 'beginner' },
+    { label: 'Intermediate', value: 'intermediate' },
+    { label: 'Advanced', value: 'advanced' },
+];
+
+const STATUS_OPTIONS = [
+    { label: 'Active', value: 'active' },
+    { label: 'Inactive', value: 'inactive' },
+];
+
+const SORT_OPTIONS = [
+    { value: 'name', label: 'Name' },
+    { value: 'price', label: 'Price' },
+    { value: 'created_at', label: 'Created' },
+    { value: 'difficulty', label: 'Difficulty' },
+];
+
+// Hoisted to module scope (not built inline in JSX): CustomFilterFromUrl/
+// CustomSortFromUrl's effects depend on `config.fields`/`config.defaultSortBy`
+// by reference — a fresh object literal on every render triggers a
+// setState-in-effect infinite loop.
+const FILTERS: FilterConfig = {
+    fields: [
+        { name: 'difficulty', type: 'select', placeholder: 'Difficulty', options: DIFFICULTY_OPTIONS },
+        { name: 'status', type: 'select', placeholder: 'Status', options: STATUS_OPTIONS },
+    ],
+    searchPlaceholder: 'Search courses...',
+};
+
+const SORTS: SortConfig = {
+    options: SORT_OPTIONS,
+    defaultSortBy: 'name',
+    defaultSortOrder: 'asc',
+};
+
 export default function CourseManagement() {
+    return (
+        <Suspense fallback={<TableSkeleton />}>
+            <CourseManagementInner />
+        </Suspense>
+    );
+}
+
+function CourseManagementInner() {
     const queryClient = useQueryClient();
+    const searchParams = useSearchParams();
+    const pathname = usePathname();
+    const router = useRouter();
+
     const [activeModal, setActiveModal] = useState<'CREATE' | 'UPDATE' | 'DELETE' | null>(null);
     const [selectedCourse, setSelectedCourse] = useState<Course | null>(null);
-    const [viewMode, setViewMode] = useState<'list' | 'table'>('list');
-    const [searchQuery, setSearchQuery] = useState('');
-    const [page, setPage] = useState(1);
-    const [pageSize] = useState(10);
+    const [viewMode, setViewMode] = useState<'list' | 'table'>('table');
     const [overviewModalOpen, setOverviewModalOpen] = useState(false);
     const [selectedCourseForOverview, setSelectedCourseForOverview] = useState<Course | null>(null);
     const [prerequisitesModalOpen, setPrerequisitesModalOpen] = useState(false);
@@ -118,12 +161,33 @@ export default function CourseManagement() {
     const [selectedPrerequisites, setSelectedPrerequisites] = useState<string[]>([]);
     const [isUpdatingPrerequisites, setIsUpdatingPrerequisites] = useState(false);
 
+    const pageSize = 10;
+    const page = parseInt(searchParams.get('page') || '1', 10);
+    const search = searchParams.get('search') || '';
+    const difficulty = searchParams.get('difficulty') || '';
+    const status = searchParams.get('status') || '';
+    const sortBy = searchParams.get('sort_by') || '';
+    const sortOrder = (searchParams.get('sort_order') as 'asc' | 'desc') || 'asc';
+
+    const setPage = (nextPage: number) => {
+        const params = new URLSearchParams(searchParams.toString());
+        params.set('page', String(nextPage));
+        router.replace(`${pathname}?${params.toString()}`, { scroll: false });
+    };
+
     // Fetch courses from API
     const { data: response, isLoading, refetch } = useQuery<CoursesResponse>({
-        queryKey: [ENDPOINTS.COURSES.LIST_COURSES, page, pageSize],
+        queryKey: [ENDPOINTS.COURSES.LIST_COURSES, page, pageSize, search, difficulty, status, sortBy, sortOrder],
         queryFn: async () => {
             const { data } = await api.get(ENDPOINTS.COURSES.LIST_COURSES, {
-                params: { page, page_size: pageSize }
+                params: {
+                    page, page_size: pageSize,
+                    search: search || undefined,
+                    difficulty: difficulty || undefined,
+                    status: status || undefined,
+                    sort_by: sortBy || undefined,
+                    sort_order: sortBy ? sortOrder : undefined,
+                }
             });
             return data;
         },
@@ -151,19 +215,6 @@ export default function CourseManagement() {
             label: course.name,
         }));
 
-    // Filter courses based on search
-    const filteredCourses = React.useMemo(() => {
-        if (!courses.length) return [];
-        if (!searchQuery) return courses;
-
-        const query = searchQuery.toLowerCase();
-        return courses.filter((course: Course) =>
-            course.name?.toLowerCase().includes(query) ||
-            course.subject?.name?.toLowerCase().includes(query) ||
-            course.description?.toLowerCase().includes(query)
-        );
-    }, [courses, searchQuery]);
-
     const invalidateCourses = () => {
         queryClient.invalidateQueries({ queryKey: [ENDPOINTS.COURSES.LIST_COURSES] });
     };
@@ -177,8 +228,7 @@ export default function CourseManagement() {
             invalidateCourses();
             closeModals();
         } catch (error: any) {
-            const errorMessage = error.response?.data?.message || error.message || "Failed to delete course.";
-            toast.error(errorMessage);
+            toast.error(apiMessage(error, "Failed to delete course."));
         }
     };
 
@@ -190,8 +240,7 @@ export default function CourseManagement() {
             toast.success(data.message || `Course "${course.name}" ${newStatus === 'active' ? 'activated' : 'deactivated'} successfully.`);
             invalidateCourses();
         } catch (error: any) {
-            const errorMessage = error.response?.data?.message || error.message || `Failed to update course status.`;
-            toast.error(errorMessage);
+            toast.error(apiMessage(error, "Failed to update course status."));
         }
     };
 
@@ -212,7 +261,7 @@ export default function CourseManagement() {
             setPrerequisitesModalOpen(false);
             invalidateCourses();
         } catch (error: any) {
-            toast.error(error.response?.data?.message || 'Failed to update prerequisites');
+            toast.error(apiMessage(error, 'Failed to update prerequisites'));
         } finally {
             setIsUpdatingPrerequisites(false);
         }
@@ -242,48 +291,7 @@ export default function CourseManagement() {
 
             invalidateCourses();
         } catch (error: any) {
-            const errorMessage = error.response?.data?.message || error.message || `Failed to ${action} ${items.length} course(s).`;
-            toast.error(errorMessage);
-        }
-    };
-
-    const handleExport = async (items: Course[]) => {
-        if (items.length === 0) {
-            toast.warning("No courses selected for export.");
-            return;
-        }
-
-        try {
-            const exportData = items.map(course => ({
-                ID: course.id,
-                Name: course.name,
-                Slug: course.slug,
-                Description: course.description,
-                Status: course.status,
-                Difficulty: course.difficulty,
-                Subject: course.subject.name,
-                Duration_Minutes: course.duration,
-                Modules_Count: course.modules_count,
-                Price: course.price,
-                Requirements: course.requirements,
-                Prerequisites: course.prerequisites.map(p => p.name),
-                Created_At: course.created_at,
-                Updated_At: course.updated_at
-            }));
-
-            const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: 'application/json' });
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = `courses_export_${new Date().toISOString().split('T')[0]}.json`;
-            document.body.appendChild(a);
-            a.click();
-            document.body.removeChild(a);
-            URL.revokeObjectURL(url);
-
-            toast.success(`${items.length} course(s) exported successfully.`);
-        } catch (error: any) {
-            toast.error(error.message || "Failed to export courses.");
+            toast.error(apiMessage(error, `Failed to ${action} ${items.length} course(s).`));
         }
     };
 
@@ -356,35 +364,21 @@ export default function CourseManagement() {
         }
     ];
 
-    // Table actions
-    const actions = [
+    // Row actions, pre-bound per row for ActionsDropdown (both list and
+    // table view render through renderActions) — matches the reference
+    // apps' `actions(row): ActionItem[]` factory
+    // pattern rather than passing the item down into the widget.
+    const rowActions = (course: Course): ActionItem[] => [
+        { label: 'View Details', icon: <Eye size={14} />, onClick: () => handleViewDetails(course) },
+        { label: 'Update Course', icon: <Pencil size={14} />, onClick: () => handleUpdateClick(course) },
+        { label: 'View Prerequisites', icon: <GitBranch size={14} />, onClick: () => handleManagePrerequisites(course) },
         {
-            label: 'View Details',
-            icon: <Eye size={14} />,
-            onClick: handleViewDetails
+            label: course.status === 'active' ? 'Deactivate' : 'Activate',
+            icon: course.status === 'active' ? <Archive size={14} /> : <RefreshCw size={14} />,
+            variant: course.status === 'active' ? 'destructive' : 'default',
+            onClick: () => handleUpdateStatus(course, course.status === 'active' ? 'inactive' : 'active'),
         },
-        {
-            label: 'Update Course',
-            icon: <Pencil size={14} />,
-            onClick: handleUpdateClick
-        },
-        {
-            label: 'View Prerequisites',
-            icon: <GitBranch size={14} />,
-            onClick: handleManagePrerequisites
-        },
-        {
-            label: (course: Course) => course.status === 'active' ? 'Deactivate' : 'Activate',
-            icon: (course: Course) => course.status === 'active' ? <Archive size={14} /> : <RefreshCw size={14} />,
-            variant: (course: Course): 'destructive' | 'default' => course.status === 'active' ? 'destructive' : 'default',
-            onClick: (course: Course) => handleUpdateStatus(course, course.status === 'active' ? 'inactive' : 'active')
-        },
-        {
-            label: 'Delete Course',
-            icon: <Trash2 size={14} />,
-            variant: 'destructive' as const,
-            onClick: handleDeleteClick
-        }
+        { label: 'Delete Course', icon: <Trash2 size={14} />, variant: 'destructive', onClick: () => handleDeleteClick(course) },
     ];
 
     // Bulk actions
@@ -406,104 +400,69 @@ export default function CourseManagement() {
             variant: 'destructive' as const,
             onClick: (items: Course[]) => handleBulkAction(items, "delete")
         },
-        {
-            label: 'Export Data',
-            icon: <FileText size={14} />,
-            onClick: handleExport
-        }
     ];
-
-    if (isLoading) {
-        return (
-            <div className='h-full min-h-[300px] w-full flex items-center justify-center'>
-                <Loader2 className='animate-spin h-12 w-12 m-auto text-primary' />
-            </div>
-        );
-    }
 
     return (
         <div className="space-y-8">
-            {/* Header */}
-            <div className="flex justify-between items-end">
-                <div className="max-w-xl space-y-2">
-                    <p className="text-[10px] font-bold uppercase text-zinc-400 tracking-[0.2em]">
-                        CURRICULUM MANAGEMENT
-                    </p>
-                    <h1 className="text-2xl md:text-3xl font-black tracking-tight">
-                        Course <span className="text-orange-600">Architect.</span>
-                    </h1>
-                    <p className="text-zinc-500 font-medium tracking-tight text-sm">
-                        Manage the structured learning paths and enrollment settings for the ecosystem.
-                    </p>
-                </div>
-
-                <div className="flex gap-3">
-                    <ToggleGroup
-                        type="single"
-                        value={viewMode}
-                        onValueChange={(value: any) => value && setViewMode(value as 'list' | 'table')}
-                        className="border border-zinc-200 dark:border-zinc-800 rounded-xl p-1 bg-white dark:bg-zinc-900/80"
-                    >
-                        <ToggleGroupItem
-                            value="list"
-                            className="rounded-lg data-[state=on]:bg-zinc-100 dark:data-[state=on]:bg-zinc-800 gap-3 p-3"
+            <PageHeader
+                eyebrow="CURRICULUM MANAGEMENT"
+                title={<>Course <span className="text-orange-600">Architect.</span></>}
+                description="Manage the structured learning paths and enrollment settings for the ecosystem."
+                actions={
+                    <>
+                        <ToggleGroup
+                            type="single"
+                            value={viewMode}
+                            onValueChange={(value: any) => value && setViewMode(value as 'list' | 'table')}
+                            className="border border-zinc-200 dark:border-zinc-800 rounded-xl p-1 bg-white dark:bg-zinc-900/80"
                         >
-                            <LayoutGrid size={16} /> <span>List view</span>
-                        </ToggleGroupItem>
-                        <ToggleGroupItem
-                            value="table"
-                            className="rounded-lg data-[state=on]:bg-zinc-100 dark:data-[state=on]:bg-zinc-800 gap-3 p-3"
+                            <ToggleGroupItem
+                                value="list"
+                                className="rounded-lg data-[state=on]:bg-zinc-100 dark:data-[state=on]:bg-zinc-800 gap-3 px-3 py-1"
+                            >
+                                <LayoutGrid size={16} /> <span className="hidden sm:inline">List view</span>
+                            </ToggleGroupItem>
+                            <ToggleGroupItem
+                                value="table"
+                                className="rounded-lg data-[state=on]:bg-zinc-100 dark:data-[state=on]:bg-zinc-800 gap-3 px-3 py-1"
+                            >
+                                <LayoutList size={16} /><span className="hidden sm:inline">Table view</span>
+                            </ToggleGroupItem>
+                        </ToggleGroup>
+
+                        <Button
+                            variant="outline"
+                            onClick={() => {
+                                refetch();
+                                toast.info("Refreshing course list...");
+                            }}
+                            className="rounded-xl h-11 w-11 p-0 transition-all"
                         >
-                            <LayoutList size={16} /><span>Table view</span>
-                        </ToggleGroupItem>
-                    </ToggleGroup>
+                            <RefreshCw size={18} className={isLoading ? "animate-spin" : ""} />
+                        </Button>
 
-                    <Button
-                        variant="outline"
-                        onClick={() => {
-                            refetch();
-                            toast.info("Refreshing course list...");
-                        }}
-                        className="rounded-xl h-11 w-11 p-0 transition-all"
-                    >
-                        <RefreshCw size={18} className={isLoading ? "animate-spin" : ""} />
-                    </Button>
+                        <Button
+                            onClick={() => setActiveModal('CREATE')}
+                            className="rounded-xl font-black uppercase tracking-widest bg-primary hover:bg-orange-600 h-11 px-6 text-[10px] transition-all"
+                        >
+                            <Plus size={18} className="mr-2" /> Create Course
+                        </Button>
+                    </>
+                }
+            />
 
-                    <Button
-                        onClick={() => setActiveModal('CREATE')}
-                        className="rounded-xl font-black uppercase tracking-widest bg-primary hover:bg-orange-600 h-11 px-6 text-[10px] transition-all"
-                    >
-                        <Plus size={18} className="mr-2" /> Create Course
-                    </Button>
-                </div>
-            </div>
-
-            {/* Filter Bar */}
-            <div className="flex gap-4 items-center bg-white dark:bg-zinc-900/80 p-2 rounded-2xl border border-zinc-200 dark:border-zinc-800">
-                <div className="relative flex-1">
-                    <Search className="absolute left-4 top-3.5 text-zinc-400" size={18} />
-                    <Input
-                        placeholder="Search courses by title, subject, or description..."
-                        value={searchQuery}
-                        onChange={(e) => setSearchQuery(e.target.value)}
-                        className="pl-12 h-12 bg-transparent border-none focus-visible:ring-0 font-medium placeholder:text-zinc-400"
-                    />
-                </div>
-                <div className="hidden md:flex items-center gap-2 pr-2">
-                    <Button variant="ghost" className="font-black text-[10px] uppercase tracking-[0.2em] text-zinc-400 hover:text-primary transition-colors">
-                        By Difficulty
-                    </Button>
-                    <div className="h-6 w-[1px] bg-zinc-200 dark:bg-zinc-800" />
-                    <Button variant="ghost" className="font-black text-[10px] uppercase tracking-[0.2em] text-zinc-400 hover:text-primary transition-colors">
-                        By Status
-                    </Button>
-                </div>
+            {/* Filter + Sort Bar */}
+            <div className="flex flex-wrap gap-3 items-center justify-between bg-white dark:bg-zinc-900/80 p-3 rounded-2xl border border-zinc-200 dark:border-zinc-800">
+                <CustomFilterFromUrl config={FILTERS} />
+                <CustomSortFromUrl config={SORTS} />
             </div>
 
             {/* View Renderer */}
-            {viewMode === 'list' ? (
+            {isLoading ? (
+                <TableSkeleton />
+            ) : viewMode === 'list' ? (
                 <div className="grid grid-cols-1 gap-4">
-                    {filteredCourses.map((course: Course) => (
+                    {courses.map((course: Course) => (
                         <Card
                             key={course.id}
                             className="shadow-none bg-white dark:bg-zinc-900/80 border border-zinc-200 dark:border-zinc-800 group hover:-translate-y-0.5 transition-all overflow-hidden"
@@ -571,59 +530,7 @@ export default function CourseManagement() {
                                                 {course.status}
                                             </div>
 
-                                            <DropdownMenu>
-                                                <DropdownMenuTrigger asChild>
-                                                    <Button
-                                                        variant="ghost"
-                                                        size="icon"
-                                                        className="rounded-xl hover:bg-zinc-100 dark:hover:bg-zinc-800 h-10 w-10 transition-colors"
-                                                    >
-                                                        <MoreHorizontal size={20} />
-                                                    </Button>
-                                                </DropdownMenuTrigger>
-                                                <DropdownMenuContent align="end" className="w-56 p-2 rounded-2xl">
-                                                    <DropdownMenuLabel className="px-3 py-2 text-[10px] font-black uppercase tracking-[0.2em] text-zinc-500">
-                                                        Course Controls
-                                                    </DropdownMenuLabel>
-
-                                                    <DropdownMenuItem
-                                                        onSelect={() => handleViewDetails(course)}
-                                                        className="flex items-center gap-3 p-3 rounded-xl cursor-pointer hover:bg-primary/10 hover:text-primary font-bold text-xs"
-                                                    >
-                                                        <Eye size={16} /> Course Overview
-                                                    </DropdownMenuItem>
-
-                                                    <DropdownMenuItem
-                                                        onSelect={() => handleUpdateClick(course)}
-                                                        className="flex items-center gap-3 p-3 rounded-xl cursor-pointer hover:bg-primary/10 hover:text-primary font-bold text-xs"
-                                                    >
-                                                        <Pencil size={16} /> Update Course
-                                                    </DropdownMenuItem>
-
-                                                    <DropdownMenuItem
-                                                        onSelect={() => handleManagePrerequisites(course)}
-                                                        className="flex items-center gap-3 p-3 rounded-xl cursor-pointer hover:bg-primary/10 hover:text-primary font-bold text-xs"
-                                                    >
-                                                        <GitBranch size={16} /> View Prerequisites
-                                                    </DropdownMenuItem>
-
-                                                    <DropdownMenuItem
-                                                        onSelect={() => handleUpdateStatus(course, course.status === 'active' ? 'inactive' : 'active')}
-                                                        className="flex items-center gap-3 p-3 rounded-xl cursor-pointer hover:bg-primary/10 hover:text-primary font-bold text-xs"
-                                                    >
-                                                        <RefreshCw size={16} /> {course.status === 'active' ? 'Deactivate' : 'Activate'}
-                                                    </DropdownMenuItem>
-
-                                                    <DropdownMenuSeparator className="bg-zinc-100 dark:bg-zinc-800 my-1" />
-
-                                                    <DropdownMenuItem
-                                                        onSelect={() => handleDeleteClick(course)}
-                                                        className="flex items-center gap-3 p-3 rounded-xl cursor-pointer text-red-500 hover:bg-red-50 dark:hover:bg-red-950 font-bold text-xs"
-                                                    >
-                                                        <Trash2 size={16} /> Delete Course
-                                                    </DropdownMenuItem>
-                                                </DropdownMenuContent>
-                                            </DropdownMenu>
+                                            <ActionsDropdown actions={rowActions(course)} maxVisible={1} showLabels={false} className="rounded-xl" />
                                         </div>
                                     </div>
                                 </div>
@@ -631,7 +538,7 @@ export default function CourseManagement() {
                         </Card>
                     ))}
 
-                    {filteredCourses.length === 0 && (
+                    {courses.length === 0 && (
                         <div className="text-center py-12 bg-white dark:bg-zinc-900/80 rounded-2xl border border-zinc-200 dark:border-zinc-800">
                             <BookMarked className="mx-auto h-12 w-12 text-zinc-400 mb-4" />
                             <h3 className="text-lg font-bold text-zinc-600 dark:text-zinc-400">No courses found</h3>
@@ -640,36 +547,17 @@ export default function CourseManagement() {
                     )}
 
                     {pagination && (
-                        <div className="flex justify-between items-center pt-4">
-                            <div className="text-sm text-zinc-500">
-                                Showing {filteredCourses.length} of {pagination.total} courses
-                            </div>
-                            <div className="flex gap-2">
-                                <Button
-                                    variant="outline"
-                                    size="sm"
-                                    onClick={() => setPage(p => Math.max(1, p - 1))}
-                                    disabled={!pagination.has_previous}
-                                >
-                                    Previous
-                                </Button>
-                                <Button
-                                    variant="outline"
-                                    size="sm"
-                                    onClick={() => setPage(p => p + 1)}
-                                    disabled={!pagination.has_next}
-                                >
-                                    Next
-                                </Button>
-                            </div>
-                        </div>
+                        <CustomPagination pagination={pagination} onPageChange={setPage} showLimitSelector={false} className="pt-4" />
                     )}
                 </div>
             ) : (
+                <div className="space-y-4">
                 <DataTable
-                    data={filteredCourses}
+                    data={courses}
+                    isLoading={isLoading}
+                    sortConfig={sortBy ? { sortBy, sortOrder } : undefined}
                     displayConfigs={displayConfigs}
-                    actions={actions}
+                    renderActions={(course) => <ActionsDropdown actions={rowActions(course)} maxVisible={3} showLabels={false} />}
                     bulkActions={bulkActions}
                     excludeColumns={['id', 'slug', 'description', 'created_at', 'updated_at', 'duration', 'modules_count', 'subject', 'price', 'requirements', 'prerequisites', 'prerequisites_count']}
                     dots={{
@@ -702,6 +590,10 @@ export default function CourseManagement() {
                     emptyTitle="No courses found"
                     emptyDescription="No courses match your current filters."
                 />
+                {pagination && (
+                    <CustomPagination pagination={pagination} onPageChange={setPage} showLimitSelector={false} />
+                )}
+                </div>
             )}
 
             {/* Modals */}

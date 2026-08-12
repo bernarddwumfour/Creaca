@@ -10,7 +10,6 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Separator } from "@/components/ui/separator";
 import { useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
@@ -111,9 +110,17 @@ const MAX_DIFFICULTY_OPTIONS = [
     { value: 'expert', label: 'Expert' },
 ];
 
+const FORM_SECTION_OPTIONS = [
+    { value: 'basic', label: 'Basic' },
+    { value: 'pricing', label: 'Pricing' },
+    { value: 'features', label: 'Features' },
+    { value: 'ai', label: 'AI & Display' },
+];
+
 export function PackageForm({ type, initialData, onSuccess, packageId }: PackageFormProps) {
     const queryClient = useQueryClient();
     const [isLoading, setIsLoading] = useState(false);
+    const [activeSection, setActiveSection] = useState('basic');
 
     const form = useForm<PackageFormData>({
         resolver: zodResolver(packageSchema),
@@ -198,24 +205,16 @@ export function PackageForm({ type, initialData, onSuccess, packageId }: Package
                     </div>
                 )}
 
-                <Tabs defaultValue="basic" >
-                    <TabsList className="w-full grid grid-cols-4 mb-6 bg-zinc-100 dark:bg-zinc-900 rounded-xl p-1">
-                        <TabsTrigger value="basic" className="rounded-lg text-[10px] font-black uppercase tracking-widest data-[state=active]:bg-white dark:data-[state=active]:bg-primary">
-                            Basic
-                        </TabsTrigger>
-                        <TabsTrigger value="pricing" className="rounded-lg text-[10px] font-black uppercase tracking-widest data-[state=active]:bg-white dark:data-[state=active]:bg-primary">
-                            Pricing
-                        </TabsTrigger>
-                        <TabsTrigger value="features" className="rounded-lg text-[10px] font-black uppercase tracking-widest data-[state=active]:bg-white dark:data-[state=active]:bg-primary">
-                            Features
-                        </TabsTrigger>
-                        <TabsTrigger value="ai" className="rounded-lg text-[10px] font-black uppercase tracking-widest data-[state=active]:bg-white dark:data-[state=active]:bg-primary">
-                            AI & Display
-                        </TabsTrigger>
-                    </TabsList>
+                <CustomSelect
+                    options={FORM_SECTION_OPTIONS}
+                    value={activeSection}
+                    onChange={setActiveSection}
+                    placeholder="Select section"
+                    className="h-12 mb-6"
+                />
 
-                    {/* Basic Tab */}
-                    <TabsContent value="basic" className="space-y-4">
+                {activeSection === 'basic' && (
+                    <div className="space-y-4">
                         <FormField
                             control={form.control}
                             name="name"
@@ -319,10 +318,11 @@ export function PackageForm({ type, initialData, onSuccess, packageId }: Package
                                 </FormItem>
                             )}
                         />
-                    </TabsContent>
+                    </div>
+                )}
 
-                    {/* Pricing Tab */}
-                    <TabsContent value="pricing" className="space-y-4">
+                {activeSection === 'pricing' && (
+                    <div className="space-y-4">
                         <div className="grid grid-cols-2 gap-4">
                             <FormField
                                 control={form.control}
@@ -421,10 +421,11 @@ export function PackageForm({ type, initialData, onSuccess, packageId }: Package
                                 </FormItem>
                             )}
                         />
-                    </TabsContent>
+                    </div>
+                )}
 
-                    {/* Features Tab */}
-                    <TabsContent value="features" className="space-y-6">
+                {activeSection === 'features' && (
+                    <div className="space-y-6">
                         <FormField
                             control={form.control}
                             name="is_unlimited"
@@ -567,10 +568,11 @@ export function PackageForm({ type, initialData, onSuccess, packageId }: Package
                                 />
                             )}
                         </div>
-                    </TabsContent>
+                    </div>
+                )}
 
-                    {/* AI & Display Tab */}
-                    <TabsContent value="ai" className="space-y-6">
+                {activeSection === 'ai' && (
+                    <div className="space-y-6">
                         <div className="space-y-3">
                             <FormLabel className="text-[10px] font-bold uppercase text-zinc-500 tracking-widest">AI Capabilities</FormLabel>
 
@@ -702,8 +704,8 @@ export function PackageForm({ type, initialData, onSuccess, packageId }: Package
                                 )}
                             />
                         </div>
-                    </TabsContent>
-                </Tabs>
+                    </div>
+                )}
 
                 <Button
                     disabled={isLoading}

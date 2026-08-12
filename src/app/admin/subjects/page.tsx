@@ -1,11 +1,10 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { Suspense, useState } from 'react';
+import { useSearchParams, usePathname, useRouter } from 'next/navigation';
 import {
     Plus,
-    Search,
     BookOpen,
-    MoreHorizontal,
     Layers,
     Library,
     Pencil,
@@ -15,22 +14,11 @@ import {
     LayoutGrid,
     RefreshCw,
     Archive,
-    Loader2,
     Eye,
-    FileText
 } from 'lucide-react';
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import {
-    DropdownMenu,
-    DropdownMenuContent,
-    DropdownMenuItem,
-    DropdownMenuLabel,
-    DropdownMenuSeparator,
-    DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 
@@ -44,7 +32,14 @@ import { CourseForm } from './(components)/CourseForm';
 // API imports
 import { ENDPOINTS } from '@/lib/endpoints';
 import api from '@/lib/axios';
+import { apiMessage } from '@/lib/api-message';
 import { ToggleGroup, ToggleGroupItem } from '../../../../widgets/ToggleGroup/ToggleGroup';
+import { CustomFilterFromUrl, type FilterConfig } from '@/widgets/custom-filter/CustomFilterFromUrl';
+import { CustomSortFromUrl, type SortConfig } from '@/widgets/custom-sort/CustomSortFromUrl';
+import { CustomPagination } from '@/widgets/custom-pagination/CustomPagination';
+import { ActionsDropdown, type ActionItem } from '@/widgets/actions-dropdown/ActionsDropdown';
+import { TableSkeleton } from '@/widgets/custom-table/TableSkeleton';
+import { PageHeader } from '@/widgets/page-header/PageHeader';
 
 interface Subject {
     id: string;
@@ -64,14 +59,16 @@ interface SubjectsResponse {
     data: {
         results: Subject[];
         pagination: {
+            current_page: number;
+            per_page: number;
             total: number;
             total_pages: number;
-            current_page: number;
-            page_size: number;
             has_next: boolean;
             has_previous: boolean;
             next_page: number | null;
             previous_page: number | null;
+            start_index: number;
+            end_index: number;
         };
     };
     errors: any[];
@@ -82,21 +79,71 @@ interface SubjectsResponse {
     };
 }
 
+const STATUS_OPTIONS = [
+    { label: 'Active', value: 'active' },
+    { label: 'Inactive', value: 'inactive' },
+];
+
+const SORT_OPTIONS = [
+    { value: 'name', label: 'Name' },
+    { value: 'created_at', label: 'Created' },
+];
+
+// Hoisted to module scope — see courses/page.tsx for why.
+const FILTERS: FilterConfig = {
+    fields: [{ name: 'status', type: 'select', placeholder: 'Status', options: STATUS_OPTIONS }],
+    searchPlaceholder: 'Search subject registry...',
+};
+
+const SORTS: SortConfig = {
+    options: SORT_OPTIONS,
+    defaultSortBy: 'name',
+    defaultSortOrder: 'asc',
+};
+
 export default function SubjectsManagement() {
+    return (
+        <Suspense fallback={<TableSkeleton />}>
+            <SubjectsManagementInner />
+        </Suspense>
+    );
+}
+
+function SubjectsManagementInner() {
     const queryClient = useQueryClient();
+    const searchParams = useSearchParams();
+    const pathname = usePathname();
+    const router = useRouter();
+
     const [activeModal, setActiveModal] = useState<'CREATE_SUBJECT' | 'UPDATE_SUBJECT' | 'CREATE_COURSE' | 'DELETE_SUBJECT' | 'DETAILS' | null>(null);
     const [selectedSubject, setSelectedSubject] = useState<Subject | null>(null);
-    const [viewMode, setViewMode] = useState<'list' | 'table'>('list');
-    const [searchQuery, setSearchQuery] = useState('');
-    const [page, setPage] = useState(1);
-    const [pageSize] = useState(10);
+    const [viewMode, setViewMode] = useState<'list' | 'table'>('table');
+
+    const pageSize = 10;
+    const page = parseInt(searchParams.get('page') || '1', 10);
+    const search = searchParams.get('search') || '';
+    const status = searchParams.get('status') || '';
+    const sortBy = searchParams.get('sort_by') || '';
+    const sortOrder = (searchParams.get('sort_order') as 'asc' | 'desc') || 'asc';
+
+    const setPage = (nextPage: number) => {
+        const params = new URLSearchParams(searchParams.toString());
+        params.set('page', String(nextPage));
+        router.replace(`${pathname}?${params.toString()}`, { scroll: false });
+    };
 
     // Fetch subjects from API
     const { data: response, isLoading, refetch } = useQuery<SubjectsResponse>({
-        queryKey: [ENDPOINTS.SUBJECTS.LIST_SUBJECTS, page, pageSize],
+        queryKey: [ENDPOINTS.SUBJECTS.LIST_SUBJECTS, page, pageSize, search, status, sortBy, sortOrder],
         queryFn: async () => {
             const { data } = await api.get(ENDPOINTS.SUBJECTS.LIST_SUBJECTS, {
-                params: { page, page_size: pageSize }
+                params: {
+                    page, page_size: pageSize,
+                    search: search || undefined,
+                    status: status || undefined,
+                    sort_by: sortBy || undefined,
+                    sort_order: sortBy ? sortOrder : undefined,
+                }
             });
             return data;
         },
@@ -104,18 +151,6 @@ export default function SubjectsManagement() {
 
     const subjects = response?.data?.results || [];
     const pagination = response?.data?.pagination;
-
-    const filteredSubjects = React.useMemo(() => {
-        if (!subjects.length) return [];
-        if (!searchQuery) return subjects;
-
-        const query = searchQuery.toLowerCase();
-        return subjects.filter((subject: Subject) =>
-            subject.name?.toLowerCase().includes(query) ||
-            subject.slug?.toLowerCase().includes(query) ||
-            subject.description?.toLowerCase().includes(query)
-        );
-    }, [subjects, searchQuery]);
 
     const invalidateSubjects = () => {
         queryClient.invalidateQueries({ queryKey: [ENDPOINTS.SUBJECTS.LIST_SUBJECTS] });
@@ -130,8 +165,7 @@ export default function SubjectsManagement() {
             toast.success(data.message || `Subject "${subject.name}" ${newStatus === 'active' ? 'activated' : 'deactivated'} successfully.`);
             invalidateSubjects();
         } catch (error: any) {
-            const errorMessage = error.response?.data?.message || error.message || `Failed to update subject status.`;
-            toast.error(errorMessage);
+            toast.error(apiMessage(error, "Failed to update subject status."));
         }
     };
 
@@ -145,8 +179,7 @@ export default function SubjectsManagement() {
             invalidateSubjects();
             closeModals();
         } catch (error: any) {
-            const errorMessage = error.response?.data?.message || error.message || "Failed to delete subject.";
-            toast.error(errorMessage);
+            toast.error(apiMessage(error, "Failed to delete subject."));
         }
     };
 
@@ -184,43 +217,7 @@ export default function SubjectsManagement() {
 
             invalidateSubjects();
         } catch (error: any) {
-            const errorMessage = error.response?.data?.message || error.message || `Failed to ${action} ${items.length} subject(s).`;
-            toast.error(errorMessage);
-        }
-    };
-
-    // Export function
-    const handleExport = async (items: Subject[]) => {
-        if (items.length === 0) {
-            toast.warning("No subjects selected for export.");
-            return;
-        }
-
-        try {
-            const exportData = items.map(subject => ({
-                ID: subject.id,
-                Name: subject.name,
-                Slug: subject.slug,
-                Status: subject.status,
-                Course_Count: subject.course_count,
-                Description: subject.description,
-                Created_At: subject.created_at,
-                Updated_At: subject.updated_at
-            }));
-
-            const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: 'application/json' });
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = `subjects_export_${new Date().toISOString().split('T')[0]}.json`;
-            document.body.appendChild(a);
-            a.click();
-            document.body.removeChild(a);
-            URL.revokeObjectURL(url);
-
-            toast.success(`${items.length} subject(s) exported successfully.`);
-        } catch (error: any) {
-            toast.error(error.message || "Failed to export subjects.");
+            toast.error(apiMessage(error, `Failed to ${action} ${items.length} subject(s).`));
         }
     };
 
@@ -274,35 +271,19 @@ export default function SubjectsManagement() {
         }
     ];
 
-    // Table actions - using the same handlers as list view
-    const actions = [
+    // Row actions, pre-bound per row for ActionsDropdown (both list and
+    // table view render through renderActions).
+    const rowActions = (subject: Subject): ActionItem[] => [
+        { label: 'View Details', icon: <Eye size={14} />, onClick: () => handleViewDetails(subject) },
+        { label: 'Update Subject', icon: <Pencil size={14} />, onClick: () => handleUpdateClick(subject) },
+        { label: 'Create Course', icon: <PlusCircle size={14} />, onClick: () => handleCreateCourseClick(subject) },
         {
-            label: 'View Details',
-            icon: <Eye size={14} />,
-            onClick: handleViewDetails
+            label: subject.status === 'active' ? 'Deactivate' : 'Activate',
+            icon: subject.status === 'active' ? <Archive size={14} /> : <RefreshCw size={14} />,
+            variant: subject.status === 'active' ? 'destructive' : 'default',
+            onClick: () => handleUpdateStatus(subject, subject.status === 'active' ? 'inactive' : 'active'),
         },
-        {
-            label: 'Update Subject',
-            icon: <Pencil size={14} />,
-            onClick: handleUpdateClick
-        },
-        {
-            label: 'Create Course',
-            icon: <PlusCircle size={14} />,
-            onClick: handleCreateCourseClick
-        },
-        {
-            label: (subject: Subject) => subject.status === 'active' ? 'Deactivate' : 'Activate',
-            icon: (subject: Subject) => subject.status === 'active' ? <Archive size={14} /> : <RefreshCw size={14} />,
-            variant: (subject: Subject): 'destructive' | 'default' => subject.status === 'active' ? 'destructive' : 'default',
-            onClick: (subject: Subject) => handleUpdateStatus(subject, subject.status === 'active' ? 'inactive' : 'active')
-        },
-        {
-            label: 'Delete Subject',
-            icon: <Trash2 size={14} />,
-            variant: 'destructive' as const,
-            onClick: handleDeleteClick
-        }
+        { label: 'Delete Subject', icon: <Trash2 size={14} />, variant: 'destructive', onClick: () => handleDeleteClick(subject) },
     ];
 
     // Bulk actions
@@ -324,105 +305,70 @@ export default function SubjectsManagement() {
             variant: 'destructive' as const,
             onClick: (items: Subject[]) => handleBulkAction(items, "delete")
         },
-        {
-            label: 'Export Data',
-            icon: <FileText size={14} />,
-            onClick: handleExport
-        }
     ];
-
-    if (isLoading) {
-        return (
-            <div className='h-full min-h-[300px] w-full flex items-center justify-center'>
-                <Loader2 className='animate-spin h-12 w-12 m-auto text-primary' />
-            </div>
-        );
-    }
 
     return (
         <div className="space-y-8">
-            {/* Header */}
-            <div className="flex justify-between items-end">
-                <div className="max-w-xl space-y-2">
-                    <p className="text-[10px] font-bold uppercase text-zinc-400 tracking-[0.2em]">
-                        ACADEMIC REGISTRY
-                    </p>
-                    <h1 className="text-2xl md:text-3xl font-black tracking-tight">
-                        Subject <span className="text-orange-600">Registry.</span>
-                    </h1>
-                    <p className="text-zinc-500 font-medium tracking-tight text-sm">
-                        Architect the core academic pillars of the Kyrios ecosystem.
-                    </p>
-                </div>
-
-                <div className="flex gap-3">
-                    <ToggleGroup
-                        type="single"
-                        value={viewMode}
-                        onValueChange={(value: any) => value && setViewMode(value as 'list' | 'table')}
-                        className="border border-zinc-200 dark:border-zinc-800 rounded-xl p-1 bg-white dark:bg-zinc-900/80"
-                    >
-                        <ToggleGroupItem
-                            value="list"
-                            className="rounded-lg data-[state=on]:bg-zinc-100 dark:data-[state=on]:bg-zinc-800 gap-3 p-3"
+            <PageHeader
+                eyebrow="ACADEMIC REGISTRY"
+                title={<>Subject <span className="text-orange-600">Registry.</span></>}
+                description="Architect the core academic pillars of the Kyrios ecosystem."
+                actions={
+                    <>
+                        <ToggleGroup
+                            type="single"
+                            value={viewMode}
+                            onValueChange={(value: any) => value && setViewMode(value as 'list' | 'table')}
+                            className="border border-zinc-200 dark:border-zinc-800 rounded-xl p-1 bg-white dark:bg-zinc-900/80"
                         >
-                            <LayoutGrid size={16} /> <span>List view</span>
-                        </ToggleGroupItem>
-                        <ToggleGroupItem
-                            value="table"
-                            className="rounded-lg data-[state=on]:bg-zinc-100 dark:data-[state=on]:bg-zinc-800 gap-3 p-3"
+                            <ToggleGroupItem
+                                value="list"
+                                className="rounded-lg data-[state=on]:bg-zinc-100 dark:data-[state=on]:bg-zinc-800 gap-3 px-3 py-1"
+                            >
+                                <LayoutGrid size={16} /> <span className="hidden sm:inline">List view</span>
+                            </ToggleGroupItem>
+                            <ToggleGroupItem
+                                value="table"
+                                className="rounded-lg data-[state=on]:bg-zinc-100 dark:data-[state=on]:bg-zinc-800 gap-3 px-3 py-1"
+                            >
+                                <LayoutList size={16} /><span className="hidden sm:inline">Table view</span>
+                            </ToggleGroupItem>
+                        </ToggleGroup>
+
+                        <Button
+                            variant="outline"
+                            onClick={() => {
+                                refetch();
+                                toast.info("Refreshing subject list...");
+                            }}
+                            className="rounded-xl h-11 w-11 p-0 transition-all"
                         >
-                            <LayoutList size={16} /><span>Table view</span>
-                        </ToggleGroupItem>
-                    </ToggleGroup>
+                            <RefreshCw size={18} className={isLoading ? "animate-spin" : ""} />
+                        </Button>
 
-                    <Button
-                        variant="outline"
-                        onClick={() => {
-                            refetch();
-                            toast.info("Refreshing subject list...");
-                        }}
-                        className="rounded-xl h-11 w-11 p-0 transition-all"
-                    >
-                        <RefreshCw size={18} className={isLoading ? "animate-spin" : ""} />
-                    </Button>
+                        <Button
+                            onClick={() => setActiveModal('CREATE_SUBJECT')}
+                            className="rounded-xl font-black uppercase tracking-widest bg-primary hover:bg-orange-600 h-11 px-6 text-[10px] transition-all"
+                        >
+                            <Plus size={18} className="mr-2" /> Create Subject
+                        </Button>
+                    </>
+                }
+            />
 
-                    <Button
-                        onClick={() => setActiveModal('CREATE_SUBJECT')}
-                        className="rounded-xl font-black uppercase tracking-widest bg-primary hover:bg-orange-600 h-11 px-6 text-[10px] transition-all"
-                    >
-                        <Plus size={18} className="mr-2" /> Create Subject
-                    </Button>
-                </div>
-            </div>
-
-            {/* Filter Bar */}
-            <div className="flex gap-4 items-center bg-white dark:bg-zinc-900/80 p-2 rounded-2xl border border-zinc-200 dark:border-zinc-800">
-                <div className="relative flex-1">
-                    <Search className="absolute left-4 top-3.5 text-zinc-400" size={18} />
-                    <Input
-                        placeholder="Search subject registry..."
-                        value={searchQuery}
-                        onChange={(e) => setSearchQuery(e.target.value)}
-                        className="pl-12 h-12 bg-transparent border-none focus-visible:ring-0 font-medium placeholder:text-zinc-400"
-                    />
-                </div>
-                <div className="hidden md:flex items-center gap-2 pr-2">
-                    <Button variant="ghost" className="font-black text-[10px] uppercase tracking-[0.2em] text-zinc-400 hover:text-primary transition-colors">
-                        By Department
-                    </Button>
-                    <div className="h-6 w-[1px] bg-zinc-200 dark:bg-zinc-800" />
-                    <Button variant="ghost" className="font-black text-[10px] uppercase tracking-[0.2em] text-zinc-400 hover:text-primary transition-colors">
-                        By Status
-                    </Button>
-                </div>
+            {/* Filter + Sort Bar */}
+            <div className="flex flex-wrap gap-3 items-center justify-between bg-white dark:bg-zinc-900/80 p-3 rounded-2xl border border-zinc-200 dark:border-zinc-800">
+                <CustomFilterFromUrl config={FILTERS} />
+                <CustomSortFromUrl config={SORTS} />
             </div>
 
             {/* View Renderer - Both views now use the SAME handlers */}
-            {viewMode === 'list' ? (
+            {isLoading ? (
+                <TableSkeleton />
+            ) : viewMode === 'list' ? (
                 /* LIST VIEW - Cards using the same handler functions */
                 <div className="grid grid-cols-1 gap-4">
-                    {filteredSubjects.map((subject: Subject) => (
+                    {subjects.map((subject: Subject) => (
                         <Card
                             key={subject.id}
                             className="shadow-none bg-white dark:bg-zinc-900/80 border border-zinc-200 dark:border-zinc-800 group hover:-translate-y-0.5 transition-all overflow-hidden"
@@ -475,59 +421,7 @@ export default function SubjectsManagement() {
                                                 {subject.status}
                                             </div>
 
-                                            <DropdownMenu>
-                                                <DropdownMenuTrigger asChild>
-                                                    <Button
-                                                        variant="ghost"
-                                                        size="icon"
-                                                        className="rounded-xl hover:bg-zinc-100 dark:hover:bg-zinc-800 h-10 w-10 transition-colors"
-                                                    >
-                                                        <MoreHorizontal size={20} />
-                                                    </Button>
-                                                </DropdownMenuTrigger>
-                                                <DropdownMenuContent align="end" className="w-56 p-2 rounded-2xl">
-                                                    <DropdownMenuLabel className="px-3 py-2 text-[10px] font-black uppercase tracking-[0.2em] text-zinc-500">
-                                                        Subject Controls
-                                                    </DropdownMenuLabel>
-
-                                                    <DropdownMenuItem
-                                                        onSelect={() => handleViewDetails(subject)}
-                                                        className="flex items-center gap-3 p-3 rounded-xl cursor-pointer hover:bg-primary/10 hover:text-primary font-bold text-xs"
-                                                    >
-                                                        <Eye size={16} /> View Details
-                                                    </DropdownMenuItem>
-
-                                                    <DropdownMenuItem
-                                                        onSelect={() => handleUpdateClick(subject)}
-                                                        className="flex items-center gap-3 p-3 rounded-xl cursor-pointer hover:bg-primary/10 hover:text-primary font-bold text-xs"
-                                                    >
-                                                        <Pencil size={16} /> Update Subject
-                                                    </DropdownMenuItem>
-
-                                                    <DropdownMenuItem
-                                                        onSelect={() => handleCreateCourseClick(subject)}
-                                                        className="flex items-center gap-3 p-3 rounded-xl cursor-pointer hover:bg-primary/10 hover:text-primary font-bold text-xs"
-                                                    >
-                                                        <PlusCircle size={16} /> Create Course
-                                                    </DropdownMenuItem>
-
-                                                    <DropdownMenuItem
-                                                        onSelect={() => handleUpdateStatus(subject, subject.status === 'active' ? 'inactive' : 'active')}
-                                                        className="flex items-center gap-3 p-3 rounded-xl cursor-pointer hover:bg-primary/10 hover:text-primary font-bold text-xs"
-                                                    >
-                                                        <RefreshCw size={16} /> {subject.status === 'active' ? 'Deactivate' : 'Activate'}
-                                                    </DropdownMenuItem>
-
-                                                    <DropdownMenuSeparator className="bg-zinc-100 dark:bg-zinc-800 my-1" />
-
-                                                    <DropdownMenuItem
-                                                        onSelect={() => handleDeleteClick(subject)}
-                                                        className="flex items-center gap-3 p-3 rounded-xl cursor-pointer text-red-500 hover:bg-red-50 dark:hover:bg-red-950 font-bold text-xs"
-                                                    >
-                                                        <Trash2 size={16} /> Delete Subject
-                                                    </DropdownMenuItem>
-                                                </DropdownMenuContent>
-                                            </DropdownMenu>
+                                            <ActionsDropdown actions={rowActions(subject)} maxVisible={1} showLabels={false} className="rounded-xl" />
                                         </div>
                                     </div>
                                 </div>
@@ -535,7 +429,7 @@ export default function SubjectsManagement() {
                         </Card>
                     ))}
 
-                    {filteredSubjects.length === 0 && (
+                    {subjects.length === 0 && (
                         <div className="text-center py-12 bg-white dark:bg-zinc-900/80 rounded-2xl border border-zinc-200 dark:border-zinc-800">
                             <Library className="mx-auto h-12 w-12 text-zinc-400 mb-4" />
                             <h3 className="text-lg font-bold text-zinc-600 dark:text-zinc-400">No subjects found</h3>
@@ -544,37 +438,18 @@ export default function SubjectsManagement() {
                     )}
 
                     {pagination && (
-                        <div className="flex justify-between items-center pt-4">
-                            <div className="text-sm text-zinc-500">
-                                Showing {filteredSubjects.length} of {pagination.total} subjects
-                            </div>
-                            <div className="flex gap-2">
-                                <Button
-                                    variant="outline"
-                                    size="sm"
-                                    onClick={() => setPage(p => Math.max(1, p - 1))}
-                                    disabled={!pagination.has_previous}
-                                >
-                                    Previous
-                                </Button>
-                                <Button
-                                    variant="outline"
-                                    size="sm"
-                                    onClick={() => setPage(p => p + 1)}
-                                    disabled={!pagination.has_next}
-                                >
-                                    Next
-                                </Button>
-                            </div>
-                        </div>
+                        <CustomPagination pagination={pagination} onPageChange={setPage} showLimitSelector={false} className="pt-4" />
                     )}
                 </div>
             ) : (
                 /* TABLE VIEW - Using DataTable with the SAME handlers */
+                <div className="space-y-4">
                 <DataTable
-                    data={filteredSubjects}
+                    data={subjects}
+                    isLoading={isLoading}
+                    sortConfig={sortBy ? { sortBy, sortOrder } : undefined}
                     displayConfigs={displayConfigs}
-                    actions={actions}
+                    renderActions={(subject) => <ActionsDropdown actions={rowActions(subject)} maxVisible={3} showLabels={false} />}
                     bulkActions={bulkActions}
                     excludeColumns={['id', 'slug', 'description', 'created_at', 'updated_at']}
                     dots={{
@@ -601,6 +476,10 @@ export default function SubjectsManagement() {
                     emptyTitle="No subjects found"
                     emptyDescription="No academic subjects match your current filters."
                 />
+                {pagination && (
+                    <CustomPagination pagination={pagination} onPageChange={setPage} showLimitSelector={false} />
+                )}
+                </div>
             )}
 
             {/* Modals - same for both views */}

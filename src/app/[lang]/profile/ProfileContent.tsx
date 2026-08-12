@@ -902,7 +902,7 @@ function PersonalInfoSection() {
 }
 
 export function SecuritySection() {
-    const { user, updateUser } = useAuth();
+    const { user, updateUser, logout } = useAuth();
     const queryClient = useQueryClient();
     const [showCurrentPassword, setShowCurrentPassword] = useState(false);
     const [showNewPassword, setShowNewPassword] = useState(false);
@@ -921,6 +921,9 @@ export function SecuritySection() {
     const [disablePassword, setDisablePassword] = useState('');
     const [isRegenerateModalOpen, setIsRegenerateModalOpen] = useState(false);
     const [regeneratePassword, setRegeneratePassword] = useState('');
+    const [deletePassword, setDeletePassword] = useState('');
+    const [deleteConfirmation, setDeleteConfirmation] = useState('');
+    const [isDeletingAccount, setIsDeletingAccount] = useState(false);
 
     // Fetch MFA status using React Query
     const { data: mfaData, isLoading: isFetchingMfa } = useQuery({
@@ -1463,6 +1466,49 @@ export function SecuritySection() {
                     </div>
                 )}
             </CustomDialog>
+
+            <Card className="mt-8 border-rose-200 bg-rose-50/40 dark:border-rose-950 dark:bg-rose-950/10">
+                <CardHeader>
+                    <CardTitle className="text-rose-700 dark:text-rose-400">Delete account</CardTitle>
+                    <CardDescription>
+                        This permanently removes your profile and access. Financial records are anonymized and retained where legally required.
+                    </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-3">
+                    <Input
+                        type="password"
+                        value={deletePassword}
+                        onChange={(event) => setDeletePassword(event.target.value)}
+                        placeholder="Current password"
+                    />
+                    <Input
+                        value={deleteConfirmation}
+                        onChange={(event) => setDeleteConfirmation(event.target.value)}
+                        placeholder='Type "DELETE"'
+                    />
+                    <Button
+                        variant="destructive"
+                        disabled={isDeletingAccount || deleteConfirmation !== 'DELETE' || !deletePassword}
+                        onClick={async () => {
+                            setIsDeletingAccount(true);
+                            try {
+                                await api.delete(ENDPOINTS.AUTH.DELETE_ACCOUNT, {
+                                    data: { password: deletePassword, confirmation: deleteConfirmation },
+                                });
+                                toast.success("Your account has been deleted.");
+                                await logout();
+                            } catch {
+                                toast.error("Account deletion failed. Check your password and try again.");
+                            } finally {
+                                setIsDeletingAccount(false);
+                            }
+                        }}
+                    >
+                        {isDeletingAccount ? <Loader2 className="mr-2 animate-spin" size={16} /> : null}
+                        Permanently delete account
+                    </Button>
+                </CardContent>
+            </Card>
 
             {/* Disable MFA Modal - Using CustomDialog */}
             <CustomDialog
