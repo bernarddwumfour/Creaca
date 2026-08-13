@@ -9,7 +9,7 @@ const HomeButtons = ({ lang, nav }: { lang?: string; nav: any }) => {
         <div className="flex flex-col sm:flex-row gap-4 md:gap-6">
             {user ? (
                 // If logged in, only show Courses button
-                <Button asChild className="w-full sm:w-auto font-bold">
+                <Button asChild className="w-full sm:w-auto h-auto px-6 md:px-8 py-3 text-sm md:text-base font-bold rounded-lg">
                     <Link href={`/${lang}/courses`}>
                         {nav.curriculum || "Browse Courses"}
                     </Link>
@@ -17,12 +17,12 @@ const HomeButtons = ({ lang, nav }: { lang?: string; nav: any }) => {
             ) : (
                 // If not logged in, show both buttons
                 <>
-                    <Button asChild className="w-full sm:w-auto font-bold">
+                    <Button asChild className="w-full sm:w-auto h-auto px-6 md:px-8 py-3 text-sm md:text-base font-bold rounded-lg">
                         <Link href={`/${lang}/packages`}>
                             {nav.trial || "View Packages"}
                         </Link>
                     </Button>
-                    <Button asChild variant="outline" className="w-full sm:w-auto font-bold">
+                    <Button asChild variant="outline" className="w-full sm:w-auto h-auto px-6 md:px-8 py-3 text-sm md:text-base font-bold rounded-lg">
                         <Link href={`/${lang}/courses`}>
                             {nav.curriculum || "Browse Courses"}
                         </Link>

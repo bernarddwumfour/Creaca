@@ -583,10 +583,6 @@ function CourseManagementInner() {
                             5: 'rose',
                         }
                     }}
-                    links={{
-                        name: (course: Course) => `/admin/courses/${course.slug}`,
-                        subject: (course: Course) => `/admin/subjects/${course.subject?.slug}`
-                    }}
                     emptyTitle="No courses found"
                     emptyDescription="No courses match your current filters."
                 />

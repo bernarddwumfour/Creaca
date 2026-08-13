@@ -75,6 +75,26 @@ export const ENDPOINTS = {
         MY_PROGRESS: `${API_VERSION}/subjects/courses/my-progress/`,
         ADMIN_LIST_REGISTRATIONS: `${API_VERSION}/subjects/courses/registrations/`
     },
+    MODULES: {
+        // Admin
+        LIST_MODULES: `${API_VERSION}/subjects/modules/`,
+        CREATE_MODULE: `${API_VERSION}/subjects/modules/create/`,
+        ADMIN_MODULE_DETAIL: `${API_VERSION}/subjects/modules/:id/`,
+        UPDATE_MODULE: `${API_VERSION}/subjects/modules/:id/update/`,
+        DELETE_MODULE: `${API_VERSION}/subjects/modules/:id/delete/`,
+        BULK_ACTION: `${API_VERSION}/subjects/modules/bulk-action/`,
+        TRIGGER_GENERATION: `${API_VERSION}/subjects/modules/:id/generate/`,
+        GENERATION_STATUS: `${API_VERSION}/subjects/modules/:id/generation-status/`,
+        APPROVE_CONTENT: `${API_VERSION}/subjects/modules/:id/approve/`,
+        PUBLISH_MODULE: `${API_VERSION}/subjects/modules/:id/publish/`,
+        UNPUBLISH_MODULE: `${API_VERSION}/subjects/modules/:id/unpublish/`,
+
+        // Student
+        MODULE_DETAIL: `${API_VERSION}/subjects/courses/modules/:id/`,
+        SUBMIT_QUIZ: `${API_VERSION}/subjects/courses/modules/:id/quiz/submit/`,
+        MARK_COMPLETE: `${API_VERSION}/subjects/courses/modules/:id/complete/`,
+        REVIEW_FLASHCARD: `${API_VERSION}/subjects/courses/flashcards/:id/review/`,
+    },
     PACKAGES: {
         LIST_PACKAGES: `${API_VERSION}/packages/`,
         CREATE_PACKAGE: `${API_VERSION}/packages/create/`,

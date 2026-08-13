@@ -488,7 +488,7 @@ export default function ProfileContent({ lang }: { lang: string }) {
                     (unchanged desktop behavior, driven by isCollapsed). */}
                 <div className={cn(
                     "shrink-0 transition-all duration-500 ease-in-out relative w-full",
-                    "border-b border-zinc-100 dark:border-zinc-800/50 md:border-b-0 md:border-r",
+                    "border-b border-zinc-100 dark:border-zinc-800/50 md:border-b-0 md:border-r md:sticky md:top-24",
                     isCollapsed ? "md:w-14" : "md:w-64"
                 )}>
                     <button
@@ -499,9 +499,10 @@ export default function ProfileContent({ lang }: { lang: string }) {
                     </button>
 
                     <TabsList className={cn(
-                        "flex flex-row md:flex-col h-auto w-full bg-muted rounded-lg gap-1 md:space-y-1 md:gap-0 p-1",
-                        "justify-between md:justify-start items-center md:items-start transition-all duration-500",
-                        isCollapsed ? "md:items-center" : "md:items-start"
+                        "!h-auto flex flex-row md:flex-col w-full bg-muted rounded-lg gap-1 md:space-y-1 md:gap-0 p-1 md:p-2",
+                        "overflow-x-auto md:overflow-visible",
+                        "justify-between md:justify-start items-center transition-all duration-500",
+                        isCollapsed ? "md:items-center" : "md:items-stretch"
                     )}>
 
                         {/* Section: Account */}
@@ -512,14 +513,13 @@ export default function ProfileContent({ lang }: { lang: string }) {
                         <TabsTrigger
                             value="personal"
                             className={cn(
-                                "flex-1 md:w-full md:flex-none flex items-center justify-center px-2 md:px-4 py-2.5 md:py-3 font-bold text-xs uppercase tracking-wider rounded-md transition-all text-foreground/60 hover:text-foreground data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-sm dark:data-[state=active]:bg-zinc-700",
+                                "!h-auto flex-1 md:w-full md:flex-none flex items-center justify-center px-2 md:px-4 py-2.5 md:py-3 font-bold text-xs uppercase tracking-wider rounded-md transition-all text-foreground/60 hover:text-foreground data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-sm dark:data-[state=active]:bg-zinc-700",
                                 isCollapsed ? "md:justify-center md:py-6" : "md:justify-start md:gap-3"
                             )}
                         >
                             <User size={16} className="shrink-0" />
                             <span className={cn(
-                                "truncate",
-                                activeTab === 'personal' ? "ml-1.5 max-w-[8rem]" : "ml-0 max-w-0",
+                                "hidden md:inline truncate",
                                 "overflow-hidden transition-all duration-200",
                                 isCollapsed ? "md:ml-0 md:max-w-0" : "md:ml-3 md:max-w-none",
                             )}>Personal Info</span>
@@ -528,14 +528,13 @@ export default function ProfileContent({ lang }: { lang: string }) {
                         <TabsTrigger
                             value="security"
                             className={cn(
-                                "flex-1 md:w-full md:flex-none flex items-center justify-center px-2 md:px-4 py-2.5 md:py-3 font-bold text-xs uppercase tracking-wider rounded-md transition-all text-foreground/60 hover:text-foreground data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-sm dark:data-[state=active]:bg-zinc-700",
+                                "!h-auto flex-1 md:w-full md:flex-none flex items-center justify-center px-2 md:px-4 py-2.5 md:py-3 font-bold text-xs uppercase tracking-wider rounded-md transition-all text-foreground/60 hover:text-foreground data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-sm dark:data-[state=active]:bg-zinc-700",
                                 isCollapsed ? "md:justify-center md:py-6" : "md:justify-start md:gap-3"
                             )}
                         >
                             <ShieldCheck size={16} className="shrink-0" />
                             <span className={cn(
-                                "truncate",
-                                activeTab === 'security' ? "ml-1.5 max-w-[8rem]" : "ml-0 max-w-0",
+                                "hidden md:inline truncate",
                                 "overflow-hidden transition-all duration-200",
                                 isCollapsed ? "md:ml-0 md:max-w-0" : "md:ml-3 md:max-w-none",
                             )}>Security</span>
@@ -549,14 +548,13 @@ export default function ProfileContent({ lang }: { lang: string }) {
                         <TabsTrigger
                             value="display"
                             className={cn(
-                                "flex-1 md:w-full md:flex-none flex items-center justify-center px-2 md:px-4 py-2.5 md:py-3 font-bold text-xs uppercase tracking-wider rounded-md transition-all text-foreground/60 hover:text-foreground data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-sm dark:data-[state=active]:bg-zinc-700",
+                                "!h-auto flex-1 md:w-full md:flex-none flex items-center justify-center px-2 md:px-4 py-2.5 md:py-3 font-bold text-xs uppercase tracking-wider rounded-md transition-all text-foreground/60 hover:text-foreground data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-sm dark:data-[state=active]:bg-zinc-700",
                                 isCollapsed ? "md:justify-center md:py-6" : "md:justify-start md:gap-3"
                             )}
                         >
                             <Palette size={16} className="shrink-0" />
                             <span className={cn(
-                                "truncate",
-                                activeTab === 'display' ? "ml-1.5 max-w-[8rem]" : "ml-0 max-w-0",
+                                "hidden md:inline truncate",
                                 "overflow-hidden transition-all duration-200",
                                 isCollapsed ? "md:ml-0 md:max-w-0" : "md:ml-3 md:max-w-none",
                             )}>Appearance</span>
@@ -565,14 +563,13 @@ export default function ProfileContent({ lang }: { lang: string }) {
                         <TabsTrigger
                             value="learning"
                             className={cn(
-                                "flex-1 md:w-full md:flex-none flex items-center justify-center px-2 md:px-4 py-2.5 md:py-3 font-bold text-xs uppercase tracking-wider rounded-md transition-all text-foreground/60 hover:text-foreground data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-sm dark:data-[state=active]:bg-zinc-700",
+                                "!h-auto flex-1 md:w-full md:flex-none flex items-center justify-center px-2 md:px-4 py-2.5 md:py-3 font-bold text-xs uppercase tracking-wider rounded-md transition-all text-foreground/60 hover:text-foreground data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-sm dark:data-[state=active]:bg-zinc-700",
                                 isCollapsed ? "md:justify-center md:py-6" : "md:justify-start md:gap-3"
                             )}
                         >
                             <Target size={16} className="shrink-0" />
                             <span className={cn(
-                                "truncate",
-                                activeTab === 'learning' ? "ml-1.5 max-w-[8rem]" : "ml-0 max-w-0",
+                                "hidden md:inline truncate",
                                 "overflow-hidden transition-all duration-200",
                                 isCollapsed ? "md:ml-0 md:max-w-0" : "md:ml-3 md:max-w-none",
                             )}>Study Goals</span>
@@ -586,14 +583,13 @@ export default function ProfileContent({ lang }: { lang: string }) {
                         <TabsTrigger
                             value="subscription"
                             className={cn(
-                                "flex-1 md:w-full md:flex-none flex items-center justify-center px-2 md:px-4 py-2.5 md:py-3 font-bold text-xs uppercase tracking-wider rounded-md transition-all text-foreground/60 hover:text-foreground data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-sm dark:data-[state=active]:bg-zinc-700",
+                                "!h-auto flex-1 md:w-full md:flex-none flex items-center justify-center px-2 md:px-4 py-2.5 md:py-3 font-bold text-xs uppercase tracking-wider rounded-md transition-all text-foreground/60 hover:text-foreground data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-sm dark:data-[state=active]:bg-zinc-700",
                                 isCollapsed ? "md:justify-center md:py-6" : "md:justify-start md:gap-3"
                             )}
                         >
                             <CreditCard size={16} className="shrink-0" />
                             <span className={cn(
-                                "truncate",
-                                activeTab === 'subscription' ? "ml-1.5 max-w-[8rem]" : "ml-0 max-w-0",
+                                "hidden md:inline truncate",
                                 "overflow-hidden transition-all duration-200",
                                 isCollapsed ? "md:ml-0 md:max-w-0" : "md:ml-3 md:max-w-none",
                             )}>Subscription</span>

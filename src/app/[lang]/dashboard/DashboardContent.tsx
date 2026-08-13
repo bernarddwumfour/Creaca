@@ -184,7 +184,7 @@ function PurchasedCourseCard({ purchase, progress, onDeactivate, lang }: { purch
 
                     <div className="flex gap-3 mt-4">
                         <Button asChild className="flex-1" variant="outline">
-                            <Link href={`/${lang}/courses/${purchase.course.slug}`}>
+                            <Link href={`/${lang}/courses/${purchase.course.id}`}>
                                 {isCompleted ? "Review Course" : "Continue Learning"}
                             </Link>
                         </Button>
@@ -292,7 +292,7 @@ function SubscriptionCourseCard({ course, progress, lang }: { course: EnrolledCo
 
                     <div className="flex gap-3 mt-4">
                         <Button asChild className="flex-1" variant="outline">
-                            <Link href={`/${lang}/courses/${course.slug}`}>
+                            <Link href={`/${lang}/courses/${course.id}`}>
                                 {isCompleted ? "Review Course" : "Continue Learning"}
                             </Link>
                         </Button>
@@ -460,7 +460,7 @@ export default function DashboardContent({ lang }: { lang: string }) {
                     (unchanged desktop behavior, driven by isCollapsed). */}
                 <div className={cn(
                     "shrink-0 transition-all duration-500 ease-in-out relative w-full",
-                    "border-b border-zinc-100 dark:border-zinc-800/50 md:border-b-0 md:border-r",
+                    "border-b border-zinc-100 dark:border-zinc-800/50 md:border-b-0 md:border-r md:sticky md:top-24",
                     isCollapsed ? "md:w-14" : "md:w-64"
                 )}>
                     <button
@@ -471,9 +471,10 @@ export default function DashboardContent({ lang }: { lang: string }) {
                     </button>
 
                     <TabsList className={cn(
-                        "flex flex-row md:flex-col h-auto w-full bg-muted rounded-lg gap-1 md:space-y-1 md:gap-0 p-1",
-                        "justify-between md:justify-start items-center md:items-start transition-all duration-500",
-                        isCollapsed ? "md:items-center" : "md:items-start"
+                        "!h-auto flex flex-row md:flex-col w-full bg-muted rounded-lg gap-1 md:space-y-1 md:gap-0 p-1 md:p-2",
+                        "overflow-x-auto md:overflow-visible",
+                        "justify-between md:justify-start items-center transition-all duration-500",
+                        isCollapsed ? "md:items-center" : "md:items-stretch"
                     )}>
                         <div className={cn("hidden md:block px-4 py-2 mb-1 transition-opacity duration-300", isCollapsed ? "opacity-0 h-8" : "opacity-100")}>
                             {!isCollapsed && <p className="text-[10px] font-bold uppercase text-zinc-400 tracking-[0.2em] whitespace-nowrap">Learning</p>}
@@ -482,7 +483,7 @@ export default function DashboardContent({ lang }: { lang: string }) {
                         <TabsTrigger
                             value="overview"
                             className={cn(
-                                "flex-1 md:w-full md:flex-none flex items-center justify-center px-2 md:px-4 py-2.5 md:py-3 font-bold text-xs uppercase tracking-wider rounded-md transition-all text-foreground/60 hover:text-foreground data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-sm dark:data-[state=active]:bg-zinc-700",
+                                "!h-auto flex-1 md:w-full md:flex-none flex items-center justify-center px-2 md:px-4 py-2.5 md:py-3 font-bold text-xs uppercase tracking-wider rounded-md transition-all text-foreground/60 hover:text-foreground data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-sm dark:data-[state=active]:bg-zinc-700",
                                 isCollapsed ? "md:justify-center md:py-6" : "md:justify-start md:gap-3"
                             )}
                         >
@@ -497,7 +498,7 @@ export default function DashboardContent({ lang }: { lang: string }) {
                         <TabsTrigger
                             value="courses"
                             className={cn(
-                                "flex-1 md:w-full md:flex-none flex items-center justify-center px-2 md:px-4 py-2.5 md:py-3 font-bold text-xs uppercase tracking-wider rounded-md transition-all text-foreground/60 hover:text-foreground data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-sm dark:data-[state=active]:bg-zinc-700",
+                                "!h-auto flex-1 md:w-full md:flex-none flex items-center justify-center px-2 md:px-4 py-2.5 md:py-3 font-bold text-xs uppercase tracking-wider rounded-md transition-all text-foreground/60 hover:text-foreground data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-sm dark:data-[state=active]:bg-zinc-700",
                                 isCollapsed ? "md:justify-center md:py-6" : "md:justify-start md:gap-3"
                             )}
                         >
@@ -516,7 +517,7 @@ export default function DashboardContent({ lang }: { lang: string }) {
                         <TabsTrigger
                             value="stats"
                             className={cn(
-                                "flex-1 md:w-full md:flex-none flex items-center justify-center px-2 md:px-4 py-2.5 md:py-3 font-bold text-xs uppercase tracking-wider rounded-md transition-all text-foreground/60 hover:text-foreground data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-sm dark:data-[state=active]:bg-zinc-700",
+                                "!h-auto flex-1 md:w-full md:flex-none flex items-center justify-center px-2 md:px-4 py-2.5 md:py-3 font-bold text-xs uppercase tracking-wider rounded-md transition-all text-foreground/60 hover:text-foreground data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-sm dark:data-[state=active]:bg-zinc-700",
                                 isCollapsed ? "md:justify-center md:py-6" : "md:justify-start md:gap-3"
                             )}
                         >
@@ -531,7 +532,7 @@ export default function DashboardContent({ lang }: { lang: string }) {
                         <TabsTrigger
                             value="achievements"
                             className={cn(
-                                "flex-1 md:w-full md:flex-none flex items-center justify-center px-2 md:px-4 py-2.5 md:py-3 font-bold text-xs uppercase tracking-wider rounded-md transition-all text-foreground/60 hover:text-foreground data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-sm dark:data-[state=active]:bg-zinc-700",
+                                "!h-auto flex-1 md:w-full md:flex-none flex items-center justify-center px-2 md:px-4 py-2.5 md:py-3 font-bold text-xs uppercase tracking-wider rounded-md transition-all text-foreground/60 hover:text-foreground data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-sm dark:data-[state=active]:bg-zinc-700",
                                 isCollapsed ? "md:justify-center md:py-6" : "md:justify-start md:gap-3"
                             )}
                         >

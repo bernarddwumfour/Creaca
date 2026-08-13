@@ -169,7 +169,7 @@ export function Package({ package: pkg, isSubscribing, onSubscribe }: PackageCar
                     <Button
                         onClick={handleSubscribeClick}
                         disabled={!!isSubscribing}
-                        className="rounded-[2rem] disabled:opacity-50 w-full"
+                        className="h-auto w-full rounded-[2rem] px-6 py-3 text-sm font-bold disabled:opacity-50"
                     >
                         {isSubscribing === pkg.id ? <Loader2 className="animate-spin h-4 w-4" /> : "Subscribe Now"}
                     </Button>

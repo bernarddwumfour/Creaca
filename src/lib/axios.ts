@@ -97,9 +97,15 @@ api.interceptors.response.use(
                 Cookies.remove(AUTH_COOKIE_KEY);
                 localStorage.clear();
 
-                // Redirecting to login (handle language prefix if necessary)
+                // Redirecting to login — preserve the current locale prefix so
+                // Next.js's [lang] route doesn't swallow a bare segment like
+                // "login"/"courses" as the language (see middleware.ts for the
+                // same class of bug on the server-side redirect branches).
                 if (typeof window !== 'undefined') {
-                    window.location.href = '/login';
+                    const SUPPORTED_LANGS = ['en', 'fr', 'es'];
+                    const currentLang = window.location.pathname.split('/')[1];
+                    const lang = SUPPORTED_LANGS.includes(currentLang) ? currentLang : 'en';
+                    window.location.href = `/${lang}/login`;
                 }
                 return Promise.reject(err);
             }

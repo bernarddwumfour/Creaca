@@ -30,8 +30,15 @@ import { ENDPOINTS } from '@/lib/endpoints';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import Link from 'next/link';
 import CourseContent from './CourseContent';
-import LessonModal from './LessonModal';
 import { CustomDialog } from '../../../../../widgets/CustomDialog/CustomDialog';
+
+interface CourseModule {
+    id: string;
+    name: string;
+    slug: string;
+    description: string;
+    order: number;
+}
 
 interface Course {
     id: string;
@@ -48,6 +55,7 @@ interface Course {
         name: string;
         slug: string;
     };
+    modules?: CourseModule[];
 }
 
 interface Registration {
@@ -75,126 +83,11 @@ interface CourseDetailClientProps {
     dictionary: any;
 }
 
-// Digital Skills Lesson Modules Data
-const ALL_LESSON_MODULES: Record<string, any[]> = {
-    'html-css': [
-        {
-            module_title: "HTML Fundamentals",
-            topic: "HTML5",
-            difficulty: "Beginner",
-            estimated_duration_minutes: 45,
-            learning_objectives: [
-                "Understand HTML document structure",
-                "Learn common HTML tags and elements",
-                "Build your first webpage"
-            ],
-            lesson: [
-                { type: "text", title: "What is HTML?", content: "HTML (HyperText Markup Language) is the standard markup language for creating web pages..." },
-                { type: "definition", term: "HTML Element", definition: "An HTML element is defined by a start tag, content, and an end tag." },
-                { type: "example", title: "Example", content: "<h1>Hello World</h1> creates a heading" }
-            ],
-            worked_examples: [],
-            practice_questions: [],
-            quiz: { title: "HTML Basics Quiz", passing_score: 70, questions: [] }
-        },
-        {
-            module_title: "CSS Styling",
-            topic: "CSS3",
-            difficulty: "Beginner",
-            estimated_duration_minutes: 60,
-            learning_objectives: ["Style web pages with CSS", "Understand selectors and properties", "Create responsive layouts"],
-            lesson: [],
-            worked_examples: [],
-            practice_questions: [],
-            quiz: { title: "CSS Quiz", passing_score: 70, questions: [] }
-        },
-        {
-            module_title: "Flexbox & Grid",
-            topic: "CSS Layout",
-            difficulty: "Intermediate",
-            estimated_duration_minutes: 75,
-            learning_objectives: ["Master Flexbox layouts", "Build complex Grid systems", "Create responsive designs"],
-            lesson: [],
-            worked_examples: [],
-            practice_questions: [],
-            quiz: { title: "Layout Quiz", passing_score: 70, questions: [] }
-        },
-        {
-            module_title: "JavaScript Basics",
-            topic: "JavaScript",
-            difficulty: "Intermediate",
-            estimated_duration_minutes: 90,
-            learning_objectives: ["Understand JavaScript syntax", "Work with variables and functions", "Manipulate the DOM"],
-            lesson: [],
-            worked_examples: [],
-            practice_questions: [],
-            quiz: { title: "JavaScript Basics Quiz", passing_score: 70, questions: [] }
-        }
-    ],
-    'javascript': [
-        {
-            module_title: "JavaScript Fundamentals",
-            topic: "JavaScript",
-            difficulty: "Beginner",
-            estimated_duration_minutes: 60,
-            learning_objectives: ["Variables and data types", "Functions and scope", "Control flow"],
-            lesson: [],
-            worked_examples: [],
-            practice_questions: [],
-            quiz: { title: "JS Fundamentals Quiz", passing_score: 70, questions: [] }
-        },
-        {
-            module_title: "DOM Manipulation",
-            topic: "JavaScript DOM",
-            difficulty: "Intermediate",
-            estimated_duration_minutes: 75,
-            learning_objectives: ["Select and modify DOM elements", "Handle events", "Create dynamic content"],
-            lesson: [],
-            worked_examples: [],
-            practice_questions: [],
-            quiz: { title: "DOM Quiz", passing_score: 70, questions: [] }
-        }
-    ],
-    'react': [
-        {
-            module_title: "React Components",
-            topic: "React",
-            difficulty: "Intermediate",
-            estimated_duration_minutes: 90,
-            learning_objectives: ["Understand React components", "Learn JSX syntax", "Manage component state"],
-            lesson: [],
-            worked_examples: [],
-            practice_questions: [],
-            quiz: { title: "React Basics Quiz", passing_score: 70, questions: [] }
-        }
-    ]
-};
-
 const difficultyMap = {
     beginner: { label: 'Beginner', color: 'bg-emerald-500/10 text-emerald-600' },
     intermediate: { label: 'Intermediate', color: 'bg-blue-500/10 text-blue-600' },
     advanced: { label: 'Advanced', color: 'bg-amber-500/10 text-amber-600' },
     expert: { label: 'Expert', color: 'bg-rose-500/10 text-rose-600' },
-};
-
-// Get modules based on course slug or subject
-const getCourseModules = (courseSlug: string, subjectName: string) => {
-    if (ALL_LESSON_MODULES[courseSlug]) {
-        return ALL_LESSON_MODULES[courseSlug];
-    }
-
-    const subjectLower = subjectName.toLowerCase();
-    if (subjectLower.includes('html') || subjectLower.includes('css')) {
-        return ALL_LESSON_MODULES['html-css'];
-    }
-    if (subjectLower.includes('javascript') || subjectLower.includes('js')) {
-        return ALL_LESSON_MODULES['javascript'];
-    }
-    if (subjectLower.includes('react')) {
-        return ALL_LESSON_MODULES['react'];
-    }
-
-    return ALL_LESSON_MODULES['html-css'];
 };
 
 export default function CourseDetailClient({ course, lang, dictionary }: CourseDetailClientProps) {
@@ -203,8 +96,6 @@ export default function CourseDetailClient({ course, lang, dictionary }: CourseD
     const queryClient = useQueryClient();
     const [isRegistering, setIsRegistering] = useState(false);
     const [isPurchasing, setIsPurchasing] = useState(false);
-    const [selectedModule, setSelectedModule] = useState(null);
-    const [isModalOpen, setIsModalOpen] = useState(false);
     const [showLoginDialog, setShowLoginDialog] = useState(false);
 
     // Fetch user's registered courses
@@ -249,7 +140,7 @@ export default function CourseDetailClient({ course, lang, dictionary }: CourseD
     const accessType = isPurchased ? 'purchase' : (isRegistered ? 'subscription' : null);
 
     const difficultyInfo = difficultyMap[course.difficulty] || difficultyMap.intermediate;
-    const allModules = getCourseModules(course.slug, course.subject.name);
+    const allModules = (course.modules || []).slice().sort((a, b) => a.order - b.order);
     const visibleModules = hasAccess ? allModules : allModules.slice(0, 2);
     const lockedModulesCount = allModules.length - visibleModules.length;
 
@@ -299,21 +190,25 @@ export default function CourseDetailClient({ course, lang, dictionary }: CourseD
     };
 
     const handleStartLearning = () => {
-        router.push(`/${lang}/courses/${course.slug}`);
+        const target = allModules[0];
+        if (target) {
+            router.push(`/${lang}/courses/${course.id}/lessons/${target.id}`);
+        } else {
+            toast.info("This course doesn't have any published lessons yet.");
+        }
     };
 
-    const handlePlayClick = (module: any) => {
+    const handlePlayClick = (module: CourseModule) => {
         if (!hasAccess) {
             toast.info("Subscribe or purchase this course to access all modules");
             return;
         }
-        setSelectedModule(module);
-        setIsModalOpen(true);
+        router.push(`/${lang}/courses/${course.id}/lessons/${module.id}`);
     };
 
     const lessons = visibleModules.map((module, index) => ({
-        title: module.module_title,
-        duration: `${module.estimated_duration_minutes} min`,
+        title: module.name,
+        duration: '',
         locked: hasAccess ? progress < (index + 1) * (100 / visibleModules.length) : false
     }));
 
@@ -552,14 +447,6 @@ export default function CourseDetailClient({ course, lang, dictionary }: CourseD
                     </div>
                 </div>
             </section>
-
-            {selectedModule && (
-                <LessonModal
-                    moduleData={selectedModule}
-                    isOpen={isModalOpen}
-                    onClose={() => setIsModalOpen(false)}
-                />
-            )}
 
             {/* Login Dialog */}
             <CustomDialog

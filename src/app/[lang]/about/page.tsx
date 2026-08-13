@@ -13,6 +13,14 @@ type PageProps = {
     };
 };
 
+const learningOrbitImages = [
+    { src: '/how-it-works-goal.png', alt: 'Learner choosing a digital-skills goal', className: 'top-[1%] left-[40%] w-[19%]' },
+    { src: '/how-it-works-ai-support.png', alt: 'Learner receiving AI guidance', className: 'top-[21%] left-[1%] w-[21%]' },
+    { src: '/how-it-works-portfolio.png', alt: 'Learner presenting a digital portfolio', className: 'top-[25%] right-[1%] w-[21%]' },
+    { src: '/step1.png', alt: 'Interactive digital learning experience', className: 'bottom-[2%] left-[8%] w-[20%]' },
+    { src: '/step4.png', alt: 'Learner celebrating completed skills', className: 'bottom-[1%] right-[9%] w-[20%]' },
+];
+
 async function page({ params }: PageProps) {
     const { lang } = await params;
     const t = getDictionary(lang);
@@ -42,20 +50,42 @@ async function page({ params }: PageProps) {
 
                 </section>
 
-                {/* Community Section */}
+                {/* Learning Experience Section */}
                 {/* Reduced py-24 to py-12 for mobile */}
                 <section className="py-12 md:py-24 relative">
                     <div className="w-full container px-4 md:px-5 lg:px-5 mx-auto">
                         <div className="w-full justify-between items-center gap-8 md:gap-12 grid lg:grid-cols-2 grid-cols-1">
                             <div className="w-full justify-center items-start gap-6 lg:order-first order-last relative">
-                                {/* Adjusted pt-24 to pt-12 and fixed height for mobile */}
-                                <div className="pt-12 md:pt-24 lg:justify-center sm:justify-end w-full md:w-[95%] h-[350px] md:h-[calc(450px+5vw)] justify-start items-start gap-2.5 flex relative">
-                                    <Image
-                                        fill
-                                        className="rounded-xl object-contain scale-90"
-                                        src="/about_image.png"
-                                        alt="Students from diverse backgrounds"
-                                    />
+                                <div className="relative w-full max-w-[620px] mx-auto aspect-square">
+                                    <div className="absolute inset-[8%] rounded-full border-2 border-dashed border-zinc-300/70 dark:border-zinc-700/70" />
+                                    <div className="absolute inset-[25%] rounded-full border-2 border-dashed border-primary/30" />
+
+                                    <div className="absolute z-20 left-1/2 top-1/2 w-[45%] aspect-square -translate-x-1/2 -translate-y-1/2 rounded-full overflow-hidden border-[6px] border-white dark:border-zinc-900 shadow-2xl">
+                                        <Image
+                                            fill
+                                            className="object-cover"
+                                            src="/how-it-works-build.png"
+                                            alt="Learner building a responsive digital project"
+                                            quality={95}
+                                            sizes="(max-width: 1023px) 42vw, 20vw"
+                                        />
+                                    </div>
+
+                                    {learningOrbitImages.map((item) => (
+                                        <div
+                                            key={item.src}
+                                            className={`absolute z-30 aspect-square rounded-full overflow-hidden border-4 border-white dark:border-zinc-900 shadow-xl ${item.className}`}
+                                        >
+                                            <Image
+                                                fill
+                                                className="object-cover transition-transform duration-500 hover:scale-110"
+                                                src={item.src}
+                                                alt={item.alt}
+                                                quality={90}
+                                                sizes="(max-width: 1023px) 20vw, 10vw"
+                                            />
+                                        </div>
+                                    ))}
                                 </div>
                             </div>
 
@@ -135,83 +165,6 @@ async function page({ params }: PageProps) {
                     </div>
                 </section>
 
-                {/* Founders Section */}
-                <section className="py-12 md:py-24 relative px-6 overflow-hidden">
-                    <div className="space-y-3 md:space-y-4 container mx-auto pb-4">
-                        <h3 className="text-2xl md:text-4xl text-start font-bold max-w-[800px] leading-tight md:leading-12 text-zinc-900 dark:text-white">
-                            {about.founders.sectionTitle}
-                        </h3>
-                        <p className="text-start text-xs md:text-sm text-gray-500 max-w-[700px]">
-                            {about.founders.sectionSubtitle}
-                        </p>
-                    </div>
-
-                    <div className="container mx-auto z-1 relative">
-                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-12 md:gap-16 mt-6">
-                            <div className="w-full col-span-1 md:col-span-2 flex-col justify-center lg:items-start items-center gap-6 md:gap-10 inline-flex">
-                                <div className="w-full flex-col justify-center items-start gap-4 flex">
-                                    <div className="space-y-3 md:space-y-4 pb-2">
-                                        <div className="inline-flex items-center gap-2 bg-primary/10 text-primary px-3 py-1 rounded-full text-[10px] md:text-xs font-bold uppercase tracking-widest">
-                                            <span>{about.founders.storyLabel}</span>
-                                        </div>
-                                        <h3 className="text-2xl md:text-4xl text-start font-bold max-w-[800px] leading-tight md:leading-12 text-zinc-900 dark:text-white">
-                                            {about.founders.storyTitle}
-                                        </h3>
-                                        <p className="text-start text-xs md:text-sm text-zinc-500 dark:text-zinc-400 max-w-[700px] leading-relaxed">
-                                            {about.founders.storyDesc}
-                                        </p>
-                                    </div>
-                                    <div className="w-full py-6 md:py-8 border-t border-zinc-100 mt-4">
-                                        <h4 className="text-primary font-bold text-xs uppercase tracking-tighter mb-4">{about.founders.creatorsLabel}</h4>
-                                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-8 items-center">
-                                            <div className="space-y-4">
-                                                <p className="text-zinc-700 dark:text-zinc-400 text-base md:text-lg italic leading-relaxed font-medium">
-                                                    &quot;{about.founders.quote}&quot;
-                                                </p>
-                                                <div className="flex items-center gap-3">
-                                                    <div className="flex -space-x-3">
-                                                        <div className="w-10 h-10 md:w-12 md:h-12 rounded-full border-4 border-white bg-zinc-200 shadow-sm" />
-                                                        <div className="w-10 h-10 md:w-12 md:h-12 rounded-full border-4 border-white bg-zinc-300 shadow-sm" />
-                                                    </div>
-                                                    <div className="flex flex-col">
-                                                        <span className="text-xs md:text-sm font-black text-zinc-900 dark:text-white leading-none">{about.founders.foundersLabel}</span>
-                                                        <span className="text-[10px] md:text-xs text-zinc-500 dark:text-zinc-400 font-medium">{about.founders.foundersSublabel}</span>
-                                                    </div>
-                                                </div>
-                                            </div>
-
-                                            <div className="bg-zinc-50 p-4 md:p-6 rounded-2xl border border-zinc-100">
-                                                <p className="text-zinc-600 text-xs md:text-sm leading-relaxed">
-                                                    {about.founders.biography}
-                                                </p>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                            {/* Adjusted height from 600px to auto for mobile, 600px for desktop */}
-                            <div className="col-span-1 md:col-span-2 grid grid-cols-1 sm:grid-cols-2 gap-8 md:h-[600px] items-center">
-                                {about.founders.members.map((member: any, i: number) => (
-                                    <div key={i} className={`flex flex-col items-start ${i === 1 ? 'md:self-end' : 'md:self-start'} hover:-translate-y-2 transition-all duration-500 group`}>
-                                        <div className="w-full h-[350px] md:h-[450px] relative overflow-hidden rounded-[2.5rem] md:rounded-[3rem] shadow-xl">
-                                            <Image
-                                                fill
-                                                src={i === 0 ? "https://images.unsplash.com/photo-1633332755192-727a05c4013d?q=80&w=600" : "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?q=80&w=600"}
-                                                alt={member.name}
-                                                className="object-cover group-hover:scale-105 transition-transform duration-500"
-                                            />
-                                        </div>
-                                        <div className="mt-4 md:mt-6 px-4">
-                                            <h3 className="text-xl md:text-2xl font-black text-zinc-900 dark:text-white">{member.name}</h3>
-                                            <p className="text-primary font-bold tracking-widest uppercase text-[10px] md:text-xs">{member.role}</p>
-                                        </div>
-                                    </div>
-                                ))}
-                            </div>
-                        </div>
-                    </div>
-                    <div className="absolute top-0 left-0 w-2/3 h-full bg-primary/5 -skew-x-12 translate-x-1/2 z-0" />
-                </section>
             </main>
 
             <Footer lang={lang} t={t.footer} />

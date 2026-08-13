@@ -58,7 +58,7 @@ function Hero({ t, nav, lang }: { t: any, nav: any, lang?: string }) {
         </div>
 
         <div className="w-full md:w-2/5 relative z-[2] min-h-[400px] md:min-h-full">
-          <div className="w-full h-full md:h-4/6 absolute bottom-0 md:bottom-16 left-1/2 md:-left-1/5 -translate-x-1/2 md:translate-x-0 flex items-center justify-center scale-[65%] md:scale-[90%]">
+          <div className="w-full h-full md:h-4/6 absolute bottom-0 md:bottom-16 left-1/2 md:-left-1/5 -translate-x-1/2 md:translate-x-0 flex items-center justify-center scale-[80%] md:scale-[110%]">
             <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
               <div className="absolute w-[130%] aspect-square border border-dashed border-primary/20 rounded-full animate-[spin_30s_linear_infinite]" />
               <div className="absolute w-[100%] aspect-square border border-orange-500/10 rounded-full animate-[spin_20s_linear_infinite_reverse]" />
@@ -86,7 +86,15 @@ function Hero({ t, nav, lang }: { t: any, nav: any, lang?: string }) {
             ))}
 
             <div className="relative z-10 w-full h-full">
-              <Image src="/home3.png" fill className="scale-100 md:scale-130 transform-origin-bottom p-0 w-full object-contain object-bottom" alt="Students" priority />
+              <Image
+                src="/home3-portfolio-lady-complexion.png"
+                alt="Student learning digital skills"
+                fill
+                priority
+                quality={100}
+                sizes="(max-width: 767px) 80vw, 40vw"
+                className="object-contain object-bottom"
+              />
             </div>
           </div>
         </div>
@@ -119,12 +127,12 @@ function Hero({ t, nav, lang }: { t: any, nav: any, lang?: string }) {
 }
 
 const letters = [
-  { char: 'K', img: '/home3.png' },
-  { char: 'Y', img: '/home3.png' },
-  { char: 'R', img: '/home3.png' },
-  { char: 'I', img: '/home3.png' },
-  { char: 'O', img: '/home3.png' },
-  { char: 'S', img: '/home3.png' }
+  { char: 'K', img: '/how-it-works-goal.png' },
+  { char: 'Y', img: '/how-it-works-build.png' },
+  { char: 'R', img: '/how-it-works-ai-support.png' },
+  { char: 'I', img: '/how-it-works-portfolio.png' },
+  { char: 'O', img: '/step1.png' },
+  { char: 'S', img: '/step4.png' }
 ];
 
 function AboutCresca({ t, aboutSection }: { t: any, aboutSection: any }) {

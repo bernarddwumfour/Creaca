@@ -13,8 +13,12 @@ export default function HowItWorks({ t }: { t: any }) {
     const [currentStep, setCurrentStep] = useState(1);
     const [percentage, setPercentage] = useState(0);
 
-    // Keep your specific local images mapped to the dictionary steps
-    const images = ["/step1.png", "/step2.png", "/step3.png", "/step4.png"];
+    const images = [
+        "/how-it-works-goal.png",
+        "/how-it-works-build.png",
+        "/how-it-works-ai-support.png",
+        "/how-it-works-portfolio.png",
+    ];
     
     const steps = t.steps.map((step: any, i: number) => ({
         ...step,
