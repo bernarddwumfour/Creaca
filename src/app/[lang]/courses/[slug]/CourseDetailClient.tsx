@@ -6,7 +6,6 @@ import { useRouter } from 'next/navigation';
 import {
     Clock,
     Zap,
-    Star,
     PlayCircle,
     CheckCircle2,
     Globe2,
@@ -40,6 +39,15 @@ interface CourseModule {
     order: number;
 }
 
+interface Prerequisite {
+    id: string;
+    slug: string;
+    name: string;
+    difficulty: string;
+    is_purchasable: boolean;
+    price: string | null;
+}
+
 interface Course {
     id: string;
     name: string;
@@ -56,6 +64,9 @@ interface Course {
         slug: string;
     };
     modules?: CourseModule[];
+    requirements?: string[];
+    prerequisites?: Prerequisite[];
+    prerequisites_count?: number;
 }
 
 interface Registration {
@@ -192,7 +203,7 @@ export default function CourseDetailClient({ course, lang, dictionary }: CourseD
     const handleStartLearning = () => {
         const target = allModules[0];
         if (target) {
-            router.push(`/${lang}/courses/${course.id}/lessons/${target.id}`);
+            router.push(`/${lang}/courses/${course.slug}/lessons/${target.slug}`);
         } else {
             toast.info("This course doesn't have any published lessons yet.");
         }
@@ -203,7 +214,7 @@ export default function CourseDetailClient({ course, lang, dictionary }: CourseD
             toast.info("Subscribe or purchase this course to access all modules");
             return;
         }
-        router.push(`/${lang}/courses/${course.id}/lessons/${module.id}`);
+        router.push(`/${lang}/courses/${course.slug}/lessons/${module.slug}`);
     };
 
     const lessons = visibleModules.map((module, index) => ({
@@ -212,13 +223,7 @@ export default function CourseDetailClient({ course, lang, dictionary }: CourseD
         locked: hasAccess ? progress < (index + 1) * (100 / visibleModules.length) : false
     }));
 
-    const learningOutcomes = [
-        `Master ${course.name} from scratch`,
-        `Build real-world projects and applications`,
-        `Write clean, maintainable code`,
-        `Understand best practices and industry standards`,
-        `Prepare for job interviews and certifications`,
-    ];
+    const prerequisites = course.prerequisites ?? [];
 
     const renderActionButtons = () => {
         if (hasAccess) {
@@ -302,10 +307,6 @@ export default function CourseDetailClient({ course, lang, dictionary }: CourseD
                                 <span className="bg-primary/10 dark:bg-primary/20 px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest text-primary">
                                     {course.subject.name}
                                 </span>
-                                <div className="flex items-center gap-1 text-amber-500 dark:text-amber-400 text-xs font-bold">
-                                    <Star size={14} fill="currentColor" />
-                                    4.9 <span className="text-zinc-400 font-medium">(1,234 ratings)</span>
-                                </div>
                             </div>
                             <h1 className="text-2xl md:text-4xl font-black tracking-tight leading-[1.15] text-zinc-900 dark:text-zinc-50">
                                 {course.name}
@@ -318,7 +319,6 @@ export default function CourseDetailClient({ course, lang, dictionary }: CourseD
                                 <div className="flex flex-wrap gap-5 pt-2 text-xs md:text-sm font-bold text-zinc-500 dark:text-zinc-400">
                                     <div className="flex items-center gap-2"><Clock className="text-primary" size={16} />{course.duration ? `${course.duration} min` : 'Self-paced'}</div>
                                     <div className="flex items-center gap-2"><Zap className="text-primary" size={16} />{difficultyInfo.label}</div>
-                                    <div className="flex items-center gap-2"><Code className="text-primary" size={16} />Hands-on Coding</div>
                                 </div>
 
                                 {hasAccess && (
@@ -342,16 +342,17 @@ export default function CourseDetailClient({ course, lang, dictionary }: CourseD
                                     </div>
                                 )}
 
-                                {/* Requirements */}
-                                <div className="pt-4">
-                                    <h3 className="font-bold mb-3 text-lg">Course Requirements</h3>
-                                    <ul className="space-y-2 text-sm text-zinc-600 dark:text-zinc-400">
-                                        <li className="flex items-center gap-2">• No prior coding experience required</li>
-                                        <li className="flex items-center gap-2">• A computer (Windows, Mac, or Linux)</li>
-                                        <li className="flex items-center gap-2">• Willingness to learn and practice</li>
-                                        <li className="flex items-center gap-2">• Internet connection for accessing course materials</li>
-                                    </ul>
-                                </div>
+                                {/* Requirements — from the API; hidden when none are set */}
+                                {(course.requirements?.length ?? 0) > 0 && (
+                                    <div className="pt-4">
+                                        <h3 className="font-bold mb-3 text-lg">Course Requirements</h3>
+                                        <ul className="space-y-2 text-sm text-zinc-600 dark:text-zinc-400">
+                                            {course.requirements!.map((req, idx) => (
+                                                <li key={idx} className="flex items-center gap-2">• {req}</li>
+                                            ))}
+                                        </ul>
+                                    </div>
+                                )}
                             </div>
                         </div>
 
@@ -428,22 +429,33 @@ export default function CourseDetailClient({ course, lang, dictionary }: CourseD
                         )}
                     </div>
 
-                    {/* Learning Outcomes */}
+                    {/* Prerequisites — real courses from the API */}
                     <div className="space-y-8">
                         <h2 className="text-2xl md:text-3xl font-black text-zinc-900 dark:text-white flex items-center gap-3">
                             <Layout className="text-primary" size={28} />
-                            What You'll Learn
+                            Prerequisites
                         </h2>
-                        <div className="grid grid-cols-1 gap-4">
-                            {learningOutcomes.map((outcome, idx) => (
-                                <div key={idx} className="flex gap-3 p-5 rounded-xl bg-zinc-50 dark:bg-zinc-900/50 border border-zinc-100 dark:border-zinc-800">
-                                    <CheckCircle2 className="text-primary shrink-0" size={18} />
-                                    <span className="text-zinc-700 dark:text-zinc-300 font-bold text-sm">{outcome}</span>
-                                </div>
-                            ))}
-                        </div>
-
-
+                        {prerequisites.length === 0 ? (
+                            <div className="p-5 rounded-xl bg-zinc-50 dark:bg-zinc-900/50 border border-zinc-100 dark:border-zinc-800 text-sm text-zinc-500">
+                                No prerequisites — you can start this course right away.
+                            </div>
+                        ) : (
+                            <div className="grid grid-cols-1 gap-4">
+                                {prerequisites.map((prereq) => (
+                                    <Link
+                                        key={prereq.id}
+                                        href={`/${lang}/courses/${prereq.slug}`}
+                                        className="group flex items-center justify-between gap-3 p-5 rounded-xl bg-zinc-50 dark:bg-zinc-900/50 border border-zinc-100 dark:border-zinc-800 hover:border-primary/40 transition-all"
+                                    >
+                                        <div className="min-w-0">
+                                            <span className="text-zinc-700 dark:text-zinc-300 font-bold text-sm block truncate">{prereq.name}</span>
+                                            <span className="text-[11px] text-zinc-500 capitalize">{prereq.difficulty}</span>
+                                        </div>
+                                        <ArrowRight className="text-zinc-400 group-hover:text-primary transition-colors shrink-0" size={16} />
+                                    </Link>
+                                ))}
+                            </div>
+                        )}
                     </div>
                 </div>
             </section>
@@ -469,7 +481,7 @@ export default function CourseDetailClient({ course, lang, dictionary }: CourseD
                             className="flex-1 bg-primary hover:bg-orange-600"
                             onClick={() => setShowLoginDialog(false)}
                         >
-                            <Link href={`/${lang}/login?redirect=/${lang}/courses/${course.id}`}>
+                            <Link href={`/${lang}/login?redirect=/${lang}/courses/${course.slug}`}>
                                 Log In
                             </Link>
                         </Button>
@@ -479,7 +491,7 @@ export default function CourseDetailClient({ course, lang, dictionary }: CourseD
                             className="flex-1"
                             onClick={() => setShowLoginDialog(false)}
                         >
-                            <Link href={`/${lang}/signup?redirect=/${lang}/courses/${course.id}`}>
+                            <Link href={`/${lang}/signup?redirect=/${lang}/courses/${course.slug}`}>
                                 Create Account
                             </Link>
                         </Button>

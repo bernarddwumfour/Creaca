@@ -1,4 +1,4 @@
-// app/[lang]/courses/[id]/page.tsx
+// app/[lang]/courses/[slug]/page.tsx
 import { Lang } from '@/lib/dictionary/dictionary';
 import { getDictionary } from '@/lib/dictionary/get-dictionary';
 import Header from '../../components/Header';
@@ -10,13 +10,13 @@ import { ENDPOINTS } from '@/lib/endpoints';
 type PageProps = {
     params: Promise<{
         lang: Lang;
-        id: string;
+        slug: string;
     }>;
 };
 
-async function getCourseData(id: string) {
+async function getCourseData(slug: string) {
     try {
-        const response = await api.get(ENDPOINTS.COURSES.COURSE_DETAIL.replace(':id', id));
+        const response = await api.get(ENDPOINTS.COURSES.COURSE_DETAIL.replace(':id', slug));
         return response.data;
     } catch (error) {
         console.error('Error fetching course:', error);
@@ -25,9 +25,9 @@ async function getCourseData(id: string) {
 }
 
 export default async function Page({ params }: PageProps) {
-    const { lang, id } = await params;
+    const { lang, slug } = await params;
     const dictionary = getDictionary(lang);
-    const courseData = await getCourseData(id);
+    const courseData = await getCourseData(slug);
 
     if (!courseData || courseData.status !== 'success') {
         return (

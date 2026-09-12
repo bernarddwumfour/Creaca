@@ -71,6 +71,7 @@ export const ENDPOINTS = {
         DEACTIVATE_PURCHASE: `${API_VERSION}/subjects/courses/purchases/:id/deactivate/`,
         REACTIVATE_PURCHASE: `${API_VERSION}/subjects/courses/purchases/:id/reactivate/`,
         UPDATE_PROGRESS: `${API_VERSION}/subjects/courses/progress/:course_id/update/`,
+        GENERATE_MODULES: `${API_VERSION}/subjects/courses/:id/generate-modules/`,
 
         MY_PROGRESS: `${API_VERSION}/subjects/courses/my-progress/`,
         ADMIN_LIST_REGISTRATIONS: `${API_VERSION}/subjects/courses/registrations/`

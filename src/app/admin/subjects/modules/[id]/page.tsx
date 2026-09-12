@@ -3,7 +3,6 @@
 import React, { useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import {
-    ArrowLeft,
     Sparkles,
     Check,
     Loader2,
@@ -13,6 +12,7 @@ import {
     Rocket,
     Archive,
     AlertTriangle,
+    Clapperboard,
 } from 'lucide-react';
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -40,22 +40,31 @@ interface Question {
     solution: { text: string; explanation: string } | null;
 }
 interface Flashcard { id: string; front: string; back: string; hint: string; order: number; is_approved: boolean }
+interface Video { id: string; url: string; duration_seconds: number; is_approved: boolean }
 interface GenerationJob {
-    id: string; content_type: 'lesson' | 'quiz' | 'flashcards'; status: GenerationJobStatus;
+    id: string; content_type: 'lesson' | 'quiz' | 'flashcards' | 'video'; status: GenerationJobStatus;
     error_message: string; created_at: string; updated_at: string;
 }
 interface ModuleDetail {
     id: string; name: string; description: string; order: number; status: 'draft' | 'active' | 'inactive';
     passing_score: number; course: { id: string; name: string };
-    content_blocks: ContentBlock[]; questions: Question[]; flashcards: Flashcard[];
+    content_blocks: ContentBlock[]; questions: Question[]; flashcards: Flashcard[]; videos: Video[];
     generation_jobs: GenerationJob[];
 }
 
-const CONTENT_TYPES: { key: 'lesson' | 'quiz' | 'flashcards'; label: string; icon: React.ElementType }[] = [
+type ContentTypeKey = 'lesson' | 'quiz' | 'flashcards' | 'video';
+
+const CONTENT_TYPES: { key: ContentTypeKey; label: string; icon: React.ElementType }[] = [
     { key: 'lesson', label: 'Lesson', icon: BookOpen },
     { key: 'quiz', label: 'Quiz', icon: HelpCircle },
     { key: 'flashcards', label: 'Flashcards', icon: Layers },
+    { key: 'video', label: 'Video', icon: Clapperboard },
 ];
+
+// Video narrates the approved lesson and renders via Remotion — much
+// slower than a single OpenAI JSON call (TTS per block + a full render),
+// so it gets a generous per-request timeout instead of the axios default.
+const VIDEO_GENERATE_TIMEOUT_MS = 5 * 60 * 1000;
 
 export default function ModuleDetailPage() {
     const params = useParams();
@@ -94,12 +103,14 @@ export default function ModuleDetailPage() {
     const latestJobFor = (type: string) =>
         module.generation_jobs.filter(j => j.content_type === type)[0];
 
-    const handleGenerate = async (type: 'lesson' | 'quiz' | 'flashcards') => {
+    const handleGenerate = async (type: ContentTypeKey) => {
         setPendingType(type);
         try {
-            const { data } = await api.post(ENDPOINTS.MODULES.TRIGGER_GENERATION.replace(':id', moduleId), {
-                content_types: [type],
-            });
+            const { data } = await api.post(
+                ENDPOINTS.MODULES.TRIGGER_GENERATION.replace(':id', moduleId),
+                { content_types: [type] },
+                type === 'video' ? { timeout: VIDEO_GENERATE_TIMEOUT_MS } : undefined
+            );
             if (data.data?.warnings?.length) {
                 data.data.warnings.forEach((w: string) => toast.warning(w));
             } else {
@@ -113,7 +124,7 @@ export default function ModuleDetailPage() {
         }
     };
 
-    const handleApprove = async (type: 'lesson' | 'quiz' | 'flashcards') => {
+    const handleApprove = async (type: ContentTypeKey) => {
         try {
             const { data } = await api.post(ENDPOINTS.MODULES.APPROVE_CONTENT.replace(':id', moduleId), {
                 content_type: type,
@@ -144,26 +155,22 @@ export default function ModuleDetailPage() {
 
     return (
         <div className="space-y-8">
-            <div className="flex items-center gap-3">
-                <Button variant="ghost" size="icon" onClick={() => router.push('/admin/subjects/modules')} className="rounded-xl">
-                    <ArrowLeft size={18} />
-                </Button>
-                <PageHeader
-                    eyebrow={module.course.name}
-                    title={<>{module.name}</>}
-                    description={module.description || 'No description provided.'}
-                    actions={
-                        <Button
-                            onClick={handlePublishToggle}
-                            variant={module.status === 'active' ? 'outline' : 'default'}
-                            className="rounded-xl font-black uppercase tracking-widest h-11 px-6 text-[10px] transition-all gap-2"
-                        >
-                            {module.status === 'active' ? <Archive size={16} /> : <Rocket size={16} />}
-                            {module.status === 'active' ? 'Unpublish' : 'Publish Module'}
-                        </Button>
-                    }
-                />
-            </div>
+            <PageHeader
+                eyebrow={module.course.name}
+                onBack={() => router.push('/admin/subjects/modules')}
+                title={<>{module.name}</>}
+                description={module.description || 'No description provided.'}
+                actions={
+                    <Button
+                        onClick={handlePublishToggle}
+                        variant={module.status === 'active' ? 'outline' : 'default'}
+                        className="rounded-xl font-black uppercase tracking-widest h-11 px-6 text-[10px] transition-all gap-2"
+                    >
+                        {module.status === 'active' ? <Archive size={16} /> : <Rocket size={16} />}
+                        {module.status === 'active' ? 'Unpublish' : 'Publish Module'}
+                    </Button>
+                }
+            />
 
             {module.status === 'active' && (
                 <div className="flex items-center gap-2 text-xs font-bold text-emerald-600 bg-emerald-500/5 border border-emerald-500/20 rounded-xl px-4 py-3">
@@ -171,7 +178,7 @@ export default function ModuleDetailPage() {
                 </div>
             )}
 
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
                 {CONTENT_TYPES.map(({ key, label, icon: Icon }) => {
                     const job = latestJobFor(key);
                     const isRunning = job?.status === 'pending' || job?.status === 'running';
@@ -181,15 +188,21 @@ export default function ModuleDetailPage() {
                         ? module.content_blocks.filter(b => !b.is_approved).length
                         : key === 'quiz'
                             ? module.questions.filter(q => !q.is_approved).length
-                            : module.flashcards.filter(f => !f.is_approved).length;
+                            : key === 'flashcards'
+                                ? module.flashcards.filter(f => !f.is_approved).length
+                                : module.videos.filter(v => !v.is_approved).length;
 
                     const approvedCount = key === 'lesson'
                         ? module.content_blocks.filter(b => b.is_approved).length
                         : key === 'quiz'
                             ? module.questions.filter(q => q.is_approved).length
-                            : module.flashcards.filter(f => f.is_approved).length;
+                            : key === 'flashcards'
+                                ? module.flashcards.filter(f => f.is_approved).length
+                                : module.videos.filter(v => v.is_approved).length;
 
                     const status: ContentStatus = approvedCount > 0 ? 'approved' : draftCount > 0 ? 'draft' : 'none';
+                    const lessonNotApprovedYet = key === 'video'
+                        && module.content_blocks.filter(b => b.is_approved).length === 0;
 
                     return (
                         <Card key={key} className="shadow-none bg-white dark:bg-zinc-900/80 border border-zinc-200 dark:border-zinc-800">
@@ -210,7 +223,12 @@ export default function ModuleDetailPage() {
                                 </CardDescription>
                             </CardHeader>
                             <CardContent className="space-y-3">
-                                {job?.status === 'failed' && (
+                                {lessonNotApprovedYet ? (
+                                    <div className="flex items-start gap-2 text-[10px] font-bold text-amber-600 bg-amber-500/5 border border-amber-500/20 rounded-lg p-2.5">
+                                        <AlertTriangle size={14} className="shrink-0 mt-0.5" />
+                                        Approve the lesson content first — video narrates it.
+                                    </div>
+                                ) : job?.status === 'failed' && (
                                     <div className="flex items-start gap-2 text-[10px] font-bold text-rose-600 bg-rose-500/5 border border-rose-500/20 rounded-lg p-2.5">
                                         <AlertTriangle size={14} className="shrink-0 mt-0.5" />
                                         {job.error_message || 'Generation failed.'}
@@ -219,7 +237,7 @@ export default function ModuleDetailPage() {
                                 <Button
                                     variant="outline"
                                     className="w-full rounded-xl font-black text-[9px] uppercase tracking-widest h-10 gap-2"
-                                    disabled={isGenerating}
+                                    disabled={isGenerating || lessonNotApprovedYet}
                                     onClick={() => handleGenerate(key)}
                                 >
                                     {isGenerating ? <Loader2 size={14} className="animate-spin" /> : <Sparkles size={14} />}
@@ -242,7 +260,45 @@ export default function ModuleDetailPage() {
             <LessonPreview module={module} />
             <QuizPreview module={module} />
             <FlashcardsPreview module={module} />
+            <VideoPreview module={module} />
         </div>
+    );
+}
+
+function VideoPreview({ module }: { module: ModuleDetail }) {
+    if (module.videos.length === 0) return null;
+    const approved = module.videos.filter(v => v.is_approved);
+    const draft = module.videos.filter(v => !v.is_approved);
+
+    const renderVideo = (video: Video, pending: boolean) => (
+        <div key={video.id} className={`rounded-xl p-4 border space-y-2 ${pending ? 'border-dashed border-amber-500/30' : 'border-zinc-100 dark:border-zinc-800'}`}>
+            <video controls className="w-full rounded-lg bg-black" src={video.url} />
+            <p className="text-[10px] text-zinc-400 font-bold uppercase tracking-widest">
+                {Math.floor(video.duration_seconds / 60)}:{String(video.duration_seconds % 60).padStart(2, '0')}
+            </p>
+        </div>
+    );
+
+    return (
+        <Card className="shadow-none bg-white dark:bg-zinc-900/80 border border-zinc-200 dark:border-zinc-800">
+            <CardHeader>
+                <CardTitle className="text-sm font-black flex items-center gap-2"><Clapperboard size={16} className="text-primary" /> Video</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+                {draft.length > 0 && (
+                    <div className="space-y-3">
+                        <Badge className="bg-amber-500/10 text-amber-600 border-none text-[9px] font-black uppercase tracking-widest">Pending Review</Badge>
+                        {draft.map(v => renderVideo(v, true))}
+                    </div>
+                )}
+                {approved.length > 0 && (
+                    <div className="space-y-3">
+                        <Badge className="bg-emerald-500/10 text-emerald-600 border-none text-[9px] font-black uppercase tracking-widest">Live</Badge>
+                        {approved.map(v => renderVideo(v, false))}
+                    </div>
+                )}
+            </CardContent>
+        </Card>
     );
 }
 

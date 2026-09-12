@@ -115,7 +115,7 @@ function SubjectsManagementInner() {
     const pathname = usePathname();
     const router = useRouter();
 
-    const [activeModal, setActiveModal] = useState<'CREATE_SUBJECT' | 'UPDATE_SUBJECT' | 'CREATE_COURSE' | 'DELETE_SUBJECT' | 'DETAILS' | null>(null);
+    const [activeModal, setActiveModal] = useState<'CREATE_SUBJECT' | 'UPDATE_SUBJECT' | 'CREATE_COURSE' | 'DELETE_SUBJECT' | null>(null);
     const [selectedSubject, setSelectedSubject] = useState<Subject | null>(null);
     const [viewMode, setViewMode] = useState<'list' | 'table'>('table');
 
@@ -228,8 +228,7 @@ function SubjectsManagementInner() {
 
     // Shared action handlers - used by both list and table views
     const handleViewDetails = (subject: Subject) => {
-        setSelectedSubject(subject);
-        setActiveModal('DETAILS');
+        router.push(`/admin/subjects/${subject.slug}`);
     };
 
     const handleUpdateClick = (subject: Subject) => {
@@ -276,7 +275,7 @@ function SubjectsManagementInner() {
     const rowActions = (subject: Subject): ActionItem[] => [
         { label: 'View Details', icon: <Eye size={14} />, onClick: () => handleViewDetails(subject) },
         { label: 'Update Subject', icon: <Pencil size={14} />, onClick: () => handleUpdateClick(subject) },
-        { label: 'Create Course', icon: <PlusCircle size={14} />, onClick: () => handleCreateCourseClick(subject) },
+        { label: 'Add Course', icon: <PlusCircle size={14} />, onClick: () => handleCreateCourseClick(subject) },
         {
             label: subject.status === 'active' ? 'Deactivate' : 'Activate',
             icon: subject.status === 'active' ? <Archive size={14} /> : <RefreshCw size={14} />,
@@ -471,7 +470,6 @@ function SubjectsManagementInner() {
                     }}
                     links={{
                         name: (subject: Subject) => `/admin/subjects/${subject.slug}`,
-                        course_count: (subject: Subject) => `/admin/subjects/${subject.id}/courses`
                     }}
                     emptyTitle="No subjects found"
                     emptyDescription="No academic subjects match your current filters."
@@ -503,8 +501,8 @@ function SubjectsManagementInner() {
             </CustomDialog>
 
             <CustomDialog
-                title="Create Course"
-                description={`Deploy a new course under ${selectedSubject?.name}.`}
+                title="Add Course"
+                description={`Add a new course under ${selectedSubject?.name}.`}
                 open={activeModal === 'CREATE_COURSE'}
                 onOpenChange={closeModals}
             >
@@ -528,9 +526,6 @@ function SubjectsManagementInner() {
                 onConfirm={handleDeleteSubject}
                 variant="destructive"
             />
-            <CustomDialog title="Subject details" description="Complete subject metadata" open={activeModal === 'DETAILS'} onOpenChange={closeModals}>
-                {selectedSubject && <div className="grid grid-cols-2 gap-4 py-4 text-sm"><div><p className="text-zinc-400">Name</p><p className="font-bold">{selectedSubject.name}</p></div><div><p className="text-zinc-400">Status</p><p className="font-bold capitalize">{selectedSubject.status}</p></div><div className="col-span-2"><p className="text-zinc-400">Description</p><p>{selectedSubject.description || '—'}</p></div><div><p className="text-zinc-400">Courses</p><p className="font-bold">{selectedSubject.course_count}</p></div><div><p className="text-zinc-400">Created</p><p>{new Date(selectedSubject.created_at).toLocaleString()}</p></div></div>}
-            </CustomDialog>
         </div>
     );
 }

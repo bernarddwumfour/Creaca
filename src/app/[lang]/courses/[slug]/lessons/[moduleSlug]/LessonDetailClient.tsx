@@ -17,6 +17,7 @@ import {
     Shuffle,
     X,
     RotateCcw,
+    Clapperboard,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -36,55 +37,62 @@ interface ContentBlock {
 interface AnswerChoice { id: string; text: string }
 interface Question { id: string; question_type: string; text: string; order: number; choices: AnswerChoice[] }
 interface Flashcard { id: string; front: string; back: string; hint: string; order: number }
+interface Video { id: string; url: string; duration_seconds: number }
 interface ModuleDetail {
     id: string; name: string; description: string; order: number; passing_score: number;
     course: { id: string; name: string };
-    content_blocks: ContentBlock[]; questions: Question[]; flashcards: Flashcard[];
+    content_blocks: ContentBlock[]; questions: Question[]; flashcards: Flashcard[]; videos: Video[];
     progress: { status: string; completed_at: string | null };
 }
-interface CourseModule { id: string; name: string; order: number }
+interface CourseModule { id: string; name: string; slug: string; order: number }
 
-export default function LessonDetailClient({ courseId, moduleId, lang }: { courseId: string; moduleId: string; lang: string }) {
+export default function LessonDetailClient({ courseSlug, moduleSlug, lang }: { courseSlug: string; moduleSlug: string; lang: string }) {
     const router = useRouter();
     const { user, isLoading: authLoading } = useAuth();
     const queryClient = useQueryClient();
     const [activeTab, setActiveTab] = useState('lesson');
     const [isCompleting, setIsCompleting] = useState(false);
 
-    const moduleQuery = useQuery<{ data: ModuleDetail }>({
-        queryKey: [ENDPOINTS.MODULES.MODULE_DETAIL, moduleId],
-        queryFn: async () => {
-            const { data } = await api.get(ENDPOINTS.MODULES.MODULE_DETAIL.replace(':id', moduleId));
-            return data;
-        },
-        enabled: !!user,
-        retry: false,
-    });
-
+    // The URL carries the module *slug* (unique within a course). The module
+    // detail endpoint keys off the id, so resolve slug -> id from the course's
+    // module list (which the course detail returns with both fields).
     const courseQuery = useQuery({
-        queryKey: [ENDPOINTS.COURSES.COURSE_DETAIL, courseId],
+        queryKey: [ENDPOINTS.COURSES.COURSE_DETAIL, courseSlug],
         queryFn: async () => {
-            const { data } = await api.get(ENDPOINTS.COURSES.COURSE_DETAIL.replace(':id', courseId));
+            const { data } = await api.get(ENDPOINTS.COURSES.COURSE_DETAIL.replace(':id', courseSlug));
             return data;
         },
         enabled: !!user,
     });
 
     const courseModules: CourseModule[] = (courseQuery.data?.data?.modules || []).slice().sort((a: CourseModule, b: CourseModule) => a.order - b.order);
-    const currentIndex = courseModules.findIndex(m => m.id === moduleId);
+    const currentIndex = courseModules.findIndex(m => m.slug === moduleSlug);
+    const currentModule = currentIndex >= 0 ? courseModules[currentIndex] : undefined;
+    const moduleId = currentModule?.id;
     const previousModule = currentIndex > 0 ? courseModules[currentIndex - 1] : undefined;
     const nextModule = currentIndex >= 0 && currentIndex < courseModules.length - 1 ? courseModules[currentIndex + 1] : undefined;
 
+    const moduleQuery = useQuery<{ data: ModuleDetail }>({
+        queryKey: [ENDPOINTS.MODULES.MODULE_DETAIL, moduleId],
+        queryFn: async () => {
+            const { data } = await api.get(ENDPOINTS.MODULES.MODULE_DETAIL.replace(':id', moduleId!));
+            return data;
+        },
+        enabled: !!user && !!moduleId,
+        retry: false,
+    });
+
     const handleMarkComplete = async () => {
+        if (!moduleId) return;
         setIsCompleting(true);
         try {
             await api.post(ENDPOINTS.MODULES.MARK_COMPLETE.replace(':id', moduleId));
             toast.success('Module marked complete');
             queryClient.invalidateQueries({ queryKey: [ENDPOINTS.MODULES.MODULE_DETAIL, moduleId] });
             if (nextModule) {
-                router.push(`/${lang}/courses/${courseId}/lessons/${nextModule.id}`);
+                router.push(`/${lang}/courses/${courseSlug}/lessons/${nextModule.slug}`);
             } else {
-                router.push(`/${lang}/courses/${courseId}`);
+                router.push(`/${lang}/courses/${courseSlug}`);
             }
         } catch (error: any) {
             toast.error(apiMessage(error, "Failed to mark module complete."));
@@ -116,6 +124,31 @@ export default function LessonDetailClient({ courseId, moduleId, lang }: { cours
         );
     }
 
+    // Resolving the course first — needed to map the module slug to its id.
+    if (courseQuery.isLoading) {
+        return (
+            <main className="min-h-screen bg-white dark:bg-[#09090b] flex items-center justify-center">
+                <Spinner size={32} />
+            </main>
+        );
+    }
+
+    // Course loaded, but no module in it matches this slug.
+    if (!currentModule) {
+        return (
+            <main className="min-h-screen bg-white dark:bg-[#09090b] flex items-center justify-center px-6">
+                <div className="text-center space-y-4 max-w-md">
+                    <Lock className="mx-auto h-12 w-12 text-zinc-400" />
+                    <h1 className="text-xl font-bold">Lesson not found</h1>
+                    <p className="text-sm text-zinc-500">This lesson may not be published yet.</p>
+                    <Button asChild variant="outline">
+                        <Link href={`/${lang}/courses/${courseSlug}`}><ArrowLeft className="mr-2" size={16} /> Back to course</Link>
+                    </Button>
+                </div>
+            </main>
+        );
+    }
+
     if (moduleQuery.isLoading || (!moduleQuery.data && !moduleQuery.isError)) {
         return (
             <main className="min-h-screen bg-white dark:bg-[#09090b] flex items-center justify-center">
@@ -139,7 +172,7 @@ export default function LessonDetailClient({ courseId, moduleId, lang }: { cours
                             : "This lesson may not be published yet."}
                     </p>
                     <Button asChild variant="outline">
-                        <Link href={`/${lang}/courses/${courseId}`}><ArrowLeft className="mr-2" size={16} /> Back to course</Link>
+                        <Link href={`/${lang}/courses/${courseSlug}`}><ArrowLeft className="mr-2" size={16} /> Back to course</Link>
                     </Button>
                 </div>
             </main>
@@ -151,10 +184,10 @@ export default function LessonDetailClient({ courseId, moduleId, lang }: { cours
 
     return (
         <main className="min-h-screen bg-white dark:bg-[#09090b] pt-24 pb-16">
-            <div className="container mx-auto px-6 max-w-4xl space-y-6">
+            <div className="container mx-auto px-6 space-y-6">
                 <div className="flex flex-wrap items-center justify-between gap-3">
                     <Button asChild variant="ghost">
-                        <Link href={`/${lang}/courses/${courseId}`}><ArrowLeft className="mr-2" size={16} /> Back to course</Link>
+                        <Link href={`/${lang}/courses/${courseSlug}`}><ArrowLeft className="mr-2" size={16} /> Back to course</Link>
                     </Button>
                     {isCompleted && (
                         <Badge className="bg-emerald-500/10 text-emerald-600 border-none gap-1.5">
@@ -186,6 +219,7 @@ export default function LessonDetailClient({ courseId, moduleId, lang }: { cours
                     <Tabs value={activeTab} onValueChange={setActiveTab}>
                         <TabsList>
                             <TabsTrigger value="lesson" className="gap-2"><BookOpen size={14} /> Lesson</TabsTrigger>
+                            <TabsTrigger value="video" className="gap-2" disabled={module.videos.length === 0}><Clapperboard size={14} /> Video</TabsTrigger>
                             <TabsTrigger value="quiz" className="gap-2" disabled={module.questions.length === 0}><HelpCircle size={14} /> Quiz</TabsTrigger>
                             <TabsTrigger value="flashcards" className="gap-2" disabled={module.flashcards.length === 0}><Layers size={14} /> Flashcards</TabsTrigger>
                         </TabsList>
@@ -208,8 +242,14 @@ export default function LessonDetailClient({ courseId, moduleId, lang }: { cours
                             )}
                         </TabsContent>
 
+                        <TabsContent value="video" className="mt-6">
+                            {module.videos.length > 0 && (
+                                <video controls className="w-full rounded-xl bg-black" src={module.videos[0].url} />
+                            )}
+                        </TabsContent>
+
                         <TabsContent value="quiz" className="mt-6">
-                            <QuizTab moduleId={moduleId} questions={module.questions} passingScore={module.passing_score} />
+                            <QuizTab moduleId={module.id} questions={module.questions} passingScore={module.passing_score} />
                         </TabsContent>
 
                         <TabsContent value="flashcards" className="mt-6">
@@ -221,14 +261,14 @@ export default function LessonDetailClient({ courseId, moduleId, lang }: { cours
                 <div className="flex items-center justify-between gap-3 border-t border-zinc-100 dark:border-zinc-800 pt-5">
                     {previousModule ? (
                         <Button asChild variant="outline">
-                            <Link href={`/${lang}/courses/${courseId}/lessons/${previousModule.id}`}>
+                            <Link href={`/${lang}/courses/${courseSlug}/lessons/${previousModule.slug}`}>
                                 <ArrowLeft size={16} className="mr-2" /> Previous
                             </Link>
                         </Button>
                     ) : <span />}
                     {nextModule ? (
                         <Button asChild variant="outline">
-                            <Link href={`/${lang}/courses/${courseId}/lessons/${nextModule.id}`}>
+                            <Link href={`/${lang}/courses/${courseSlug}/lessons/${nextModule.slug}`}>
                                 Next <ArrowRight size={16} className="ml-2" />
                             </Link>
                         </Button>

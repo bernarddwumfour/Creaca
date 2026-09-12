@@ -21,7 +21,9 @@ import {
     BookMarked,
     List,
     Link as LinkIcon,
-    GitBranch
+    GitBranch,
+    Sparkles,
+    Settings2,
 } from 'lucide-react';
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -119,18 +121,11 @@ const SORT_OPTIONS = [
     { value: 'difficulty', label: 'Difficulty' },
 ];
 
-// Hoisted to module scope (not built inline in JSX): CustomFilterFromUrl/
-// CustomSortFromUrl's effects depend on `config.fields`/`config.defaultSortBy`
-// by reference — a fresh object literal on every render triggers a
-// setState-in-effect infinite loop.
-const FILTERS: FilterConfig = {
-    fields: [
-        { name: 'difficulty', type: 'select', placeholder: 'Difficulty', options: DIFFICULTY_OPTIONS },
-        { name: 'status', type: 'select', placeholder: 'Status', options: STATUS_OPTIONS },
-    ],
-    searchPlaceholder: 'Search courses...',
-};
-
+// SORTS is hoisted to module scope (not built inline in JSX):
+// CustomSortFromUrl's effects depend on `config.defaultSortBy` by reference —
+// a fresh object literal on every render triggers a setState-in-effect
+// infinite loop. The filter config is built with useMemo inside the
+// component instead, because it needs the fetched subject options.
 const SORTS: SortConfig = {
     options: SORT_OPTIONS,
     defaultSortBy: 'name',
@@ -160,12 +155,14 @@ function CourseManagementInner() {
     const [prerequisitesCourse, setPrerequisitesCourse] = useState<Course | null>(null);
     const [selectedPrerequisites, setSelectedPrerequisites] = useState<string[]>([]);
     const [isUpdatingPrerequisites, setIsUpdatingPrerequisites] = useState(false);
+    const [generatingCourseId, setGeneratingCourseId] = useState<string | null>(null);
 
     const pageSize = 10;
     const page = parseInt(searchParams.get('page') || '1', 10);
     const search = searchParams.get('search') || '';
     const difficulty = searchParams.get('difficulty') || '';
     const status = searchParams.get('status') || '';
+    const subject = searchParams.get('subject') || '';
     const sortBy = searchParams.get('sort_by') || '';
     const sortOrder = (searchParams.get('sort_order') as 'asc' | 'desc') || 'asc';
 
@@ -177,7 +174,7 @@ function CourseManagementInner() {
 
     // Fetch courses from API
     const { data: response, isLoading, refetch } = useQuery<CoursesResponse>({
-        queryKey: [ENDPOINTS.COURSES.LIST_COURSES, page, pageSize, search, difficulty, status, sortBy, sortOrder],
+        queryKey: [ENDPOINTS.COURSES.LIST_COURSES, page, pageSize, search, difficulty, status, subject, sortBy, sortOrder],
         queryFn: async () => {
             const { data } = await api.get(ENDPOINTS.COURSES.LIST_COURSES, {
                 params: {
@@ -185,6 +182,7 @@ function CourseManagementInner() {
                     search: search || undefined,
                     difficulty: difficulty || undefined,
                     status: status || undefined,
+                    subject: subject || undefined,
                     sort_by: sortBy || undefined,
                     sort_order: sortBy ? sortOrder : undefined,
                 }
@@ -192,6 +190,35 @@ function CourseManagementInner() {
             return data;
         },
     });
+
+    // Subjects for the "filter by subject" dropdown (value = slug, matching
+    // the backend's ?subject=<slug> filter).
+    const { data: subjectsResponse } = useQuery({
+        queryKey: [ENDPOINTS.SUBJECTS.LIST_SUBJECTS, 'filter-options'],
+        queryFn: async () => {
+            const { data } = await api.get(ENDPOINTS.SUBJECTS.LIST_SUBJECTS, { params: { page_size: 100 } });
+            return data;
+        },
+    });
+
+    // Memoized so CustomFilterFromUrl receives a stable `config.fields`
+    // reference (a fresh literal each render triggers its effect loop, per
+    // the SORTS note above). Reference changes only once, when the subject
+    // options finish loading.
+    const filterConfig: FilterConfig = React.useMemo(() => {
+        const subjectOptions = (subjectsResponse?.data?.results || []).map((s: { slug: string; name: string }) => ({
+            value: s.slug,
+            label: s.name,
+        }));
+        return {
+            fields: [
+                { name: 'subject', type: 'select', placeholder: 'Subject', options: subjectOptions },
+                { name: 'difficulty', type: 'select', placeholder: 'Difficulty', options: DIFFICULTY_OPTIONS },
+                { name: 'status', type: 'select', placeholder: 'Status', options: STATUS_OPTIONS },
+            ],
+            searchPlaceholder: 'Search courses...',
+        };
+    }, [subjectsResponse]);
 
     const courses = response?.data?.results || [];
     const pagination = response?.data?.pagination;
@@ -315,6 +342,23 @@ function CourseManagementInner() {
         setOverviewModalOpen(true);
     };
 
+    const handleManageModules = (course: Course) => {
+        router.push(`/admin/subjects/courses/${course.slug}`);
+    };
+
+    const handleGenerateModules = async (course: Course) => {
+        setGeneratingCourseId(course.id);
+        try {
+            const { data } = await api.post(ENDPOINTS.COURSES.GENERATE_MODULES.replace(':id', course.id));
+            toast.success(data.message || `Modules generated for "${course.name}".`);
+            invalidateCourses();
+        } catch (error: any) {
+            toast.error(apiMessage(error, 'Failed to generate modules.'));
+        } finally {
+            setGeneratingCourseId(null);
+        }
+    };
+
     // Difficulty badge colors
     const getDifficultyColor = (difficulty: string) => {
         switch (difficulty) {
@@ -370,6 +414,14 @@ function CourseManagementInner() {
     // pattern rather than passing the item down into the widget.
     const rowActions = (course: Course): ActionItem[] => [
         { label: 'View Details', icon: <Eye size={14} />, onClick: () => handleViewDetails(course) },
+        { label: 'Manage Modules', icon: <Settings2 size={14} />, onClick: () => handleManageModules(course) },
+        {
+            label: 'Generate Modules',
+            icon: <Sparkles size={14} />,
+            loading: generatingCourseId === course.id,
+            disabled: generatingCourseId !== null,
+            onClick: () => handleGenerateModules(course),
+        },
         { label: 'Update Course', icon: <Pencil size={14} />, onClick: () => handleUpdateClick(course) },
         { label: 'View Prerequisites', icon: <GitBranch size={14} />, onClick: () => handleManagePrerequisites(course) },
         {
@@ -453,7 +505,7 @@ function CourseManagementInner() {
 
             {/* Filter + Sort Bar */}
             <div className="flex flex-wrap gap-3 items-center justify-between bg-white dark:bg-zinc-900/80 p-3 rounded-2xl border border-zinc-200 dark:border-zinc-800">
-                <CustomFilterFromUrl config={FILTERS} />
+                <CustomFilterFromUrl config={filterConfig} />
                 <CustomSortFromUrl config={SORTS} />
             </div>
 
@@ -559,6 +611,9 @@ function CourseManagementInner() {
                     displayConfigs={displayConfigs}
                     renderActions={(course) => <ActionsDropdown actions={rowActions(course)} maxVisible={3} showLabels={false} />}
                     bulkActions={bulkActions}
+                    links={{
+                        name: (course: Course) => `/admin/subjects/courses/${course.slug}`,
+                    }}
                     excludeColumns={['id', 'slug', 'description', 'created_at', 'updated_at', 'duration', 'modules_count', 'subject', 'price', 'requirements', 'prerequisites', 'prerequisites_count']}
                     dots={{
                         status: {

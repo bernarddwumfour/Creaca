@@ -1,4 +1,4 @@
-// app/[lang]/courses/[id]/lessons/[moduleId]/page.tsx
+// app/[lang]/courses/[slug]/lessons/[moduleSlug]/page.tsx
 import { Lang } from '@/lib/dictionary/dictionary';
 import { getDictionary } from '@/lib/dictionary/get-dictionary';
 import Header from '../../../../components/Header';
@@ -8,19 +8,19 @@ import LessonDetailClient from './LessonDetailClient';
 type PageProps = {
     params: Promise<{
         lang: Lang;
-        id: string;
-        moduleId: string;
+        slug: string;
+        moduleSlug: string;
     }>;
 };
 
 export default async function Page({ params }: PageProps) {
-    const { lang, id, moduleId } = await params;
+    const { lang, slug, moduleSlug } = await params;
     const dictionary = getDictionary(lang);
 
     return (
         <>
             <Header lang={lang} t={dictionary.nav} />
-            <LessonDetailClient courseId={id} moduleId={moduleId} lang={lang} />
+            <LessonDetailClient courseSlug={slug} moduleSlug={moduleSlug} lang={lang} />
             <Footer lang={lang} t={dictionary.footer} />
         </>
     );

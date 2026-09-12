@@ -37,6 +37,9 @@ yarn-error.log*
 # vercel
 .vercel
 
+# AI-generated video renders (Remotion output) — large binaries, not source
+/public/generated-videos/
+
 # typescript
 *.tsbuildinfo
 next-env.d.ts

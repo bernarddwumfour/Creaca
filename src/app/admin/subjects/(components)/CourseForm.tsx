@@ -475,7 +475,7 @@ export function CourseForm({ type = 'CREATE', initialData, onSuccess, courseId, 
                         ? <Loader2 className="animate-spin" size={18} />
                         : (type === 'CREATE' ? <Plus size={18} /> : <Save size={18} />)
                     }
-                    {type === 'CREATE' ? 'Create Course' : 'Save Changes'}
+                    {type === 'CREATE' ? (subjectId ? 'Add Course' : 'Create Course') : 'Save Changes'}
                 </Button>
             </form>
         </Form>

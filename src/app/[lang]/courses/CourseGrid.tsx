@@ -184,7 +184,7 @@ export default function CourseGrid({ lang }: { lang: Lang }) {
 
             toast.success(response.data?.message || `Successfully registered for ${course.name}`);
 
-            setInfoDialogOptions({ open: true, title: "Registration Sucessful", description: "Course has been registered succesfully.", infoMessage: `Hurray, you have registered for ${course.name}, you now have access to start learning this course.`, primaryAction: () => { router.push(`/${lang}/courses/${course.id}`) }, secondaryAction: () => { setInfoDialogOptions(prev => { return { ...prev, open: false } }) }, primaryButtonText: "Start Learning", secondaryButtonText: "Close", variant: "success", handleClose: () => { setInfoDialogOptions({ open: false }) } })
+            setInfoDialogOptions({ open: true, title: "Registration Sucessful", description: "Course has been registered succesfully.", infoMessage: `Hurray, you have registered for ${course.name}, you now have access to start learning this course.`, primaryAction: () => { router.push(`/${lang}/courses/${course.slug}`) }, secondaryAction: () => { setInfoDialogOptions(prev => { return { ...prev, open: false } }) }, primaryButtonText: "Start Learning", secondaryButtonText: "Close", variant: "success", handleClose: () => { setInfoDialogOptions({ open: false }) } })
 
             queryClient.invalidateQueries({ queryKey: ['user-registrations'] });
             setRegisteredCourses(prev => new Set([...prev, course.id]));

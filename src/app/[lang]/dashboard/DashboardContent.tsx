@@ -184,7 +184,7 @@ function PurchasedCourseCard({ purchase, progress, onDeactivate, lang }: { purch
 
                     <div className="flex gap-3 mt-4">
                         <Button asChild className="flex-1" variant="outline">
-                            <Link href={`/${lang}/courses/${purchase.course.id}`}>
+                            <Link href={`/${lang}/courses/${purchase.course.slug}`}>
                                 {isCompleted ? "Review Course" : "Continue Learning"}
                             </Link>
                         </Button>
@@ -292,7 +292,7 @@ function SubscriptionCourseCard({ course, progress, lang }: { course: EnrolledCo
 
                     <div className="flex gap-3 mt-4">
                         <Button asChild className="flex-1" variant="outline">
-                            <Link href={`/${lang}/courses/${course.id}`}>
+                            <Link href={`/${lang}/courses/${course.slug}`}>
                                 {isCompleted ? "Review Course" : "Continue Learning"}
                             </Link>
                         </Button>

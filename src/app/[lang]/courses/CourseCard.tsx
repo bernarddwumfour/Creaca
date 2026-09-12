@@ -103,7 +103,7 @@ export function CourseCard({
                             {course.duration ? `${course.duration} min` : 'Self-paced'}
                         </span>
                     </div>
-                    <Link href={`/${lang}/courses/${course.id}`} className='hover:underline'>
+                    <Link href={`/${lang}/courses/${course.slug}`} className='hover:underline'>
                         <h3 className="text-[20px] font-black text-zinc-900 dark:text-gray-200 leading-tight">
                             {course.name}
                         </h3>
@@ -133,7 +133,7 @@ export function CourseCard({
                         {/* Start Learning Button - Always show if has access */}
                         {hasAccess && (
                             <Button asChild className="flex-1 font-bold py-6 bg-primary hover:bg-orange-600">
-                                <Link href={`/${lang}/courses/${course.id}`}>
+                                <Link href={`/${lang}/courses/${course.slug}`}>
                                     Start Learning <ArrowRightCircle className="ml-2 w-4 h-4" />
                                 </Link>
                             </Button>
