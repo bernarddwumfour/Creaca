@@ -87,6 +87,7 @@ export const ENDPOINTS = {
         TRIGGER_GENERATION: `${API_VERSION}/subjects/modules/:id/generate/`,
         GENERATION_STATUS: `${API_VERSION}/subjects/modules/:id/generation-status/`,
         APPROVE_CONTENT: `${API_VERSION}/subjects/modules/:id/approve/`,
+        UPDATE_SCRIPT: `${API_VERSION}/subjects/modules/:id/script/`,
         PUBLISH_MODULE: `${API_VERSION}/subjects/modules/:id/publish/`,
         UNPUBLISH_MODULE: `${API_VERSION}/subjects/modules/:id/unpublish/`,
 

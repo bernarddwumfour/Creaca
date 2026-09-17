@@ -13,6 +13,7 @@ import {
     Archive,
     AlertTriangle,
     Clapperboard,
+    Film,
 } from 'lucide-react';
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -22,9 +23,23 @@ import { toast } from 'sonner';
 import api from '@/lib/axios';
 import { ENDPOINTS } from '@/lib/endpoints';
 import { apiMessage } from '@/lib/api-message';
+import dynamic from 'next/dynamic';
 import { PageHeader } from '@/widgets/page-header/PageHeader';
 import { MarkdownContent } from '@/widgets/markdown-content/MarkdownContent';
 import { Spinner } from '@/widgets/loaders/Spinner';
+import type { VideoScript } from './ScriptStudio';
+
+// The Script Studio embeds @remotion/player, which requires the DOM and pulls
+// in the whole Remotion runtime — load it client-side only, so it never runs
+// during SSR and stays out of the main page bundle.
+const ScriptStudio = dynamic(() => import('./ScriptStudio').then(m => m.ScriptStudio), {
+    ssr: false,
+    loading: () => (
+        <div className="flex items-center justify-center py-12">
+            <Spinner size={28} />
+        </div>
+    ),
+});
 
 type ContentStatus = 'none' | 'draft' | 'approved';
 type GenerationJobStatus = 'pending' | 'running' | 'succeeded' | 'failed';
@@ -42,24 +57,41 @@ interface Question {
 interface Flashcard { id: string; front: string; back: string; hint: string; order: number; is_approved: boolean }
 interface Video { id: string; url: string; duration_seconds: number; is_approved: boolean }
 interface GenerationJob {
-    id: string; content_type: 'lesson' | 'quiz' | 'flashcards' | 'video'; status: GenerationJobStatus;
+    id: string; content_type: 'lesson' | 'quiz' | 'flashcards' | 'script' | 'video'; status: GenerationJobStatus;
     error_message: string; created_at: string; updated_at: string;
 }
 interface ModuleDetail {
     id: string; name: string; description: string; order: number; status: 'draft' | 'active' | 'inactive';
     passing_score: number; course: { id: string; name: string };
     content_blocks: ContentBlock[]; questions: Question[]; flashcards: Flashcard[]; videos: Video[];
+    scripts: VideoScript[];
     generation_jobs: GenerationJob[];
 }
 
-type ContentTypeKey = 'lesson' | 'quiz' | 'flashcards' | 'video';
+type ContentTypeKey = 'lesson' | 'quiz' | 'flashcards' | 'script' | 'video';
 
 const CONTENT_TYPES: { key: ContentTypeKey; label: string; icon: React.ElementType }[] = [
     { key: 'lesson', label: 'Lesson', icon: BookOpen },
     { key: 'quiz', label: 'Quiz', icon: HelpCircle },
     { key: 'flashcards', label: 'Flashcards', icon: Layers },
+    { key: 'script', label: 'Video Script', icon: Film },
     { key: 'video', label: 'Video', icon: Clapperboard },
 ];
+
+// counts of draft/approved rows for each content type, plus the gate that must
+// be satisfied before this type can be generated.
+function countsFor(module: ModuleDetail, key: ContentTypeKey): { draft: number; approved: number } {
+    const rows: { is_approved: boolean }[] =
+        key === 'lesson' ? module.content_blocks
+            : key === 'quiz' ? module.questions
+                : key === 'flashcards' ? module.flashcards
+                    : key === 'script' ? module.scripts
+                        : module.videos;
+    return {
+        draft: rows.filter(r => !r.is_approved).length,
+        approved: rows.filter(r => r.is_approved).length,
+    };
+}
 
 // Video narrates the approved lesson and renders via Remotion — much
 // slower than a single OpenAI JSON call (TTS per block + a full render),
@@ -178,31 +210,24 @@ export default function ModuleDetailPage() {
                 </div>
             )}
 
-            <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6">
                 {CONTENT_TYPES.map(({ key, label, icon: Icon }) => {
                     const job = latestJobFor(key);
                     const isRunning = job?.status === 'pending' || job?.status === 'running';
                     const isGenerating = pendingType === key || isRunning;
 
-                    const draftCount = key === 'lesson'
-                        ? module.content_blocks.filter(b => !b.is_approved).length
-                        : key === 'quiz'
-                            ? module.questions.filter(q => !q.is_approved).length
-                            : key === 'flashcards'
-                                ? module.flashcards.filter(f => !f.is_approved).length
-                                : module.videos.filter(v => !v.is_approved).length;
-
-                    const approvedCount = key === 'lesson'
-                        ? module.content_blocks.filter(b => b.is_approved).length
-                        : key === 'quiz'
-                            ? module.questions.filter(q => q.is_approved).length
-                            : key === 'flashcards'
-                                ? module.flashcards.filter(f => f.is_approved).length
-                                : module.videos.filter(v => v.is_approved).length;
-
+                    const { draft: draftCount, approved: approvedCount } = countsFor(module, key);
                     const status: ContentStatus = approvedCount > 0 ? 'approved' : draftCount > 0 ? 'draft' : 'none';
-                    const lessonNotApprovedYet = key === 'video'
-                        && module.content_blocks.filter(b => b.is_approved).length === 0;
+
+                    // Prerequisite gates: a script needs approved lesson content;
+                    // a video needs an approved script.
+                    const lessonApproved = module.content_blocks.some(b => b.is_approved);
+                    const scriptApproved = module.scripts.some(s => s.is_approved);
+                    const blockedReason = key === 'script' && !lessonApproved
+                        ? 'Approve the lesson content first — the script is built from it.'
+                        : key === 'video' && !scriptApproved
+                            ? 'Approve a video script first — the video renders from it.'
+                            : null;
 
                     return (
                         <Card key={key} className="shadow-none bg-white dark:bg-zinc-900/80 border border-zinc-200 dark:border-zinc-800">
@@ -223,10 +248,10 @@ export default function ModuleDetailPage() {
                                 </CardDescription>
                             </CardHeader>
                             <CardContent className="space-y-3">
-                                {lessonNotApprovedYet ? (
+                                {blockedReason ? (
                                     <div className="flex items-start gap-2 text-[10px] font-bold text-amber-600 bg-amber-500/5 border border-amber-500/20 rounded-lg p-2.5">
                                         <AlertTriangle size={14} className="shrink-0 mt-0.5" />
-                                        Approve the lesson content first — video narrates it.
+                                        {blockedReason}
                                     </div>
                                 ) : job?.status === 'failed' && (
                                     <div className="flex items-start gap-2 text-[10px] font-bold text-rose-600 bg-rose-500/5 border border-rose-500/20 rounded-lg p-2.5">
@@ -237,19 +262,26 @@ export default function ModuleDetailPage() {
                                 <Button
                                     variant="outline"
                                     className="w-full rounded-xl font-black text-[9px] uppercase tracking-widest h-10 gap-2"
-                                    disabled={isGenerating || lessonNotApprovedYet}
+                                    disabled={isGenerating || !!blockedReason}
                                     onClick={() => handleGenerate(key)}
                                 >
                                     {isGenerating ? <Loader2 size={14} className="animate-spin" /> : <Sparkles size={14} />}
-                                    {approvedCount > 0 || draftCount > 0 ? 'Regenerate' : 'Generate'}
+                                    {key === 'video'
+                                        ? (approvedCount > 0 || draftCount > 0 ? 'Re-render' : 'Render')
+                                        : (approvedCount > 0 || draftCount > 0 ? 'Regenerate' : 'Generate')}
                                 </Button>
-                                {draftCount > 0 && (
+                                {/* Script is reviewed/approved in the studio below; every other
+                                    type approves its draft inline. */}
+                                {draftCount > 0 && key !== 'script' && (
                                     <Button
                                         className="w-full rounded-xl font-black text-[9px] uppercase tracking-widest h-10 gap-2 bg-primary hover:bg-orange-600"
                                         onClick={() => handleApprove(key)}
                                     >
                                         <Check size={14} /> Approve draft
                                     </Button>
+                                )}
+                                {key === 'script' && (draftCount > 0 || approvedCount > 0) && (
+                                    <p className="text-[9px] text-zinc-400 text-center">Edit &amp; approve in the studio below.</p>
                                 )}
                             </CardContent>
                         </Card>
@@ -258,6 +290,9 @@ export default function ModuleDetailPage() {
             </div>
 
             <LessonPreview module={module} />
+            {module.scripts.length > 0 && (
+                <ScriptStudio moduleId={moduleId} scripts={module.scripts} onChanged={invalidate} />
+            )}
             <QuizPreview module={module} />
             <FlashcardsPreview module={module} />
             <VideoPreview module={module} />

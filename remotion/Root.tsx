@@ -13,9 +13,9 @@ export function RemotionRoot() {
             fps={FPS}
             width={1920}
             height={1080}
-            defaultProps={{ blocks: [] }}
+            defaultProps={{ scenes: [] }}
             calculateMetadata={async ({ props }) => {
-                const total = props.blocks.reduce((sum, block) => sum + block.durationInFrames, 0);
+                const total = (props.scenes || []).reduce((sum, scene) => sum + (scene.durationInFrames || 0), 0);
                 return { durationInFrames: Math.max(total, FPS) };
             }}
         />

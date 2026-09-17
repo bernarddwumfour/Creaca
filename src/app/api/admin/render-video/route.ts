@@ -11,23 +11,26 @@ import { nodeReader } from '@remotion/media-parser/node';
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
-interface IncomingBlock {
-    block_type: string;
-    title: string;
-    body: string;
-    code: string;
-    language: string;
-    audio_base64: string;
+// A scene from the AI script (apps/ai script generator), optionally carrying
+// pre-generated narration audio. Visual fields vary by `type` and are passed
+// straight through to the Remotion composition.
+interface IncomingScene {
+    type: string;
+    narration?: string;
+    audio_base64?: string;
+    [key: string]: unknown;
 }
 
 const FPS = 30;
-// Breathing room after each block's narration ends, before the next slide cuts in.
+// Breathing room after each scene's narration ends before the next cuts in.
 const PADDING_FRAMES = 20;
+// Hold for a scene that has no narration audio.
+const SILENT_HOLD_FRAMES = FPS * 4;
 
 /**
- * Server-to-server only: renders a module's approved lesson content (with
- * pre-generated narration audio) into an mp4 via Remotion, and stores it
- * under public/generated-videos/. Called by kyrios-backend's
+ * Server-to-server only: renders a module's approved video *script* (typed
+ * animated scenes + pre-generated narration audio) into an mp4 via Remotion,
+ * and stores it under public/generated-videos/. Called by kyrios-backend's
  * generate_video_task, never from the browser — gated by a shared secret,
  * not user auth.
  */
@@ -37,16 +40,16 @@ export async function POST(request: NextRequest) {
         return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    let body: { module_id?: string; blocks?: IncomingBlock[] };
+    let body: { module_id?: string; scenes?: IncomingScene[] };
     try {
         body = await request.json();
     } catch {
         return NextResponse.json({ error: 'Invalid JSON body' }, { status: 400 });
     }
 
-    const blocks = body.blocks;
-    if (!Array.isArray(blocks) || blocks.length === 0) {
-        return NextResponse.json({ error: 'blocks must be a non-empty array' }, { status: 400 });
+    const scenes = body.scenes;
+    if (!Array.isArray(scenes) || scenes.length === 0) {
+        return NextResponse.json({ error: 'scenes must be a non-empty array' }, { status: 400 });
     }
 
     const jobId = crypto.randomUUID();
@@ -55,35 +58,32 @@ export async function POST(request: NextRequest) {
     await fs.mkdir(publicDir, { recursive: true });
 
     try {
-        const compositionBlocks = [];
-        for (let i = 0; i < blocks.length; i++) {
-            const block = blocks[i];
-            const audioFile = `audio-${i}.mp3`;
-            const audioPath = path.join(publicDir, audioFile);
-            await fs.writeFile(audioPath, Buffer.from(block.audio_base64, 'base64'));
+        const compositionScenes = [];
+        for (let i = 0; i < scenes.length; i++) {
+            const { audio_base64, ...sceneFields } = scenes[i];
+            let audioFile: string | undefined;
+            let durationInFrames = SILENT_HOLD_FRAMES;
 
-            const { durationInSeconds } = await parseMedia({
-                src: audioPath,
-                reader: nodeReader,
-                fields: { durationInSeconds: true },
-                acknowledgeRemotionLicense: true,
-            });
-            const durationSeconds = durationInSeconds ?? 5;
-            const durationInFrames = Math.max(Math.round(durationSeconds * FPS) + PADDING_FRAMES, FPS);
+            if (audio_base64) {
+                audioFile = `audio-${i}.mp3`;
+                const audioPath = path.join(publicDir, audioFile);
+                await fs.writeFile(audioPath, Buffer.from(audio_base64, 'base64'));
 
-            compositionBlocks.push({
-                block_type: block.block_type,
-                title: block.title,
-                body: block.body,
-                code: block.code,
-                language: block.language,
-                audioFile,
-                durationInFrames,
-            });
+                const { durationInSeconds } = await parseMedia({
+                    src: audioPath,
+                    reader: nodeReader,
+                    fields: { durationInSeconds: true },
+                    acknowledgeRemotionLicense: true,
+                });
+                const durationSeconds = durationInSeconds ?? 5;
+                durationInFrames = Math.max(Math.round(durationSeconds * FPS) + PADDING_FRAMES, FPS);
+            }
+
+            compositionScenes.push({ ...sceneFields, audioFile, durationInFrames });
         }
 
-        const totalFrames = compositionBlocks.reduce((sum, b) => sum + b.durationInFrames, 0);
-        const inputProps = { blocks: compositionBlocks };
+        const totalFrames = compositionScenes.reduce((sum, s) => sum + s.durationInFrames, 0);
+        const inputProps = { scenes: compositionScenes };
 
         const bundleLocation = await bundle({
             entryPoint: path.join(process.cwd(), 'remotion', 'index.ts'),

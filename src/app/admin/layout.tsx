@@ -248,7 +248,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                                         onClick={() => toggleMenu(link.label)}
                                         className={cn(
                                             "w-full flex items-center text-sm font-bold rounded-lg transition-all group py-2.5",
-                                            isOpen && !isCollapsed ? 'bg-zinc-50 dark:bg-white/5 text-orange-600' : 'text-zinc-500 hover:text-orange-600 hover:bg-zinc-50 dark:hover:bg-zinc-900/50',
+                                            isOpen && !isCollapsed ? 'bg-zinc-50 dark:bg-white/5 text-zinc-700 dark:text-zinc-300' : 'text-zinc-500 hover:text-orange-600 hover:bg-zinc-50 dark:hover:bg-zinc-900/50',
                                             isCollapsed ? "justify-center px-0" : "justify-between px-4"
                                         )}
                                     >

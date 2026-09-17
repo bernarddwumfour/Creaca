@@ -1,6 +1,6 @@
 'use client';
 
-import React, { Suspense, useState } from 'react';
+import React, { Suspense, useState, useMemo } from 'react';
 import { useRouter, useSearchParams, usePathname } from 'next/navigation';
 import {
     Plus,
@@ -69,13 +69,6 @@ const SORT_OPTIONS = [
     { value: 'status', label: 'Status' },
 ];
 
-const FILTERS: FilterConfig = {
-    fields: [
-        { name: 'status', type: 'select', placeholder: 'Status', options: STATUS_OPTIONS },
-    ],
-    searchPlaceholder: 'Search modules...',
-};
-
 const SORTS: SortConfig = {
     options: SORT_OPTIONS,
     defaultSortBy: 'order',
@@ -103,6 +96,7 @@ function ModulesManagementInner() {
     const page = parseInt(searchParams.get('page') || '1', 10);
     const search = searchParams.get('search') || '';
     const status = searchParams.get('status') || '';
+    const course = searchParams.get('course') || '';
     const sortBy = searchParams.get('sort_by') || '';
     const sortOrder = (searchParams.get('sort_order') as 'asc' | 'desc') || 'asc';
 
@@ -113,13 +107,14 @@ function ModulesManagementInner() {
     };
 
     const { data: response, isLoading, refetch } = useQuery<ModulesResponse>({
-        queryKey: [ENDPOINTS.MODULES.LIST_MODULES, page, pageSize, search, status, sortBy, sortOrder],
+        queryKey: [ENDPOINTS.MODULES.LIST_MODULES, page, pageSize, search, status, course, sortBy, sortOrder],
         queryFn: async () => {
             const { data } = await api.get(ENDPOINTS.MODULES.LIST_MODULES, {
                 params: {
                     page, page_size: pageSize,
                     search: search || undefined,
                     status: status || undefined,
+                    course: course || undefined,
                     sort_by: sortBy || undefined,
                     sort_order: sortBy ? sortOrder : undefined,
                 }
@@ -127,6 +122,31 @@ function ModulesManagementInner() {
             return data;
         },
     });
+
+    // Courses feed the filter dropdown; page_size:100 mirrors ModuleForm's course picker.
+    const { data: coursesResponse } = useQuery({
+        queryKey: [ENDPOINTS.COURSES.LIST_COURSES, 'all'],
+        queryFn: async () => {
+            const { data } = await api.get(ENDPOINTS.COURSES.LIST_COURSES, {
+                params: { page_size: 100 }
+            });
+            return data;
+        },
+    });
+
+    const filters = useMemo<FilterConfig>(() => {
+        const courseOptions = (coursesResponse?.data?.results || []).map((c: { id: string; name: string }) => ({
+            value: c.id,
+            label: c.name,
+        }));
+        return {
+            fields: [
+                { name: 'course', type: 'select', placeholder: 'Course', options: courseOptions },
+                { name: 'status', type: 'select', placeholder: 'Status', options: STATUS_OPTIONS },
+            ],
+            searchPlaceholder: 'Search modules...',
+        };
+    }, [coursesResponse]);
 
     const modules = response?.data?.results || [];
     const pagination = response?.data?.pagination;
@@ -240,7 +260,7 @@ function ModulesManagementInner() {
             />
 
             <div className="flex flex-wrap gap-3 items-center justify-between bg-white dark:bg-zinc-900/80 p-3 rounded-2xl border border-zinc-200 dark:border-zinc-800">
-                <CustomFilterFromUrl config={FILTERS} />
+                <CustomFilterFromUrl config={filters} />
                 <CustomSortFromUrl config={SORTS} />
             </div>
 
