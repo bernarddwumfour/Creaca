@@ -2,9 +2,10 @@
 
 import React, { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { useTheme } from 'next-themes';
-import { Moon, Sun, Loader2, Mail, CheckCircle2, ArrowLeft, XCircle, ShieldCheck } from 'lucide-react';
+import { Loader2, Mail, CheckCircle2, ArrowLeft, XCircle, ShieldCheck } from 'lucide-react';
+import { ThemeToggle } from '../../../../../widgets/ThemeToggle/ThemeToggle';
 import { toast } from 'sonner';
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -17,7 +18,6 @@ import { ENDPOINTS } from '@/lib/endpoints';
 
 export default function VerifyEmailPage({ params }: { params: Promise<{ lang: Lang }> }) {
     const { lang } = React.use(params);
-    const { theme, setTheme } = useTheme();
     const router = useRouter();
     const searchParams = useSearchParams();
 
@@ -58,29 +58,20 @@ export default function VerifyEmailPage({ params }: { params: Promise<{ lang: La
     }, [verifyToken]);
 
     return (
-        <div className="min-h-screen flex w-full bg-zinc-50 dark:bg-[#09090b] relative overflow-hidden transition-colors duration-500">
+        <div className="h-screen flex w-full bg-zinc-50 dark:bg-[#09090b] relative overflow-hidden transition-colors duration-500">
             {/* Top Actions */}
             <div className="absolute !right-6 top-6 z-20 flex items-center gap-2">
-                <Button variant="ghost" size="icon" className="rounded-full w-8 h-8" onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}>
-                    {theme === 'dark' ? <Sun size={18} /> : <Moon size={18} />}
-                </Button>
+                <ThemeToggle />
                 <LanguageSwitcher currentLang={lang} />
             </div>
 
             {/* Brand Side (Desktop) */}
-            <div className="hidden lg:flex w-1/2 bg-primary relative overflow-hidden items-center justify-center">
-                <div className="absolute inset-0 z-0 opacity-20 pointer-events-none select-none text-white font-serif italic">
-                    <span className="absolute top-[20%] left-[10%] text-9xl">@</span>
-                    <span className="absolute bottom-[20%] right-[10%] text-8xl">✓</span>
-                </div>
-                <div className="relative z-10 text-center text-white space-y-2">
-                    <h1 className="text-8xl font-black tracking-tighter uppercase">KYRIOS<span className="text-zinc-900">.</span></h1>
-                    <p className="text-white/90 font-medium text-lg tracking-widest uppercase">Securing your journey</p>
-                </div>
+            <div className="hidden lg:block w-1/2 relative bg-primary">
+                <Image src="/how-it-works-portfolio.png" alt="Securing your journey" fill className="object-cover" priority />
             </div>
 
             {/* Content Side */}
-            <div className="w-full lg:w-1/2 flex flex-col gap-6 items-center justify-center p-6 bg-white dark:bg-[#18181b] relative">
+            <div className="w-full lg:w-1/2 h-screen overflow-y-auto flex flex-col gap-6 items-center justify-center-safe [&>*]:shrink-0 p-6 bg-white dark:bg-[#18181b] relative">
                 <Link href={`/${lang}`}>
                     <span className='font-black text-xl text-zinc-900 dark:text-white'>KYRIOS<span className="text-primary">.</span></span>
                 </Link>

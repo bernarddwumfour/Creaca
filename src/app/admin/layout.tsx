@@ -3,8 +3,8 @@
 import React, { useState, useMemo, useRef, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
-import { useTheme } from 'next-themes';
 import { useQuery } from '@tanstack/react-query';
+import { ThemeToggle } from '../../../widgets/ThemeToggle/ThemeToggle';
 import { cn } from "@/lib/utils";
 import {
     LayoutDashboard,
@@ -18,8 +18,6 @@ import {
     Terminal,
     Menu,
     X,
-    Sun,
-    Moon,
     UserCircle,
     ChevronDown,
     ChevronRight,
@@ -97,7 +95,6 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     const [showSearchResults, setShowSearchResults] = useState(false);
 
     const searchRef = useRef<HTMLDivElement>(null);
-    const { theme, setTheme } = useTheme();
     const pathname = usePathname();
     const { user, logout, isLoading } = useAuth();
     const router = useRouter();
@@ -359,13 +356,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
                     {/* ACTIONS */}
                     <div className="flex items-center gap-2">
-                        <Button
-                            variant="ghost" size="icon"
-                            onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
-                            className="rounded-full hover:bg-zinc-100 dark:hover:bg-zinc-900"
-                        >
-                            {theme === 'dark' ? <Sun size={18} className="text-amber-500" /> : <Moon size={18} className="text-orange-600" />}
-                        </Button>
+                        <ThemeToggle className="rounded-full hover:bg-zinc-100 dark:hover:bg-zinc-900" />
 
                         <div className="h-8 w-[1px] bg-zinc-200 dark:bg-zinc-800 mx-2" />
 

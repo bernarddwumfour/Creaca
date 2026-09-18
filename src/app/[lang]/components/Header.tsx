@@ -6,10 +6,10 @@ import Link from 'next/link'
 import { Lang } from '@/lib/dictionary/dictionary'
 import LanguageSwitcher from './LanguageSwitcher'
 import {
-  Menu, X, Sun, Moon, LayoutDashboard, LogOut,
+  Menu, X, LayoutDashboard, LogOut,
   Settings, ChevronDown, Bell, CheckCircle2
 } from 'lucide-react'
-import { useTheme } from 'next-themes'
+import { ThemeToggle } from '../../../../widgets/ThemeToggle/ThemeToggle'
 import { useAuth } from '@/context/AuthContext'
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import {
@@ -44,7 +44,6 @@ const Header = ({ lang, t }: HeaderProps) => {
   const [isScrolled, setIsScrolled] = useState(false)
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const [mounted, setMounted] = useState(false)
-  const { theme, setTheme } = useTheme()
 
   const { user, logout } = useAuth()
   const queryClient = useQueryClient()
@@ -126,15 +125,7 @@ const Header = ({ lang, t }: HeaderProps) => {
           <div className="flex items-center gap-6">
             <div className="flex sm:gap-4 items-center">
               {mounted && (
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="rounded-full w-8 h-8"
-                  onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
-                >
-                  {theme === 'dark' ? <Sun size={18} /> : <Moon size={18} />}
-                  <span className="sr-only">{labels.theme}</span>
-                </Button>
+                <ThemeToggle srLabel={labels.theme} />
               )}
 
               <div>

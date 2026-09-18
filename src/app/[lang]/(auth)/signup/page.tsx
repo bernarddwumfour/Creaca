@@ -2,12 +2,13 @@
 
 import React, { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useForm } from 'react-hook-form';
 import * as z from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { useTheme } from 'next-themes';
-import { Moon, Sun, Loader2, Eye, EyeOff, Venus, Mars } from 'lucide-react';
+import { Loader2, Eye, EyeOff, Venus, Mars } from 'lucide-react';
+import { ThemeToggle } from '../../../../../widgets/ThemeToggle/ThemeToggle';
 
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -397,31 +398,21 @@ function SignupForm({ lang, t, redirectTo }: { lang: Lang, t: any, redirectTo: s
 export default function SignupPage({ params }: { params: Promise<{ lang: Lang }> }) {
   const { lang } = React.use(params);
   const t = signupDict[lang] || signupDict.en;
-  const { theme, setTheme } = useTheme();
   const searchParams = useSearchParams();
   const redirectTo = searchParams.get('redirect') || '/';
 
   return (
-    <div className="min-h-screen flex w-full bg-zinc-50 dark:bg-[#09090b] relative overflow-hidden">
+    <div className="h-screen flex w-full bg-zinc-50 dark:bg-[#09090b] relative overflow-hidden">
       <div className="absolute !right-6 top-6 z-20 flex items-center">
-        <Button variant="ghost" size="icon" className="rounded-full w-8 h-8" onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}>
-          {theme === 'dark' ? <Sun size={18} /> : <Moon size={18} />}
-        </Button>
+        <ThemeToggle />
         <LanguageSwitcher currentLang={lang} />
       </div>
 
-      <div className="hidden lg:flex w-1/2 bg-primary relative items-center justify-center">
-        <div className="absolute inset-0 z-0 opacity-20 pointer-events-none text-white italic">
-          <span className="absolute top-[10%] left-[10%] text-6xl">α</span>
-          <span className="absolute bottom-[10%] right-[10%] text-6xl">Ω</span>
-        </div>
-        <div className="relative z-10 text-center text-white">
-          <h1 className="text-8xl font-black tracking-tighter">KYRIOS<span className="text-zinc-900">.</span></h1>
-          <p className="font-bold text-xl tracking-[0.3em] uppercase opacity-80">{t.brandTagline}</p>
-        </div>
+      <div className="hidden lg:block w-1/2 relative bg-primary">
+        <Image src="/how-it-works-build.png" alt={t.brandTagline} fill className="object-cover" priority />
       </div>
 
-      <div className="w-full lg:w-1/2 flex flex-col items-center justify-center p-6 relative">
+      <div className="w-full lg:w-1/2 h-screen overflow-y-auto flex flex-col items-center justify-center-safe [&>*]:shrink-0 p-6 relative">
         <Link href={`/${lang}`} className="mb-6"><span className='font-black text-xl'>KYRIOS<span className="text-primary">.</span></span></Link>
         <Card className="w-full max-w-md group rounded-2xl overflow-hidden transition-all duration-500 hover:-translate-y-1 bg-white dark:bg-[#111114] relative z-10 shadow-2xl border-none">
           <div className="absolute w-[98%] h-[99%] top-[0.5%] left-[1%] bg-white dark:bg-[#111114] rounded-2xl z-0" />
