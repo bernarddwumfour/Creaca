@@ -4,6 +4,12 @@ import type { NextRequest } from 'next/server';
 const AUTH_COOKIE_KEY = 'kyrios_auth_session';
 const SUPPORTED_LANGS = ['en', 'fr', 'es'];
 
+// Learner-facing sections under /{lang}/... that require an authenticated
+// user of any role. Marketing/legal pages (home, about, courses, packages,
+// FAQs, privacy, terms) and the Paystack result pages (/payments/*, gated by
+// their own `reference` param) stay public.
+const PROTECTED_LEARNER_SECTIONS = ['dashboard', 'profile', 'notifications'];
+
 export function middleware(request: NextRequest) {
     const { pathname } = request.nextUrl;
     const authCookie = request.cookies.get(AUTH_COOKIE_KEY);
@@ -35,6 +41,21 @@ export function middleware(request: NextRequest) {
             response.cookies.delete(AUTH_COOKIE_KEY);
             return response;
         }
+    }
+
+    // Gate learner-facing authenticated routes (student dashboard, profile,
+    // notifications). Without this, these pages render their shell to
+    // logged-out visitors. Cookie presence is the UI gate; the API still
+    // enforces real token validity on every request.
+    const segments = pathname.split('/');
+    const langSegment = SUPPORTED_LANGS.includes(segments[1]) ? segments[1] : null;
+    const learnerSection = langSegment ? segments[2] : segments[1];
+    const isProtectedLearnerPage = PROTECTED_LEARNER_SECTIONS.includes(learnerSection);
+
+    if (isProtectedLearnerPage && !authCookie) {
+        const loginUrl = new URL(`/${langSegment || 'en'}/login`, request.url);
+        loginUrl.searchParams.set('redirect', pathname);
+        return NextResponse.redirect(loginUrl);
     }
 
     if (isLoginPage && authCookie) {
